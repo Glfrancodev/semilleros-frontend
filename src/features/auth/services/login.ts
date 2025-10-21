@@ -6,8 +6,12 @@ export interface LoginPayload {
 }
 
 export interface LoginResponse {
-  token: string;
-  usuario: any; // Ajusta según la respuesta real del backend
+  success: boolean;
+  message: string;
+  data: {
+    token: string;
+    user: any; // Ajusta según la estructura del usuario en el backend
+  };
 }
 
 export async function login(payload: LoginPayload): Promise<LoginResponse> {

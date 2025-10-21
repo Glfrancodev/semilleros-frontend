@@ -3,8 +3,17 @@ import { useNavigate } from "react-router-dom";
 import api from "../services/api"; // instancia axios centralizada
 import { jwtDecode } from "jwt-decode";
 
+interface DecodedToken {
+  idUsuario: string;
+  correo: string;
+  nombre: string;
+  iniciales: string;
+  fotoPerfil: string | null;
+  rol: string;
+}
+
 interface AuthContextType {
-  user: any;
+  user: DecodedToken | null;
   token: string | null;
   loading: boolean;
   login: (correo: string, contrasena: string) => Promise<void>;
@@ -17,13 +26,14 @@ interface AuthContextType {
     idRol: string;
   }) => Promise<void>;
   logout: () => void;
+  updateToken: (newToken: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<DecodedToken | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -41,8 +51,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (token) {
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
       try {
-        const decoded: any = jwtDecode(token);
-        setUser({ nombre: decoded.nombre, correo: decoded.correo });
+        const decoded = jwtDecode<DecodedToken>(token);
+        setUser({
+          idUsuario: decoded.idUsuario,
+          correo: decoded.correo,
+          nombre: decoded.nombre,
+          iniciales: decoded.iniciales,
+          fotoPerfil: decoded.fotoPerfil,
+          rol: decoded.rol,
+        });
       } catch (error) {
         console.error("Error al decodificar el token:", error);
         setUser(null);
@@ -58,7 +75,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       const res = await api.post("/usuarios/login", { correo, contrasena });
-      const { token } = res.data; // ajustá si tu backend devuelve otro campo
+      // El backend devuelve: { success: true, message: "...", data: { token, user } }
+      const { token } = res.data.data;
       localStorage.setItem("token", token);
       setToken(token);
       navigate("/");
@@ -80,13 +98,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }) => {
     try {
       setLoading(true);
-      const res = await api.post("/usuarios", data);
-      const { token } = res.data; // si tu backend no devuelve token, lo podemos omitir
-      if (token) {
-        localStorage.setItem("token", token);
-        setToken(token);
-      }
-      navigate("/");
+      await api.post("/usuarios", data);
+      // El backend devuelve: { success: true, message: "...", data: { usuario } }
+      // El signup no devuelve token, tendrías que hacer login después
+      // Por ahora redirigimos al login
+      navigate("/login");
     } catch (err: any) {
       throw new Error(err.response?.data?.message || "Error al registrarse");
     } finally {
@@ -102,8 +118,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     navigate("/signin");
   };
 
+  // 🔹 UPDATE TOKEN (útil al actualizar foto de perfil)
+  const updateToken = (newToken: string) => {
+    localStorage.setItem("token", newToken);
+    setToken(newToken);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, signup, logout, updateToken }}>
       {children}
     </AuthContext.Provider>
   );

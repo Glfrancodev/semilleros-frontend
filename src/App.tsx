@@ -2,12 +2,12 @@
 
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import NotFound from "./legacy/pages/OtherPage/NotFound";
-import UserProfiles from "./legacy/pages/UserProfiles";
 import Calendar from "./legacy/pages/Calendar";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./legacy/pages/Dashboard/Home";
 import SignInPage from "./features/auth/pages/SignInPage";
+import ProfilePage from "./features/profile/pages/ProfilePage";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
 
@@ -43,7 +43,7 @@ export default function App() {
           <Route element={<PrivateRoute />}>
             <Route element={<AppLayout />}>
               <Route index path="/" element={<Home />} />
-              <Route path="/profile" element={<UserProfiles />} />
+                <Route path="/profile" element={<ProfilePage />} />
               <Route path="/calendar" element={<Calendar />} />
             </Route>
           </Route>
