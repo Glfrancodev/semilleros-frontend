@@ -8,6 +8,7 @@ import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./legacy/pages/Dashboard/Home";
 import SignInPage from "./features/auth/pages/SignInPage";
 import ProfilePage from "./features/profile/pages/ProfilePage";
+import RolesPermisosPage from "./features/admin/pages/RolesPermisosPage";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
 
@@ -43,8 +44,11 @@ export default function App() {
           <Route element={<PrivateRoute />}>
             <Route element={<AppLayout />}>
               <Route index path="/" element={<Home />} />
-                <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/profile" element={<ProfilePage />} />
               <Route path="/calendar" element={<Calendar />} />
+              
+              {/* Rutas de Admin */}
+              <Route path="/roles" element={<RolesPermisosPage />} />
             </Route>
           </Route>
 

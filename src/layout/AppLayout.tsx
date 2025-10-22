@@ -2,15 +2,36 @@ import { SidebarProvider, useSidebar } from "../context/SidebarContext";
 import { Outlet } from "react-router";
 import AppHeader from "./AppHeader";
 import Backdrop from "./Backdrop";
-import AppSidebar from "./AppSidebar";
+import AdminSidebar from "./sidebars/AdminSidebar";
+import EstudianteSidebar from "./sidebars/EstudianteSidebar";
+import DocenteSidebar from "./sidebars/DocenteSidebar";
+import { useAuth } from "../context/AuthContext";
+import { ROLES } from "../constants/roles";
 
 const LayoutContent: React.FC = () => {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
+  const { user } = useAuth();
+
+  // Renderizar el sidebar según el rol del usuario
+  const renderSidebar = () => {
+    if (!user) return <AdminSidebar />; // Fallback
+
+    switch (user.rol) {
+      case ROLES.ADMIN:
+        return <AdminSidebar />;
+      case ROLES.DOCENTE:
+        return <DocenteSidebar />;
+      case ROLES.ESTUDIANTE:
+        return <EstudianteSidebar />;
+      default:
+        return <AdminSidebar />;
+    }
+  };
 
   return (
     <div className="min-h-screen xl:flex">
       <div>
-        <AppSidebar />
+        {renderSidebar()}
         <Backdrop />
       </div>
       <div
