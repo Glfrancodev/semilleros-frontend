@@ -8,7 +8,7 @@ import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./legacy/pages/Dashboard/Home";
 import SignInPage from "./features/auth/pages/SignInPage";
 import ProfilePage from "./features/profile/pages/ProfilePage";
-import RolesPermisosPage from "./features/admin/pages/RolesPermisosPage";
+import UsuariosPage from "./features/admin/pages/UsuariosPage";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
 
@@ -48,7 +48,7 @@ export default function App() {
               <Route path="/calendar" element={<Calendar />} />
               
               {/* Rutas de Admin */}
-              <Route path="/roles" element={<RolesPermisosPage />} />
+              <Route path="/usuarios" element={<UsuariosPage />} />
             </Route>
           </Route>
 

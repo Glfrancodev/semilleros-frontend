@@ -8,7 +8,7 @@ import {
 import Badge from "../../ui/badge/Badge";
 import Button from "../../ui/button/Button";
 import { MoreDotIcon } from "../../../assets/icons";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import CustomSelect from "../../common/CustomSelect";
 
 export interface User {
@@ -39,6 +39,10 @@ export default function AdvancedTableOne({
   const [openSocialDropdown, setOpenSocialDropdown] = useState<number | null>(null);
   const [openActionsDropdown, setOpenActionsDropdown] = useState<number | null>(null);
   const [rowsPerPage, setRowsPerPage] = useState<string>("10");
+  const [socialDropdownPosition, setSocialDropdownPosition] = useState<{ top: number; right: number } | null>(null);
+  const [actionsDropdownPosition, setActionsDropdownPosition] = useState<{ top: number; right: number } | null>(null);
+  const socialButtonRef = useRef<HTMLButtonElement>(null);
+  const actionsButtonRef = useRef<HTMLButtonElement>(null);
 
   const rowsPerPageOptions = [
     { value: "10", label: "10" },
@@ -54,6 +58,39 @@ export default function AdvancedTableOne({
   const toggleActionsDropdown = (userId: number) => {
     setOpenActionsDropdown(openActionsDropdown === userId ? null : userId);
   };
+
+  // Calcular posición del dropdown de social
+  useEffect(() => {
+    if (openSocialDropdown && socialButtonRef.current) {
+      const rect = socialButtonRef.current.getBoundingClientRect();
+      setSocialDropdownPosition({
+        top: rect.top - 8,
+        right: window.innerWidth - rect.right,
+      });
+    }
+  }, [openSocialDropdown]);
+
+  // Calcular posición del dropdown de actions
+  useEffect(() => {
+    if (openActionsDropdown && actionsButtonRef.current) {
+      const rect = actionsButtonRef.current.getBoundingClientRect();
+      setActionsDropdownPosition({
+        top: rect.top - 8,
+        right: window.innerWidth - rect.right,
+      });
+    }
+  }, [openActionsDropdown]);
+
+  // Cerrar dropdowns al hacer scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (openSocialDropdown) setOpenSocialDropdown(null);
+      if (openActionsDropdown) setOpenActionsDropdown(null);
+    };
+
+    window.addEventListener('scroll', handleScroll, true);
+    return () => window.removeEventListener('scroll', handleScroll, true);
+  }, [openSocialDropdown, openActionsDropdown]);
 
   const getSocialIcon = (platform: string) => {
     switch (platform) {
@@ -258,6 +295,7 @@ export default function AdvancedTableOne({
                     {user.socialProfiles.length > 1 && (
                       <div className="relative">
                         <button
+                          ref={openSocialDropdown === user.id ? socialButtonRef : null}
                           onClick={() => toggleSocialDropdown(user.id)}
                           className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-white text-xs font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
                           aria-label={`${user.socialProfiles.length - 1} more social profiles`}
@@ -266,7 +304,7 @@ export default function AdvancedTableOne({
                         </button>
 
                         {/* Dropdown */}
-                        {openSocialDropdown === user.id && (
+                        {openSocialDropdown === user.id && socialDropdownPosition && (
                           <>
                             {/* Overlay para cerrar al hacer click fuera */}
                             <div
@@ -274,8 +312,14 @@ export default function AdvancedTableOne({
                               onClick={() => setOpenSocialDropdown(null)}
                             />
                             
-                            {/* Contenido del dropdown */}
-                            <div className="absolute left-0 top-full z-20 mt-2 w-48 rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+                            {/* Contenido del dropdown - posicionamiento fijo */}
+                            <div 
+                              className="fixed z-50 w-48 rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+                              style={{
+                                bottom: `${window.innerHeight - socialDropdownPosition.top}px`,
+                                right: `${socialDropdownPosition.right}px`,
+                              }}
+                            >
                               <div className="mb-2 px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-400">
                                 Redes Sociales
                               </div>
@@ -347,6 +391,7 @@ export default function AdvancedTableOne({
                 <TableCell className="px-5 py-4 text-start">
                   <div className="relative">
                     <button 
+                      ref={openActionsDropdown === user.id ? actionsButtonRef : null}
                       onClick={() => toggleActionsDropdown(user.id)}
                       className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
                     >
@@ -354,7 +399,7 @@ export default function AdvancedTableOne({
                     </button>
 
                     {/* Dropdown de acciones */}
-                    {openActionsDropdown === user.id && (
+                    {openActionsDropdown === user.id && actionsDropdownPosition && (
                       <>
                         {/* Overlay para cerrar al hacer click fuera */}
                         <div
@@ -362,8 +407,14 @@ export default function AdvancedTableOne({
                           onClick={() => setOpenActionsDropdown(null)}
                         />
                         
-                        {/* Contenido del dropdown */}
-                        <div className="absolute right-0 top-full z-20 mt-2 w-48 rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+                        {/* Contenido del dropdown - posicionamiento fijo */}
+                        <div 
+                          className="fixed z-50 w-48 rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+                          style={{
+                            bottom: `${window.innerHeight - actionsDropdownPosition.top}px`,
+                            right: `${actionsDropdownPosition.right}px`,
+                          }}
+                        >
                           <div className="mb-2 px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-400">
                             Actions
                           </div>

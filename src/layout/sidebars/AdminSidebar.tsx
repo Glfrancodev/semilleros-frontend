@@ -6,7 +6,6 @@ import {
   UserCircleIcon,
   ChevronDownIcon,
   HorizontaLDots,
-  LockIcon,
   UserIcon,
   ShootingStarIcon,
   BoltIcon,
@@ -34,7 +33,6 @@ const navItems: NavItem[] = [
     icon: <UserCircleIcon />,
     name: "Cuentas",
     subItems: [
-      { name: "Roles y Permisos", path: "/roles", icon: <LockIcon /> },
       { name: "Usuarios", path: "/usuarios", icon: <UserIcon /> },
     ],
   },

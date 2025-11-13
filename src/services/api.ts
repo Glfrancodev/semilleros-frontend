@@ -38,7 +38,39 @@ api.interceptors.response.use(
 
       // Lanzar el error con el mensaje del backend si existe
       if (data?.message) {
-        throw new Error(data.message);
+        // Si hay detalles adicionales del error, los incluimos
+        let errorMessage = data.message;
+        
+        // Manejar errores de Sequelize específicos
+        if (data.error?.parent) {
+          const parent = data.error.parent;
+          
+          // Error de unicidad (correo duplicado, CI duplicado, etc.)
+          if (parent.code === '23505') {
+            const detail = parent.detail || '';
+            if (detail.includes('correo')) {
+              errorMessage = 'El correo electrónico ya está registrado';
+            } else if (detail.includes('ci')) {
+              errorMessage = 'El CI ya está registrado';
+            } else if (detail.includes('codigoEstudiante')) {
+              errorMessage = 'El código de estudiante ya está registrado';
+            } else if (detail.includes('codigoDocente')) {
+              errorMessage = 'El código de docente ya está registrado';
+            } else {
+              errorMessage = 'Ya existe un registro con estos datos';
+            }
+          }
+          // Error de llave foránea
+          else if (parent.code === '23503') {
+            errorMessage = 'Error de referencia: el registro relacionado no existe';
+          }
+          // Error de violación de restricción
+          else if (parent.code === '23514') {
+            errorMessage = 'Los datos no cumplen con las restricciones requeridas';
+          }
+        }
+        
+        throw new Error(errorMessage);
       }
     } else if (error.request) {
       // La petición fue hecha pero no hubo respuesta
