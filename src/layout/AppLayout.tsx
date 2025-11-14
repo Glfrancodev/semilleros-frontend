@@ -14,7 +14,9 @@ const LayoutContent: React.FC = () => {
 
   // Renderizar el sidebar según el rol del usuario
   const renderSidebar = () => {
-    if (!user) return <AdminSidebar />; // Fallback
+    if (!user) {
+      return <AdminSidebar />; // Fallback
+    }
 
     switch (user.rol) {
       case ROLES.ADMIN:

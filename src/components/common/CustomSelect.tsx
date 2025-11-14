@@ -12,6 +12,7 @@ interface CustomSelectProps {
   placeholder?: string;
   className?: string;
   dropdownPosition?: "top" | "bottom";
+  disabled?: boolean;
 }
 
 export default function CustomSelect({
@@ -21,6 +22,7 @@ export default function CustomSelect({
   placeholder = "Seleccionar...",
   className = "",
   dropdownPosition = "bottom",
+  disabled = false,
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const selectRef = useRef<HTMLDivElement>(null);
@@ -53,8 +55,13 @@ export default function CustomSelect({
       {/* Botón del select */}
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+        className={`flex w-full items-center justify-between gap-2 rounded-lg border px-4 py-2 text-sm transition-colors focus:outline-none ${
+          disabled
+            ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-600"
+            : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+        }`}
       >
         <span>{selectedOption ? selectedOption.label : placeholder}</span>
         <svg

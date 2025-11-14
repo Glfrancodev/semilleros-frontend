@@ -1,6 +1,7 @@
 
 
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import NotFound from "./legacy/pages/OtherPage/NotFound";
 import Calendar from "./legacy/pages/Calendar";
 import AppLayout from "./layout/AppLayout";
@@ -10,6 +11,14 @@ import SignInPage from "./features/auth/pages/SignInPage";
 import ProfilePage from "./features/profile/pages/ProfilePage";
 import UsuariosPage from "./features/admin/pages/UsuariosPage";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { ROLES } from "./constants/roles";
+
+// Páginas de Estudiante
+import EstadisticasPage from "./features/estudiante/pages/EstadisticasPage";
+import CalendarioPage from "./features/estudiante/pages/CalendarioPage";
+import GuiasDescubrirPage from "./features/estudiante/pages/GuiasDescubrirPage";
+import MisProyectosPage from "./features/estudiante/pages/MisProyectosPage";
+import ConvocatoriasPage from "./features/estudiante/pages/ConvocatoriasPage";
 
 
 // Ruta privada: solo permite acceso si hay token
@@ -18,10 +27,29 @@ function PrivateRoute() {
   return token ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
-// Ruta pública: si ya está autenticado, redirige al dashboard
+// Ruta pública: si ya está autenticado, redirige según el rol
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { token } = useAuth();
-  return token ? <Navigate to="/" replace /> : <>{children}</>;
+  const { token, user } = useAuth();
+  
+  if (!token) {
+    return <>{children}</>;
+  }
+
+  // Redirigir según el rol del usuario
+  if (user) {
+    switch (user.rol) {
+      case ROLES.ADMIN:
+        return <Navigate to="/" replace />;
+      case ROLES.DOCENTE:
+        return <Navigate to="/docente/dashboard" replace />;
+      case ROLES.ESTUDIANTE:
+        return <Navigate to="/estudiante/convocatorias" replace />;
+      default:
+        return <Navigate to="/" replace />;
+    }
+  }
+
+  return <Navigate to="/" replace />;
 }
 
 export default function App() {
@@ -49,6 +77,13 @@ export default function App() {
               
               {/* Rutas de Admin */}
               <Route path="/usuarios" element={<UsuariosPage />} />
+              
+              {/* Rutas de Estudiante */}
+              <Route path="/estudiante/convocatorias" element={<ConvocatoriasPage />} />
+              <Route path="/estudiante/estadisticas" element={<EstadisticasPage />} />
+              <Route path="/estudiante/calendario" element={<CalendarioPage />} />
+              <Route path="/estudiante/proyectos/guias" element={<GuiasDescubrirPage />} />
+              <Route path="/estudiante/proyectos/mis-proyectos" element={<MisProyectosPage />} />
             </Route>
           </Route>
 
@@ -56,6 +91,39 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AuthProvider>
+      
+      {/* Toast Notifications */}
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
+        containerStyle={{
+          top: 80,
+          zIndex: 999999999,
+        }}
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#fff',
+            color: '#374151',
+            borderRadius: '0.75rem',
+            border: '1px solid #e5e7eb',
+            padding: '16px',
+            zIndex: 999999999,
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
     </Router>
   );
 }

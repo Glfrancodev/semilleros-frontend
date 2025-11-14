@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  GridIcon,
-  CalenderIcon,
   UserCircleIcon,
   ChevronDownIcon,
   HorizontaLDots,
+  DocsIcon,
+  ChatIcon,
 } from "../../assets/icons";
 import { useSidebar } from "../../context/SidebarContext";
 
@@ -18,29 +18,25 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
-    icon: <GridIcon />,
-    name: "Dashboard",
-    path: "/",
-  },
-  {
-    icon: <GridIcon />,
-    name: "Mis Proyectos",
-    path: "/mis-proyectos",
-  },
-  {
-    icon: <CalenderIcon />,
-    name: "Eventos",
-    path: "/eventos",
-  },
-  {
-    icon: <CalenderIcon />,
+    icon: <ChatIcon />,
     name: "Convocatorias",
-    path: "/convocatorias",
+    path: "/estudiante/convocatorias",
   },
   {
     icon: <UserCircleIcon />,
-    name: "Mi Perfil",
-    path: "/profile",
+    name: "Yo",
+    subItems: [
+      { name: "Mis estadísticas", path: "/estudiante/estadisticas" },
+      { name: "Calendario", path: "/estudiante/calendario" },
+    ],
+  },
+  {
+    icon: <DocsIcon />,
+    name: "Proyectos",
+    subItems: [
+      { name: "Guías y descubrir", path: "/estudiante/proyectos/guias" },
+      { name: "Mis proyectos", path: "/estudiante/proyectos/mis-proyectos" },
+    ],
   },
 ];
 

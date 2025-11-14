@@ -28,6 +28,13 @@ export const actualizarEstudiante = async (id: string, data: { codigoEstudiante:
 
 // Obtener estudiante por ID
 export const obtenerEstudiantePorId = async (id: string): Promise<Estudiante> => {
-  const response = await api.get<ApiSuccessResponse<Estudiante>>(`/estudiantes/${id}`);
+  const response = await api.get<ApiSuccessResponse<Estudiante>>(`estudiantes/${id}`);
   return response.data.data;
 };
+
+// Obtener el estudiante actual basado en el usuario autenticado
+export const obtenerEstudianteActual = async (): Promise<Estudiante> => {
+  const response = await api.get<ApiSuccessResponse<Estudiante>>("estudiantes/me");
+  return response.data.data;
+};
+

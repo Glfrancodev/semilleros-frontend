@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api"; // instancia axios centralizada
 import { jwtDecode } from "jwt-decode";
+import { ROLES } from "../constants/roles";
 
 interface DecodedToken {
   idUsuario: string;
@@ -79,7 +80,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { token } = res.data.data;
       localStorage.setItem("token", token);
       setToken(token);
-      navigate("/");
+      
+      // Decodificar el token para obtener el rol y redirigir según corresponda
+      try {
+        const decoded = jwtDecode<DecodedToken>(token);
+        
+        // Redirigir según el rol del usuario
+        switch (decoded.rol) {
+          case ROLES.ADMIN:
+            navigate("/");
+            break;
+          case ROLES.DOCENTE:
+            navigate("/docente/dashboard");
+            break;
+          case ROLES.ESTUDIANTE:
+            navigate("/estudiante/convocatorias");
+            break;
+          default:
+            navigate("/");
+        }
+      } catch (decodeError) {
+        console.error("Error al decodificar el token:", decodeError);
+        navigate("/");
+      }
     } catch (err: any) {
       throw new Error(err.response?.data?.message || "Error al iniciar sesión");
     } finally {
