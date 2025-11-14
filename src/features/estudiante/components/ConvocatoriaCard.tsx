@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Convocatoria } from "../../../services/convocatoriaService";
+import { Tarea } from "../../../services/tareaService";
 import { 
   crearProyecto, 
   crearEstudianteProyecto, 
   CrearProyectoData 
 } from "../../../services/proyectoService";
+import { crearRevision } from "../../../services/revisionService";
 import { obtenerEstudianteActual } from "../../../services/estudianteService";
 import Button from "../../../components/ui/button/Button";
 import InscripcionConvocatoriaModal, {
@@ -12,12 +13,12 @@ import InscripcionConvocatoriaModal, {
 } from "../../../components/modals/InscripcionConvocatoriaModal";
 
 interface ConvocatoriaCardProps {
-  convocatoria: Convocatoria;
+  tarea: Tarea;
   onInscripcionExitosa?: () => void;
 }
 
 export default function ConvocatoriaCard({
-  convocatoria,
+  tarea,
   onInscripcionExitosa,
 }: ConvocatoriaCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -29,7 +30,6 @@ export default function ConvocatoriaCard({
         nombre: data.nombreProyecto,
         descripcion: data.descripcionProyecto,
         idGrupoMateria: data.idGrupoMateria,
-        idConvocatoria: convocatoria.idConvocatoria,
       };
       
       const proyectoCreado = await crearProyecto(proyectoData);
@@ -42,6 +42,12 @@ export default function ConvocatoriaCard({
         proyectoCreado.idProyecto,
         estudiante.idEstudiante
       );
+      
+      // 4. Crear la revisión a la tarea de orden 0 (inscripción)
+      await crearRevision({
+        idProyecto: proyectoCreado.idProyecto,
+        idTarea: tarea.idTarea,
+      });
       
       // Llamar callback si existe
       if (onInscripcionExitosa) {
@@ -61,21 +67,33 @@ export default function ConvocatoriaCard({
   return (
     <>
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
-        {/* Título */}
+        {/* Nombre de la Feria */}
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-          {convocatoria.nombre}
+          {tarea.feria?.nombre || "Feria sin nombre"}
         </h3>
 
-        {/* Año y Semestre */}
-        <div className="flex items-center gap-2 mb-3">
-          <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium rounded">
-            {convocatoria.año} - Semestre {convocatoria.semestre}
-          </span>
+        {/* Año y Semestre de la Feria */}
+        {tarea.feria && (
+          <div className="flex items-center gap-2 mb-3">
+            <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium rounded">
+              {tarea.feria.año} - Semestre {tarea.feria.semestre}
+            </span>
+          </div>
+        )}
+
+        {/* Descripción de la Tarea */}
+        <div className="mb-4">
+          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {tarea.nombre}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {tarea.descripcion || "Sin descripción"}
+          </p>
         </div>
 
-        {/* Descripción */}
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">
-          {convocatoria.descripcion || "Sin descripción disponible"}
+        {/* Fecha límite */}
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+          Fecha límite: {new Date(tarea.fechaLimite).toLocaleDateString()}
         </p>
 
         {/* Botón */}
@@ -94,7 +112,7 @@ export default function ConvocatoriaCard({
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleInscripcion}
-        convocatoriaNombre={convocatoria.nombre}
+        convocatoriaNombre={tarea.feria?.nombre || "Feria"}
       />
     </>
   );

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Proyecto } from "../../../services/proyectoService";
 import Button from "../../../components/ui/button/Button";
 import ImagenNoEncontrada from "../../../assets/ImagenNoEncontrada.png";
@@ -9,10 +10,15 @@ interface ProyectoCardProps {
 
 export default function ProyectoCard({ proyecto }: ProyectoCardProps) {
   const [imageError, setImageError] = useState(false);
+  const navigate = useNavigate();
 
   const imageSrc = imageError || !proyecto.urlLogo 
     ? ImagenNoEncontrada 
     : proyecto.urlLogo;
+
+  const handleReadMore = () => {
+    navigate(`/estudiante/proyectos/${proyecto.idProyecto}`);
+  };
 
   return (
     <div className="overflow-hidden bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
@@ -61,6 +67,7 @@ export default function ProyectoCard({ proyecto }: ProyectoCardProps) {
           variant="primary" 
           size="sm" 
           className="w-full mt-4"
+          onClick={handleReadMore}
         >
           Read more
         </Button>

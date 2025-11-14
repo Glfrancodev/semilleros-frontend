@@ -19,6 +19,8 @@ import CalendarioPage from "./features/estudiante/pages/CalendarioPage";
 import GuiasDescubrirPage from "./features/estudiante/pages/GuiasDescubrirPage";
 import MisProyectosPage from "./features/estudiante/pages/MisProyectosPage";
 import ConvocatoriasPage from "./features/estudiante/pages/ConvocatoriasPage";
+import ProyectoDetallePage from "./features/estudiante/pages/ProyectoDetallePage";
+import DocumentoEditorPage from "./features/estudiante/pages/DocumentoEditorPage";
 
 
 // Ruta privada: solo permite acceso si hay token
@@ -70,6 +72,9 @@ export default function App() {
 
           {/* Rutas privadas */}
           <Route element={<PrivateRoute />}>
+            {/* Ruta del editor de documento (sin layout) */}
+            <Route path="/estudiante/proyectos/:idProyecto/documento" element={<DocumentoEditorPage />} />
+            
             <Route element={<AppLayout />}>
               <Route index path="/" element={<Home />} />
               <Route path="/profile" element={<ProfilePage />} />
@@ -84,6 +89,7 @@ export default function App() {
               <Route path="/estudiante/calendario" element={<CalendarioPage />} />
               <Route path="/estudiante/proyectos/guias" element={<GuiasDescubrirPage />} />
               <Route path="/estudiante/proyectos/mis-proyectos" element={<MisProyectosPage />} />
+              <Route path="/estudiante/proyectos/:idProyecto" element={<ProyectoDetallePage />} />
             </Route>
           </Route>
 

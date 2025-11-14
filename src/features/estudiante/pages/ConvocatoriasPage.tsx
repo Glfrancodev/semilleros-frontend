@@ -1,33 +1,33 @@
 import { useEffect, useState } from "react";
-import { obtenerConvocatorias, Convocatoria } from "../../../services/convocatoriaService";
+import { obtenerTareasInscripcion, Tarea } from "../../../services/tareaService";
 import { obtenerEventos, Evento } from "../../../services/eventoService";
 import ConvocatoriaCard from "../components/ConvocatoriaCard";
 import EventoCard from "../components/EventoCard";
 import Button from "../../../components/ui/button/Button";
 
 export default function ConvocatoriasPage() {
-  const [convocatorias, setConvocatorias] = useState<Convocatoria[]>([]);
+  const [tareasInscripcion, setTareasInscripcion] = useState<Tarea[]>([]);
   const [eventos, setEventos] = useState<Evento[]>([]);
-  const [loadingConvocatorias, setLoadingConvocatorias] = useState(true);
+  const [loadingTareas, setLoadingTareas] = useState(true);
   const [loadingEventos, setLoadingEventos] = useState(true);
-  const [errorConvocatorias, setErrorConvocatorias] = useState<string | null>(null);
+  const [errorTareas, setErrorTareas] = useState<string | null>(null);
   const [errorEventos, setErrorEventos] = useState<string | null>(null);
 
   useEffect(() => {
-    cargarConvocatorias();
+    cargarTareasInscripcion();
     cargarEventos();
   }, []);
 
-  const cargarConvocatorias = async () => {
+  const cargarTareasInscripcion = async () => {
     try {
-      setLoadingConvocatorias(true);
-      setErrorConvocatorias(null);
-      const data = await obtenerConvocatorias();
-      setConvocatorias(data);
+      setLoadingTareas(true);
+      setErrorTareas(null);
+      const data = await obtenerTareasInscripcion();
+      setTareasInscripcion(data);
     } catch (err: any) {
-      setErrorConvocatorias(err.response?.data?.message || "Error al cargar las convocatorias");
+      setErrorTareas(err.response?.data?.message || "Error al cargar las convocatorias");
     } finally {
-      setLoadingConvocatorias(false);
+      setLoadingTareas(false);
     }
   };
 
@@ -64,18 +64,18 @@ export default function ConvocatoriasPage() {
         </div>
 
         <div className="p-6">
-          {loadingConvocatorias ? (
+          {loadingTareas ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
                 <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                 <p className="text-gray-600 dark:text-gray-400">Cargando convocatorias...</p>
               </div>
             </div>
-          ) : errorConvocatorias ? (
+          ) : errorTareas ? (
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-              <p className="text-red-700 dark:text-red-400 text-sm">{errorConvocatorias}</p>
+              <p className="text-red-700 dark:text-red-400 text-sm">{errorTareas}</p>
               <Button 
-                onClick={cargarConvocatorias}
+                onClick={cargarTareasInscripcion}
                 variant="danger"
                 size="xs"
                 className="mt-2"
@@ -83,7 +83,7 @@ export default function ConvocatoriasPage() {
                 Reintentar
               </Button>
             </div>
-          ) : convocatorias.length === 0 ? (
+          ) : tareasInscripcion.length === 0 ? (
             <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-12 text-center">
               <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-3xl">📢</span>
@@ -97,8 +97,8 @@ export default function ConvocatoriasPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {convocatorias.map((convocatoria) => (
-                <ConvocatoriaCard key={convocatoria.idConvocatoria} convocatoria={convocatoria} />
+              {tareasInscripcion.map((tarea) => (
+                <ConvocatoriaCard key={tarea.idTarea} tarea={tarea} />
               ))}
             </div>
           )}

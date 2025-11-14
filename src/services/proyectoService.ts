@@ -14,11 +14,27 @@ export interface Proyecto {
   fechaCreacion: string;
 }
 
+export interface ProyectoDetalle {
+  idProyecto: string;
+  nombre: string;
+  descripcion: string;
+  estaAprobado: boolean | null;
+  esFinal: boolean;
+  fechaCreacion: string;
+  fechaActualizacion: string;
+  nombreDocente: string;
+  nombreMateria: string;
+  grupo: string;
+  urlLogo: string | null;
+  urlTriptico: string | null;
+  urlBanner: string | null;
+}
+
 export interface CrearProyectoData {
   nombre: string;
   descripcion: string;
   idGrupoMateria: string;
-  idConvocatoria: string;
+  idConvocatoria?: string; // Ahora es opcional porque ya no se relaciona directamente
 }
 
 interface MisProyectosResponse {
@@ -30,25 +46,41 @@ interface MisProyectosResponse {
   };
 }
 
+interface ProyectoDetalleResponse {
+  success: boolean;
+  message: string;
+  data: ProyectoDetalle;
+}
+
 // Obtener los proyectos del estudiante actual
 export const obtenerMisProyectos = async (): Promise<Proyecto[]> => {
   const response = await api.get<MisProyectosResponse>('/proyectos/mis-proyectos');
   return response.data.data.items;
 };
 
+// Obtener un proyecto por ID con todos sus detalles
+export const obtenerProyectoPorId = async (idProyecto: string): Promise<ProyectoDetalle> => {
+  const response = await api.get<ProyectoDetalleResponse>(`/proyectos/${idProyecto}`);
+  return response.data.data;
+};
+
 // Crear un nuevo proyecto
 export const crearProyecto = async (
   data: CrearProyectoData
 ): Promise<any> => {
-  const payload = {
+  const payload: any = {
     nombre: data.nombre,
     descripcion: data.descripcion,
-    contenido: data.descripcion, // Usar la descripción como contenido inicial
-    estaAprobado: false,
+    estaAprobado: null, // null = En revisión
     esFinal: false,
     idGrupoMateria: data.idGrupoMateria,
-    idConvocatoria: data.idConvocatoria,
   };
+  
+  // Solo incluir idConvocatoria si existe (para compatibilidad con código antiguo)
+  if (data.idConvocatoria) {
+    payload.idConvocatoria = data.idConvocatoria;
+  }
+  
   const response = await api.post("proyectos", payload);
   return response.data.data;
 };
