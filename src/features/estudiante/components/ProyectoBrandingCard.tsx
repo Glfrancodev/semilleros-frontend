@@ -52,7 +52,7 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
       const archivoSubido = response.data.data;
       setUrls(prev => ({
         ...prev,
-        [tipo]: archivoSubido.url,
+        [tipo]: archivoSubido.urlFirmada || archivoSubido.url,
       }));
 
       toast.success(`${tipo.charAt(0).toUpperCase() + tipo.slice(1)} subido exitosamente`);
