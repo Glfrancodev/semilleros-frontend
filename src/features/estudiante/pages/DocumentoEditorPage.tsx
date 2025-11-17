@@ -1,8 +1,6 @@
 import { useState, useRef } from "react";
-import { useParams } from "react-router-dom";
 
 export default function DocumentoEditorPage() {
-  const { idProyecto } = useParams<{ idProyecto: string }>();
   const [numeroPaginas, setNumeroPaginas] = useState(1);
   const editorRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
