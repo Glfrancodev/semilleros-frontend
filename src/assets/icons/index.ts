@@ -54,6 +54,10 @@ import { ReactComponent as ChatIcon } from "./chat.svg?react";
 import { ReactComponent as MoreDotIcon } from "./moredot.svg?react";
 import { ReactComponent as AlertHexaIcon } from "./alert-hexa.svg?react";
 import { ReactComponent as ErrorHexaIcon } from "./info-hexa.svg?react";
+import { ReactComponent as Undo2Icon } from "./undo2.svg?react";
+import { ReactComponent as Redo2Icon } from "./redo2.svg?react";
+import { ReactComponent as SunIcon } from "./sun.svg?react";
+import { ReactComponent as MoonIcon } from "./moon.svg?react";
 
 export {
   ErrorHexaIcon,
@@ -112,4 +116,8 @@ export {
   ChatIcon,
   AngleLeftIcon,
   AngleRightIcon,
+  Undo2Icon,
+  Redo2Icon,
+  SunIcon,
+  MoonIcon,
 };

@@ -15,4 +15,8 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    // Eleva el umbral de warning sin cambiar el bundle final.
+    chunkSizeWarningLimit: 3000,
+  },
 });

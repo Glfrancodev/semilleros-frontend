@@ -1,77 +1,74 @@
-import { useState, useRef } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { DocumentEditor } from "../../../components/components/Editor";
+import { obtenerContenidoEditor } from "../../../services/proyectoService";
 
 export default function DocumentoEditorPage() {
-  const [numeroPaginas, setNumeroPaginas] = useState(1);
-  const editorRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const { idProyecto } = useParams<{ idProyecto: string }>();
+  const navigate = useNavigate();
+  const [contenido, setContenido] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Tamaño carta: 8.5 x 11 pulgadas = 816 x 1056 px a 96 DPI
-  // Márgenes APA 7: 1 pulgada en todos los lados = 96px
-  const MARGEN = 96; // 1 pulgada
-  const ANCHO_PAGINA = 816; // 8.5 pulgadas
-  const ALTO_PAGINA = 1056; // 11 pulgadas
-  const ALTO_CONTENIDO = ALTO_PAGINA - MARGEN * 2; // 864px
-  const INTERLINEADO = 2; // Doble espacio APA 7
-
-  const handleInput = () => {
-    if (!editorRef.current) return;
-    
-    // Calcular cuántas páginas necesitamos
-    const alturaTotal = editorRef.current.scrollHeight;
-    const paginasNecesarias = Math.max(1, Math.ceil(alturaTotal / ALTO_CONTENIDO));
-    
-    if (paginasNecesarias !== numeroPaginas) {
-      setNumeroPaginas(paginasNecesarias);
+  useEffect(() => {
+    if (!idProyecto) {
+      navigate("/estudiante/proyectos/mis-proyectos");
+      return;
     }
-  };
 
-  return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 py-8">
-      {/* Contenedor de páginas */}
-      <div 
-        className="mx-auto relative" 
-        style={{ width: `${ANCHO_PAGINA}px` }}
-        ref={containerRef}
-      >
-        {/* Renderizar páginas de fondo */}
-        {Array.from({ length: numeroPaginas }).map((_, index) => (
-          <div
-            key={index}
-            className="bg-white shadow-lg mb-8"
-            style={{
-              width: `${ANCHO_PAGINA}px`,
-              height: `${ALTO_PAGINA}px`,
-            }}
-          />
-        ))}
+    const cargarProyecto = async () => {
+      try {
+        setIsLoading(true);
+        const data = await obtenerContenidoEditor(idProyecto);
 
-        {/* Editor absoluto sobre las páginas */}
-        <div
-          className="absolute top-0 left-0"
-          style={{
-            width: `${ANCHO_PAGINA}px`,
-          }}
-        >
-          <div
-            ref={editorRef}
-            contentEditable
-            onInput={handleInput}
-            className="outline-none focus:outline-none"
-            style={{
-              margin: `${MARGEN}px`,
-              width: `${ANCHO_PAGINA - MARGEN * 2}px`,
-              lineHeight: INTERLINEADO,
-              fontFamily: "Times New Roman, serif",
-              fontSize: "12pt",
-              color: "#000",
-              whiteSpace: "pre-wrap",
-              wordWrap: "break-word",
-              minHeight: `${ALTO_CONTENIDO}px`,
-            }}
-            suppressContentEditableWarning
-          />
+        if (data.contenido) {
+          try {
+            const contenidoJSON = JSON.parse(data.contenido);
+            setContenido(contenidoJSON);
+          } catch (parseError) {
+            console.error("Error al parsear contenido:", parseError);
+            setContenido(null);
+          }
+        } else {
+          setContenido(null);
+        }
+      } catch (err) {
+        console.error("Error al cargar proyecto:", err);
+        setError("Error al cargar el proyecto");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    cargarProyecto();
+  }, [idProyecto, navigate]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-white mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Cargando editor...</p>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <p className="text-red-600 dark:text-red-400">{error}</p>
+          <button
+            onClick={() => navigate("/estudiante/proyectos/mis-proyectos")}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Volver a mis proyectos
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return <DocumentEditor idProyecto={idProyecto!} initialContent={contenido} />;
 }

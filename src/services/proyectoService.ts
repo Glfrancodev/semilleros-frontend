@@ -18,6 +18,7 @@ export interface ProyectoDetalle {
   idProyecto: string;
   nombre: string;
   descripcion: string;
+  contenido?: string | null;
   estaAprobado: boolean | null;
   esFinal: boolean;
   fechaCreacion: string;
@@ -95,4 +96,63 @@ export const crearEstudianteProyecto = async (
     idEstudiante,
   });
   return response.data.data;
+};
+
+// Actualizar el contenido del proyecto
+export const actualizarContenidoProyecto = async (
+  idProyecto: string,
+  contenido: any
+): Promise<ProyectoDetalle> => {
+  const response = await api.put<ProyectoDetalleResponse>(
+    `/proyectos/${idProyecto}`,
+    { contenido: JSON.stringify(contenido) }
+  );
+  return response.data.data;
+};
+
+// Subir imagen del editor al S3
+export const subirImagenEditor = async (
+  idProyecto: string,
+  file: File
+): Promise<{ url: string; idArchivo: string }> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('idProyecto', idProyecto);
+  formData.append('tipo', 'contenido');
+
+  const response = await api.post('/archivos/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+  return {
+    url: response.data.data.urlFirmada,
+    idArchivo: response.data.data.idArchivo,
+  };
+};
+
+// Obtener imágenes de contenido del proyecto
+export const obtenerImagenesContenido = async (
+  idProyecto: string
+): Promise<any[]> => {
+  const response = await api.get(`/archivos/proyecto/${idProyecto}`);
+  // Filtrar solo las imágenes de tipo "contenido"
+  return response.data.data.items.filter((archivo: any) => archivo.tipo === 'contenido');
+};
+
+// Eliminar imagen del S3
+export const eliminarImagen = async (idArchivo: string): Promise<void> => {
+  await api.delete(`/archivos/${idArchivo}`);
+};
+
+// Obtener contenido del editor con imágenes
+export const obtenerContenidoEditor = async (
+  idProyecto: string
+): Promise<{ contenido: string | null; imagenes: any[] }> => {
+  const response = await api.get(`/proyectos/${idProyecto}/contenido-editor`);
+  return {
+    contenido: response.data.data.contenido,
+    imagenes: response.data.data.imagenes,
+  };
 };
