@@ -1,16 +1,32 @@
 import { useEffect, useState } from "react";
-import { obtenerMisProyectos, Proyecto } from "../../../services/proyectoService";
+import {
+  obtenerMisProyectos,
+  obtenerMisProyectosInvitado,
+  obtenerMisInvitaciones,
+  responderInvitacion,
+  Proyecto,
+  InvitacionProyecto,
+} from "../../../services/proyectoService";
 import ProyectoCard from "../components/ProyectoCard";
 import Button from "../../../components/ui/button/Button";
 
 export default function MisProyectosPage() {
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
+  const [proyectosInvitado, setProyectosInvitado] = useState<Proyecto[]>([]);
+  const [invitaciones, setInvitaciones] = useState<InvitacionProyecto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingInvitado, setLoadingInvitado] = useState(true);
+  const [loadingInvitaciones, setLoadingInvitaciones] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showInvitacionesModal, setShowInvitacionesModal] = useState(false);
 
   useEffect(() => {
-    cargarProyectos();
+    void cargarTodo();
   }, []);
+
+  const cargarTodo = async () => {
+    await Promise.all([cargarProyectos(), cargarProyectosInvitado(), cargarInvitaciones()]);
+  };
 
   const cargarProyectos = async () => {
     try {
@@ -22,6 +38,42 @@ export default function MisProyectosPage() {
       setError(err.response?.data?.message || "Error al cargar los proyectos");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const cargarProyectosInvitado = async () => {
+    try {
+      setLoadingInvitado(true);
+      const data = await obtenerMisProyectosInvitado();
+      setProyectosInvitado(data);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Error al cargar los proyectos invitados");
+    } finally {
+      setLoadingInvitado(false);
+    }
+  };
+
+  const cargarInvitaciones = async () => {
+    try {
+      setLoadingInvitaciones(true);
+      const data = await obtenerMisInvitaciones();
+      setInvitaciones(data.items || []);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Error al cargar las invitaciones");
+    } finally {
+      setLoadingInvitaciones(false);
+    }
+  };
+
+  const manejarRespuestaInvitacion = async (idEstudianteProyecto: string, aceptar: boolean) => {
+    try {
+      setLoadingInvitaciones(true);
+      await responderInvitacion(idEstudianteProyecto, aceptar);
+      await Promise.all([cargarInvitaciones(), cargarProyectosInvitado()]);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Error al procesar la invitación");
+    } finally {
+      setLoadingInvitaciones(false);
     }
   };
 
@@ -41,17 +93,11 @@ export default function MisProyectosPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-3xl">⚠️</span>
+            <span className="text-3xl">😕</span>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            Error al cargar proyectos
-          </h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Error al cargar proyectos</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{error}</p>
-          <Button 
-            onClick={cargarProyectos}
-            variant="primary"
-            size="sm"
-          >
+          <Button onClick={cargarTodo} variant="primary" size="sm">
             Reintentar
           </Button>
         </div>
@@ -61,33 +107,28 @@ export default function MisProyectosPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Mis Proyectos
-        </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Gestiona y trabaja en tus proyectos de investigación
-        </p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Mis Proyectos</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Gestiona y trabaja en tus proyectos de investigación
+          </p>
+        </div>
       </div>
 
-      {/* Contenedor principal */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+      {/* Proyectos líder */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden mb-8">
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            Proyectos
-          </h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Proyectos</h2>
         </div>
 
         <div className="p-6">
-          {/* Lista de proyectos */}
           {proyectos.length === 0 ? (
             <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-12 text-center">
               <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl">📁</span>
+                <span className="text-3xl">📄</span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                No tienes proyectos
-              </h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No tienes proyectos</h3>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Aún no estás participando en ningún proyecto de investigación
               </p>
@@ -101,6 +142,128 @@ export default function MisProyectosPage() {
           )}
         </div>
       </div>
+
+      {/* Proyectos de Invitado */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Proyectos de Invitado</h2>
+          <Button
+            variant="primary"
+            onClick={() => {
+              void cargarInvitaciones();
+              setShowInvitacionesModal(true);
+            }}
+            size="sm"
+          >
+            Invitaciones
+            {invitaciones.filter((inv) => inv.invitacion === null).length > 0 && (
+              <span className="ml-2 inline-flex items-center justify-center text-xs font-semibold px-2 py-0.5 bg-red-600 text-white rounded-full">
+                {invitaciones.filter((inv) => inv.invitacion === null).length}
+              </span>
+            )}
+          </Button>
+        </div>
+
+        <div className="p-6">
+          {loadingInvitado ? (
+            <div className="text-center text-gray-500 dark:text-gray-400">Cargando...</div>
+          ) : proyectosInvitado.length === 0 ? (
+            <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-12 text-center">
+              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">🤝</span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                No tienes proyectos como invitado
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Aún no formas parte de proyectos como colaborador.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {proyectosInvitado.map((proyecto) => (
+                <ProyectoCard key={proyecto.idProyecto} proyecto={proyecto} />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Modal Invitaciones */}
+      {showInvitacionesModal && (
+        <div className="fixed inset-0 z-999999999 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Mis Invitaciones</h3>
+              <button
+                onClick={() => setShowInvitacionesModal(false)}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-4 space-y-3">
+              {loadingInvitaciones ? (
+                <div className="text-center text-gray-500 dark:text-gray-400">Cargando invitaciones...</div>
+              ) : invitaciones.length === 0 ? (
+                <div className="text-center text-gray-500 dark:text-gray-400">
+                  No tienes invitaciones pendientes.
+                </div>
+              ) : (
+                invitaciones.map((inv) => (
+                  <div
+                    key={inv.idEstudianteProyecto}
+                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+                  >
+                    <div>
+                      <h4 className="text-base font-semibold text-gray-900 dark:text-white">
+                        {inv.proyecto.nombre}
+                      </h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        Materia: {inv.proyecto.materia || "Sin materia"} · Grupo: {inv.proyecto.grupo || "Sin grupo"}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        Líder: {inv.proyecto.lider || "Sin líder"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {inv.invitacion === null ? (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="success"
+                            onClick={() => void manejarRespuestaInvitacion(inv.idEstudianteProyecto, true)}
+                            disabled={loadingInvitaciones}
+                          >
+                            Aceptar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => void manejarRespuestaInvitacion(inv.idEstudianteProyecto, false)}
+                            disabled={loadingInvitaciones}
+                          >
+                            Rechazar
+                          </Button>
+                        </>
+                      ) : inv.invitacion === true ? (
+                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                          Aceptada
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                          Rechazada
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

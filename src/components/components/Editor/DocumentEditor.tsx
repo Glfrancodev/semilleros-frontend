@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import TaskList from "@tiptap/extension-task-list";
@@ -10,7 +10,9 @@ import TextAlign from "@tiptap/extension-text-align";
 import ResizeImage from "tiptap-extension-resize-image";
 import type { JSONContent } from "@tiptap/core";
 import clsx from "clsx";
+import { io, type Socket } from "socket.io-client";
 import { useTheme } from "../../../context/ThemeContext";
+import { useAuth } from "../../../context/AuthContext";
 import { ThemeToggleButton } from "../../common/ThemeToggleButton";
 import {
   actualizarContenidoProyecto,
@@ -98,6 +100,7 @@ export const DocumentEditor = ({
   className,
 }: DocumentEditorProps) => {
   const { theme } = useTheme();
+  const { token } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -110,11 +113,37 @@ export const DocumentEditor = ({
   const headingRef = useRef<HTMLDivElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
   const highlightRef = useRef<HTMLDivElement | null>(null);
+  const socketRef = useRef<Socket | null>(null);
+  const ignoreRemoteRef = useRef(false);
   const [projectImages, setProjectImages] = useState<
     Array<{ idArchivo: string; url?: string; urlFirmada?: string; nombre?: string }>
   >([]);
   const [isImagesLoading, setIsImagesLoading] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [activeUsers, setActiveUsers] = useState<
+    Array<{ id: string; email: string; nombre: string; iniciales: string; foto: string | null }>
+  >([]);
+  const [remoteCursors, setRemoteCursors] = useState<
+    Map<string, { 
+      userId: string; 
+      nombre: string; 
+      iniciales: string; 
+      x: number; 
+      y: number;
+      height?: number;
+      selection?: { x: number; y: number; width: number; height: number } | 
+                   { fromX: number; fromY: number; toX: number; toY: number };
+    }>
+  >(new Map());
+  const editorContainerRef = useRef<HTMLDivElement | null>(null);
+  const [containerReady, setContainerReady] = useState(false);
+
+  // Marcar cuando el contenedor está listo
+  useEffect(() => {
+    if (editorContainerRef.current) {
+      setContainerReady(true);
+    }
+  }, [editorContainerRef.current]);
 
   const editor = useEditor({
     extensions: [
@@ -171,6 +200,20 @@ export const DocumentEditor = ({
       hasPendingChangesRef.current = true;
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
       saveTimeoutRef.current = setTimeout(() => void saveNow(), 5000);
+
+      // Propagar cambios a colaboradores si no provienen de una actualización remota
+      if (!ignoreRemoteRef.current && socketRef.current) {
+        socketRef.current.emit("content-change", {
+          documentId: idProyecto,
+          documentType: "proyecto",
+          content: editor.getJSON(),
+        });
+      }
+
+      // Limpiar la bandera tras manejar la actualización remota
+      if (ignoreRemoteRef.current) {
+        ignoreRemoteRef.current = false;
+      }
     };
 
     const handlePageHide = () => void saveNow();
@@ -205,6 +248,217 @@ export const DocumentEditor = ({
       editor.off("selectionUpdate", updateHistoryState);
     };
   }, [editor]);
+
+  // Función para navegar al cursor de un usuario
+  const scrollToUser = useCallback((userId: string) => {
+    const cursorData = remoteCursors.get(userId);
+    
+    if (!cursorData) {
+      return;
+    }
+    
+    if (!editorContainerRef.current) {
+      return;
+    }
+
+    // Hacer scroll basado en las coordenadas almacenadas del cursor remoto
+    const container = editorContainerRef.current;
+    const targetY = cursorData.y; // Esta es la posición relativa al contenedor visible
+    const currentScrollTop = container.scrollTop;
+    const containerHeight = container.clientHeight;
+    
+    // El targetY ya es relativo a la vista actual del contenedor
+    // Necesitamos calcular la posición absoluta dentro del documento
+    const absoluteY = targetY + currentScrollTop;
+    
+    // Calcular el scroll para centrar el cursor en la vista
+    const newScrollTop = absoluteY - containerHeight / 2;
+    
+    container.scrollTo({
+      top: Math.max(0, newScrollTop),
+      behavior: 'smooth',
+    });
+  }, [editor, remoteCursors]);
+
+  // Enviar posición del cursor
+  useEffect(() => {
+    if (!editor || !socketRef.current) {
+      return;
+    }
+    let lastSentTime = 0;
+    const THROTTLE_MS = 50; // Enviar más frecuentemente
+
+    const handleSelectionUpdate = () => {
+      const now = Date.now();
+      if (now - lastSentTime < THROTTLE_MS) return;
+      lastSentTime = now;
+
+      const container = editorContainerRef.current;
+      if (!container) {
+        return;
+      }
+
+      const { state } = editor;
+      const { selection } = state;
+      const { from } = selection;
+
+      try {
+        // Obtener la posición DOM del cursor
+        const coords = editor.view.coordsAtPos(from);
+
+        // Calcular posición relativa al contenedor del documento
+        const containerRect = container.getBoundingClientRect();
+        const relativeX = coords.left - containerRect.left;
+        const relativeY = coords.top - containerRect.top;
+        const cursorHeight = coords.bottom - coords.top;
+
+        // Preparar datos de posición
+        const positionData: any = { 
+          x: relativeX, 
+          y: relativeY,
+          height: cursorHeight 
+        };
+
+        // Si hay selección (no es solo cursor), agregar información de selección
+        if (selection.from !== selection.to) {
+          const fromCoords = editor.view.coordsAtPos(selection.from);
+          const toCoords = editor.view.coordsAtPos(selection.to);
+          
+          // Calcular el rectángulo de selección usando el DOM
+          const range = document.createRange();
+          const domSelection = editor.view.domAtPos(selection.from);
+          const domEnd = editor.view.domAtPos(selection.to);
+          
+          try {
+            range.setStart(domSelection.node, domSelection.offset);
+            range.setEnd(domEnd.node, domEnd.offset);
+            const rects = range.getBoundingClientRect();
+            
+            positionData.selection = {
+              x: rects.left - containerRect.left,
+              y: rects.top - containerRect.top,
+              width: rects.width,
+              height: rects.height,
+            };
+          } catch (e) {
+            // Fallback a cálculo por coordenadas
+            positionData.selection = {
+              fromX: fromCoords.left - containerRect.left,
+              fromY: fromCoords.top - containerRect.top,
+              toX: toCoords.left - containerRect.left,
+              toY: toCoords.bottom - containerRect.top,
+            };
+          }
+        }
+
+        // Enviar posición
+        socketRef.current?.emit("cursor-position", {
+          documentId: idProyecto,
+          documentType: "proyecto",
+          position: positionData,
+        });
+      } catch (error) {
+        // Ignorar errores de coordenadas
+      }
+    };
+
+    // Escuchar múltiples eventos para capturar todos los movimientos
+    editor.on("selectionUpdate", handleSelectionUpdate);
+    editor.on("transaction", handleSelectionUpdate);
+    editor.on("focus", handleSelectionUpdate);
+    editor.on("update", handleSelectionUpdate);
+
+    return () => {
+      editor.off("selectionUpdate", handleSelectionUpdate);
+      editor.off("transaction", handleSelectionUpdate);
+      editor.off("focus", handleSelectionUpdate);
+      editor.off("update", handleSelectionUpdate);
+    };
+  }, [editor, idProyecto, containerReady]);
+
+  // Conexión de colaboración en tiempo real
+  useEffect(() => {
+    if (!editor || !token) {
+      return;
+    }
+
+    // Obtener la URL base del backend sin /api
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+    const socketUrl = apiUrl.replace(/\/api\/?$/, "");
+
+    const socket = io(socketUrl, {
+      auth: { token },
+      transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5,
+    });
+    socketRef.current = socket;
+
+    socket.on("connect", () => {
+      socket.emit("join-document", { documentId: idProyecto, documentType: "proyecto" });
+    });
+
+    socket.on("connect_error", () => {
+      // Error de conexión silenciado
+    });
+
+    socket.on("content-update", ({ content }) => {
+      if (!content) return;
+      ignoreRemoteRef.current = true;
+      editor.commands.setContent(content, { emitUpdate: false });
+    });
+
+    socket.on("active-users", (users) => {
+      setActiveUsers(users || []);
+      
+      // Limpiar cursores de usuarios que ya no están activos
+      setRemoteCursors((prev) => {
+        const updated = new Map(prev);
+        const activeUserIds = new Set(users.map((u: any) => u.id));
+        
+        // Eliminar cursores de usuarios que ya no están en la lista
+        for (const userId of updated.keys()) {
+          if (!activeUserIds.has(userId)) {
+            updated.delete(userId);
+          }
+        }
+        
+        return updated;
+      });
+    });
+
+    socket.on("cursor-update", ({ userId, userNombre, userIniciales, position }) => {
+      if (!position) {
+        return;
+      }
+      
+      setRemoteCursors((prev) => {
+        const updated = new Map(prev);
+        updated.set(userId, {
+          userId,
+          nombre: userNombre,
+          iniciales: userIniciales,
+          x: position.x,
+          y: position.y,
+          height: position.height,
+          selection: position.selection,
+        });
+        return updated;
+      });
+    });
+
+    socket.on("disconnect", () => {
+      // Limpiar todos los cursores cuando se desconecta
+      setRemoteCursors(new Map());
+    });
+
+    return () => {
+      socket.emit("leave-document", { documentId: idProyecto, documentType: "proyecto" });
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, [editor, idProyecto, token]);
 
   // Close dropdowns on click outside
   useEffect(() => {
@@ -320,6 +574,29 @@ export const DocumentEditor = ({
     } finally {
       setIsImagesLoading(false);
     }
+  };
+
+  // Generar color único basado en userId
+  const getUserColor = (userId: string) => {
+    const colors = [
+      { bg: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", light: "#667eea" },
+      { bg: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)", light: "#f093fb" },
+      { bg: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)", light: "#4facfe" },
+      { bg: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)", light: "#43e97b" },
+      { bg: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)", light: "#fa709a" },
+      { bg: "linear-gradient(135deg, #30cfd0 0%, #330867 100%)", light: "#30cfd0" },
+      { bg: "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)", light: "#a8edea" },
+      { bg: "linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)", light: "#ff9a9e" },
+    ];
+    
+    // Hash simple del userId para obtener un índice consistente
+    let hash = 0;
+    for (let i = 0; i < userId.length; i++) {
+      hash = ((hash << 5) - hash) + userId.charCodeAt(i);
+      hash = hash & hash;
+    }
+    
+    return colors[Math.abs(hash) % colors.length];
   };
 
   if (!editor) {
@@ -638,15 +915,131 @@ export const DocumentEditor = ({
             <span className="doc-editor__icon-align doc-editor__icon-align-justify" />
           </button>
           <div className="doc-editor__toolbar-divider" />
+          {activeUsers.length > 0 && (
+            <>
+              <div className="doc-editor__active-users">
+                {activeUsers.slice(0, 5).map((user) => (
+                  <div
+                    key={user.id}
+                    className="doc-editor__user-avatar"
+                    title={`${user.nombre} - ${user.email}`}
+                    onClick={() => scrollToUser(user.id)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {user.foto ? (
+                      <img src={user.foto} alt={user.nombre} className="doc-editor__user-photo" />
+                    ) : (
+                      <span className="doc-editor__user-initials">{user.iniciales}</span>
+                    )}
+                  </div>
+                ))}
+                {activeUsers.length > 5 && (
+                  <div className="doc-editor__user-avatar" title={`+${activeUsers.length - 5} más`}>
+                    <span className="doc-editor__user-initials">+{activeUsers.length - 5}</span>
+                  </div>
+                )}
+              </div>
+              <div className="doc-editor__toolbar-divider" />
+            </>
+          )}
           <div className="doc-editor__theme-toggle-wrapper">
             <ThemeToggleButton />
           </div>
         </div>
       </div>
 
-      <div className="doc-editor__surface">
+      <div className="doc-editor__surface" ref={editorContainerRef}>
         <div className="doc-editor__page">
           <EditorContent editor={editor} />
+          
+          {/* Cursores remotos */}
+          {Array.from(remoteCursors.values()).map((cursor) => {
+            const color = getUserColor(cursor.userId);
+            const rectSelection = cursor.selection && 'width' in cursor.selection ? cursor.selection : null;
+            const coordSelection = cursor.selection && 'fromX' in cursor.selection ? cursor.selection : null;
+            
+            return (
+              <div key={cursor.userId}>
+                {/* Selección de texto - formato bounding box */}
+                {rectSelection && (
+                  <div
+                    className="doc-editor__remote-selection"
+                    style={{
+                      position: 'absolute',
+                      left: `${rectSelection.x}px`,
+                      top: `${rectSelection.y}px`,
+                      width: `${rectSelection.width}px`,
+                      height: `${rectSelection.height}px`,
+                      background: color.light,
+                      opacity: 0.3,
+                      pointerEvents: 'none',
+                      zIndex: 9998,
+                      borderRadius: '2px',
+                    }}
+                  />
+                )}
+                
+                {/* Selección de texto - formato coordenadas (fallback) */}
+                {coordSelection && (
+                  <div
+                    className="doc-editor__remote-selection"
+                    style={{
+                      position: 'absolute',
+                      left: `${Math.min(coordSelection.fromX, coordSelection.toX)}px`,
+                      top: `${Math.min(coordSelection.fromY, coordSelection.toY)}px`,
+                      width: `${Math.abs(coordSelection.toX - coordSelection.fromX)}px`,
+                      height: `${Math.abs(coordSelection.toY - coordSelection.fromY)}px`,
+                      background: color.light,
+                      opacity: 0.3,
+                      pointerEvents: 'none',
+                      zIndex: 9998,
+                      borderRadius: '2px',
+                    }}
+                  />
+                )}
+                
+                {/* Cursor */}
+                <div
+                  className="doc-editor__remote-cursor"
+                  style={{
+                    left: `${cursor.x}px`,
+                    top: `${cursor.y}px`,
+                    position: 'absolute',
+                    zIndex: 9999,
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <div 
+                    className="doc-editor__cursor-line"
+                    style={{ 
+                      background: color.bg,
+                      width: '2px',
+                      height: cursor.height ? `${cursor.height}px` : '1.4em',
+                      borderRadius: '1px',
+                    }}
+                  />
+                  <div 
+                    className="doc-editor__cursor-label"
+                    style={{ 
+                      background: color.bg,
+                      color: '#fff',
+                      padding: '2px 6px',
+                      fontSize: '10px',
+                      position: 'absolute',
+                      top: '-22px',
+                      left: '0',
+                      whiteSpace: 'nowrap',
+                      borderRadius: '3px',
+                      fontWeight: 600,
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                    }}
+                  >
+                    {cursor.iniciales}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
       <div className="doc-editor__status">

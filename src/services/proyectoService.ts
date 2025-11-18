@@ -14,6 +14,21 @@ export interface Proyecto {
   fechaCreacion: string;
 }
 
+export interface InvitacionProyecto {
+  idEstudianteProyecto: string;
+  invitacion: boolean | null;
+  fechaCreacion: string;
+  proyecto: {
+    idProyecto: string;
+    nombre: string;
+    descripcion?: string;
+    materia?: string;
+    grupo?: string;
+    nombreDocente?: string;
+    lider?: string;
+  };
+}
+
 export interface ProyectoDetalle {
   idProyecto: string;
   nombre: string;
@@ -57,6 +72,36 @@ interface ProyectoDetalleResponse {
 export const obtenerMisProyectos = async (): Promise<Proyecto[]> => {
   const response = await api.get<MisProyectosResponse>('/proyectos/mis-proyectos');
   return response.data.data.items;
+};
+
+// Obtener los proyectos donde soy invitado (invitación aceptada)
+export const obtenerMisProyectosInvitado = async (): Promise<Proyecto[]> => {
+  const response = await api.get<MisProyectosResponse>('/proyectos/mis-proyectos-invitados');
+  return response.data.data.items;
+};
+
+// Obtener invitaciones pendientes/registradas del estudiante autenticado
+export const obtenerMisInvitaciones = async (): Promise<{
+  count: number;
+  items: InvitacionProyecto[];
+}> => {
+  const response = await api.get('/estudiante-proyectos/mis-invitaciones');
+  const body = response.data ?? {};
+  const payload = (body.message as any) ?? body.data ?? {};
+  return {
+    count: payload.count ?? 0,
+    items: payload.items ?? [],
+  };
+};
+
+// Aceptar/Rechazar invitación
+export const responderInvitacion = async (
+  idEstudianteProyecto: string,
+  aceptar: boolean
+): Promise<void> => {
+  await api.put(`/estudiante-proyectos/${idEstudianteProyecto}`, {
+    invitacion: aceptar,
+  });
 };
 
 // Obtener un proyecto por ID con todos sus detalles

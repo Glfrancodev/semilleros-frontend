@@ -749,3 +749,106 @@
   color: var(--doc-editor-text);
   opacity: 0.7;
 }
+
+/* Active users */
+.doc-editor__active-users {
+  display: flex;
+  align-items: center;
+  gap: -4px;
+  margin-left: 8px;
+}
+
+.doc-editor__user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  margin-left: -8px;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.2s ease, z-index 0.2s ease;
+}
+
+.doc-editor__wrapper.is-dark .doc-editor__user-avatar {
+  border-color: #0f172a;
+}
+
+.doc-editor__user-avatar:first-child {
+  margin-left: 0;
+}
+
+.doc-editor__user-avatar:hover {
+  transform: translateY(-2px);
+  z-index: 10;
+}
+
+.doc-editor__user-photo {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.doc-editor__user-initials {
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+/* Remote cursors */
+.doc-editor__remote-cursor {
+  position: absolute;
+  pointer-events: none;
+  z-index: 100;
+  transition: left 0.1s ease-out, top 0.1s ease-out;
+  animation: cursor-fade-in 0.2s ease-out;
+}
+
+.doc-editor__remote-selection {
+  pointer-events: none;
+  transition: all 0.1s ease-out;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+@keyframes cursor-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.doc-editor__cursor-line {
+  width: 2px;
+  height: 1.4em;
+  border-radius: 1px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.doc-editor__cursor-label {
+  position: absolute;
+  top: -24px;
+  left: -2px;
+  color: #fff;
+  padding: 3px 7px;
+  border-radius: 4px 4px 4px 0;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.doc-editor__surface {
+  position: relative;
+}
