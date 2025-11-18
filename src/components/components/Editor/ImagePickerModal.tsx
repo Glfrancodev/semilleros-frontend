@@ -16,6 +16,7 @@ type Props = {
   onRefresh: () => void;
   onUpload: (file: File) => Promise<void> | void;
   onSelect: (url: string) => void;
+  onDelete: (idArchivo: string) => Promise<void> | void;
 };
 
 const ImagePickerModal: React.FC<Props> = ({
@@ -27,6 +28,7 @@ const ImagePickerModal: React.FC<Props> = ({
   onRefresh,
   onUpload,
   onSelect,
+  onDelete,
 }) => {
   const [activeTab, setActiveTab] = useState<"existing" | "upload">("existing");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -85,18 +87,33 @@ const ImagePickerModal: React.FC<Props> = ({
                   {images.map((img) => {
                     const src = img.urlFirmada || img.url;
                     return (
-                      <button
-                        key={img.idArchivo || src}
-                        className="doc-image-modal__thumb"
-                        onClick={() => src && onSelect(src)}
-                        title={img.nombre || ""}
-                      >
-                        {src ? (
-                          <img src={src} alt={img.nombre || "imagen"} />
-                        ) : (
-                          <span>Sin URL</span>
+                      <div key={img.idArchivo || src} className="doc-image-modal__thumb">
+                        <button
+                          className="doc-image-modal__thumb-select"
+                          onClick={() => src && onSelect(src)}
+                          title={img.nombre || ""}
+                        >
+                          {src ? (
+                            <img src={src} alt={img.nombre || "imagen"} />
+                          ) : (
+                            <span>Sin URL</span>
+                          )}
+                        </button>
+                        {img.idArchivo && (
+                          <button
+                            className="doc-image-modal__thumb-delete"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              void onDelete(img.idArchivo!);
+                            }}
+                            title="Eliminar imagen"
+                            aria-label="Eliminar imagen"
+                            disabled={uploading}
+                          >
+                            ✕
+                          </button>
                         )}
-                      </button>
+                      </div>
                     );
                   })}
                 </div>

@@ -16,6 +16,7 @@ import {
   actualizarContenidoProyecto,
   obtenerImagenesContenido,
   subirImagenEditor,
+  eliminarImagen,
 } from "../../../services/proyectoService";
 import ImagePickerModal from "./ImagePickerModal";
 import "./editor.css";
@@ -306,6 +307,18 @@ export const DocumentEditor = ({
       console.error("Error al subir imagen:", error);
     } finally {
       setIsUploadingImage(false);
+    }
+  };
+
+  const handleDeleteImage = async (idArchivo: string) => {
+    try {
+      setIsImagesLoading(true);
+      await eliminarImagen(idArchivo);
+      await fetchProjectImages();
+    } catch (error) {
+      console.error("Error al eliminar imagen:", error);
+    } finally {
+      setIsImagesLoading(false);
     }
   };
 
@@ -652,6 +665,7 @@ export const DocumentEditor = ({
         uploading={isUploadingImage}
         onRefresh={() => void fetchProjectImages()}
         onUpload={handleUploadImage}
+        onDelete={handleDeleteImage}
         onSelect={(url) => {
           handleInsertImage(url);
           setIsImageModalOpen(false);
