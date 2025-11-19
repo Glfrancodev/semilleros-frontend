@@ -1,82 +1,62 @@
 import api from "./api";
 
-// Interfaces para las tareas
+export interface FeriaTarea {
+  idFeria: string;
+  nombre: string;
+  semestre: number;
+  ["a\u00f1o"]: number;
+}
+
 export interface Tarea {
   idTarea: string;
-  nombre: string;
-  descripcion: string | null;
-  fechaLimite: string;
-  fechaCreacion: string;
-  fechaActualizacion: string;
   orden: number;
+  nombre: string;
+  descripcion: string;
+  fechaLimite: string;
   idFeria: string;
-  feria?: {
-    idFeria: string;
-    nombre: string;
-    descripcion: string | null;
-    semestre: number;
-    año: number;
-    estaActivo: boolean;
+  feria?: FeriaTarea;
+}
+
+export interface ProyectoRevision {
+  idProyecto: string;
+  nombre: string;
+  descripcion: string;
+  fechaEnvio: string;
+  revisado: boolean;
+}
+
+export interface TareaDetalle {
+  idTarea: string;
+  orden: number;
+  nombre: string;
+  descripcion: string;
+  fechaLimite: string;
+  idFeria: string;
+  revisionesEnviadas: number;
+  revisionesPendientes: number;
+  proyectos: ProyectoRevision[];
+}
+
+interface TareasInscripcionResponse {
+  success: boolean;
+  message: string;
+  data: {
+    items: Tarea[];
   };
 }
 
-interface TareasOrdenCeroResponse {
+interface TareaDetalleResponse {
   success: boolean;
-  message: {
-    tareas: Tarea[];
-    count: number;
-  };
+  message: TareaDetalle;
   data: string;
 }
 
-interface TareasResponse {
-  success: boolean;
-  message: string;
-  data: {
-    tareas: Tarea[];
-    count: number;
-  };
-}
-
-interface TareaResponse {
-  success: boolean;
-  message: string;
-  data: {
-    tarea: Tarea;
-  };
-}
-
-// Obtener todas las tareas
-export const obtenerTareas = async (): Promise<Tarea[]> => {
-  const response = await api.get<TareasResponse>('/tareas');
-  return response.data.data.tareas;
-};
-
-// Obtener tareas de orden 0 (inscripciones)
 export const obtenerTareasInscripcion = async (): Promise<Tarea[]> => {
-  const response = await api.get<TareasOrdenCeroResponse>('/tareas/orden/cero');
-  return response.data.message.tareas;
+  const response = await api.get<TareasInscripcionResponse>("/tareas/inscripcion");
+  return response.data.data.items;
 };
 
-// Obtener una tarea por ID
-export const obtenerTareaPorId = async (id: string): Promise<Tarea> => {
-  const response = await api.get<TareaResponse>(`/tareas/${id}`);
-  return response.data.data.tarea;
-};
-
-// Crear una nueva tarea
-export const crearTarea = async (data: Partial<Tarea>): Promise<Tarea> => {
-  const response = await api.post<TareaResponse>('/tareas', data);
-  return response.data.data.tarea;
-};
-
-// Actualizar una tarea
-export const actualizarTarea = async (id: string, data: Partial<Tarea>): Promise<Tarea> => {
-  const response = await api.put<TareaResponse>(`/tareas/${id}`, data);
-  return response.data.data.tarea;
-};
-
-// Eliminar una tarea
-export const eliminarTarea = async (id: string): Promise<void> => {
-  await api.delete(`/tareas/${id}`);
+export const obtenerDetalleTarea = async (idTarea: string): Promise<TareaDetalle> => {
+  const response = await api.get<TareaDetalleResponse>(`/tareas/${idTarea}/detalle`);
+  return response.data.message;
 };

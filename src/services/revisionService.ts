@@ -9,6 +9,7 @@ export interface Revision {
   fechaActualizacion: string;
   idProyecto: string;
   idTarea: string;
+  revisado?: boolean;
 }
 
 interface RevisionesResponse {

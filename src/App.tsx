@@ -88,6 +88,7 @@ export default function App() {
               {/* Rutas de Admin */}
               <Route path="/usuarios" element={<UsuariosPage />} />
               <Route path="/proyectos" element={<ProyectoPage />} />
+              <Route path="/admin/proyectos/:idProyecto" element={<ProyectoDetallePage />} />
               <Route path="/proyectos/tareas/:idTarea" element={<TareasDetallePage />} />
               
               {/* Rutas de Estudiante */}

@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 import api from "../../../services/api";
 import { useAuth } from "../../../context/AuthContext";
 import Button from "../../../components/ui/button/Button";
-import { obtenerRevisionesPorProyecto, Revision } from "../../../services/revisionService";
+import { actualizarRevision, obtenerRevisionesPorProyecto, Revision } from "../../../services/revisionService";
+import { ROLES } from "../../../constants/roles";
+import toast from "react-hot-toast";
 
 interface Tarea {
   orden: number;
@@ -49,7 +51,12 @@ export default function ProyectoTareasCard({ idProyecto }: ProyectoTareasCardPro
   const [revisionSeleccionada, setRevisionSeleccionada] = useState<{
     tarea: Tarea;
     revision: Revision;
+    editable: boolean;
   } | null>(null);
+  const [calificacionInput, setCalificacionInput] = useState<string>("");
+  const [comentarioInput, setComentarioInput] = useState("");
+  const [guardandoCalificacion, setGuardandoCalificacion] = useState(false);
+  const [errorCalificacion, setErrorCalificacion] = useState<string | null>(null);
 
   useEffect(() => {
     cargarTareas();
@@ -111,6 +118,7 @@ export default function ProyectoTareasCard({ idProyecto }: ProyectoTareasCardPro
   // Obtener la tarea en proceso actual (solo una puede estarlo)
   const tareaEnProceso = tareas.enProceso && tareas.enProceso.length > 0 ? tareas.enProceso[0] : null;
   const revisionEnCurso = tareaEnProceso && 'enRevision' in tareaEnProceso && (tareaEnProceso as any).enRevision;
+  const esAdmin = user?.rol === ROLES.ADMIN;
 
   // Función para enviar revisión
   const handleEnviarRevision = async () => {
@@ -155,7 +163,16 @@ export default function ProyectoTareasCard({ idProyecto }: ProyectoTareasCardPro
     const revision = revisionesMap[tarea.idTarea];
     const handleClick = () => {
       if (revision) {
-        setRevisionSeleccionada({ tarea, revision });
+        setRevisionSeleccionada({
+          tarea,
+          revision,
+          editable: esAdmin && !esCompletado,
+        });
+        setCalificacionInput(
+          typeof revision.puntaje === "number" ? String(revision.puntaje) : ""
+        );
+        setComentarioInput(revision.comentario ?? "");
+        setErrorCalificacion(null);
       }
     };
 
@@ -197,12 +214,43 @@ export default function ProyectoTareasCard({ idProyecto }: ProyectoTareasCardPro
               }}
               className="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200 transition-colors"
             >
-              Ver revisión
+              {esAdmin && !esCompletado ? "Calificar" : "Ver revisión"}
             </button>
           </div>
         )}
     </div>
     );
+  };
+
+  const handleGuardarCalificacion = async () => {
+    if (!revisionSeleccionada || !revisionSeleccionada.editable) return;
+    const puntaje =
+      calificacionInput.trim() === "" ? null : Number(calificacionInput.trim());
+
+    if (puntaje !== null && (Number.isNaN(puntaje) || puntaje < 0 || puntaje > 100)) {
+      setErrorCalificacion("La calificación debe estar entre 0 y 100.");
+      return;
+    }
+
+    setGuardandoCalificacion(true);
+    setErrorCalificacion(null);
+    try {
+      await actualizarRevision(revisionSeleccionada.revision.idRevision, {
+        puntaje,
+        comentario: comentarioInput.trim() || null,
+        revisado: true,
+      });
+      await Promise.all([cargarRevisiones(), cargarTareas()]);
+      setErrorCalificacion(null);
+      setRevisionSeleccionada(null);
+      toast.success("Calificación guardada correctamente");
+    } catch (err) {
+      console.error("Error al guardar calificación:", err);
+      setErrorCalificacion("No se pudo guardar la calificación. Intenta nuevamente.");
+      toast.error("No se pudo guardar la calificación");
+    } finally {
+      setGuardandoCalificacion(false);
+    }
   };
 
   return (
@@ -317,29 +365,64 @@ export default function ProyectoTareasCard({ idProyecto }: ProyectoTareasCardPro
                   </p>
                 </div>
 
-                <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-white/10 dark:bg-white/5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-white/10 dark:bg-white/5 flex flex-col gap-2">
                   <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white">
                     Calificación
                   </span>
-                  <span className="text-xl font-semibold text-primary-600 dark:text-primary-300">
-                    {revisionSeleccionada.revision.puntaje ?? "Sin calificación"} / 100
-                  </span>
+                  {revisionSeleccionada.editable ? (
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={calificacionInput}
+                      onChange={(e) => setCalificacionInput(e.target.value)}
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-white/10 dark:bg-transparent"
+                      placeholder="Ingresa un puntaje (0-100)"
+                    />
+                  ) : (
+                    <span className="text-xl font-semibold text-primary-600 dark:text-primary-300">
+                      {revisionSeleccionada.revision.puntaje ?? "Sin calificación"} / 100
+                    </span>
+                  )}
                 </div>
 
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white mb-2">
                     Comentario
                   </p>
-                  <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-gray-700 dark:border-white/10 dark:bg-white/5 dark:text-white">
-                    {revisionSeleccionada.revision.comentario || "Sin comentario"}
-                  </div>
+                  {revisionSeleccionada.editable ? (
+                    <textarea
+                      value={comentarioInput}
+                      onChange={(e) => setComentarioInput(e.target.value)}
+                      rows={4}
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-white/10 dark:bg-transparent"
+                      placeholder="Añade un comentario"
+                    />
+                  ) : (
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-gray-700 dark:border-white/10 dark:bg-white/5 dark:text-white">
+                      {revisionSeleccionada.revision.comentario || "Sin comentario"}
+                    </div>
+                  )}
                 </div>
+                {revisionSeleccionada.editable && errorCalificacion && (
+                  <p className="text-sm text-red-600 dark:text-red-400">{errorCalificacion}</p>
+                )}
               </div>
             </div>
-            <div className="border-t border-gray-200 p-6 text-right dark:border-gray-700">
-              <Button size="sm" variant="primary" onClick={() => setRevisionSeleccionada(null)}>
+            <div className="border-t border-gray-200 p-6 flex flex-col gap-3 text-right dark:border-gray-700 sm:flex-row sm:justify-end">
+              <Button size="sm" variant="outline" onClick={() => setRevisionSeleccionada(null)}>
                 Cerrar
               </Button>
+              {revisionSeleccionada.editable && (
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={handleGuardarCalificacion}
+                  disabled={guardandoCalificacion}
+                >
+                  {guardandoCalificacion ? "Guardando..." : "Guardar calificación"}
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -347,3 +430,4 @@ export default function ProyectoTareasCard({ idProyecto }: ProyectoTareasCardPro
     </div>
   );
 }
+
