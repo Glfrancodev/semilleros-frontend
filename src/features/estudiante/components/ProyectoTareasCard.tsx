@@ -224,64 +224,40 @@ export default function ProyectoTareasCard({ idProyecto }: ProyectoTareasCardPro
             )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* En Proceso */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-            <h4 className="font-semibold text-gray-900 dark:text-white">
-              En Proceso ({tareas.enProceso.length})
-            </h4>
-          </div>
-          <div className="space-y-3">
-            {tareas.enProceso.length > 0 ? (
-              tareas.enProceso.map(t => renderTarea(t, false))
-            ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400 italic">
-                No hay tareas en proceso
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Completado */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-3 h-3 rounded-full bg-green-500"></div>
-            <h4 className="font-semibold text-gray-900 dark:text-white">
-              Completado ({tareas.completado.length})
-            </h4>
-          </div>
-          <div className="space-y-3">
-            {tareas.completado.length > 0 ? (
-              tareas.completado.map(t => renderTarea(t, true))
-            ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400 italic">
-                No hay tareas completadas
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Pendiente */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-            <h4 className="font-semibold text-gray-900 dark:text-white">
-              Pendiente ({tareas.pendiente.length})
-            </h4>
-          </div>
-          <div className="space-y-3">
-            {tareas.pendiente.length > 0 ? (
-              tareas.pendiente.map(t => renderTarea(t, false))
-            ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400 italic">
-                No hay tareas pendientes
-              </p>
-            )}
-          </div>
-        </div>
+      {/* Tabla de tareas con columnas de igual ancho */}
+      <div className="overflow-x-auto">
+        <table className="min-w-full table-fixed border-separate border-spacing-0">
+          <thead>
+            <tr>
+              <th className="w-1/7 px-3 py-2 font-semibold text-left">ORDEN</th>
+              <th className="w-1/7 px-3 py-2 font-semibold text-left">NOMBRE</th>
+              <th className="w-1/7 px-3 py-2 font-semibold text-left">DESCRIPCIÓN</th>
+              <th className="w-1/7 px-3 py-2 font-semibold text-left">ENVIADOS / INSCRITOS</th>
+              <th className="w-1/7 px-3 py-2 font-semibold text-left">PENDIENTES / ENVIADOS</th>
+              <th className="w-1/7 px-3 py-2 font-semibold text-left">FECHA LÍMITE</th>
+              <th className="w-1/7 px-3 py-2 font-semibold text-left">ACCIONES</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[...tareas.enProceso, ...tareas.completado, ...tareas.pendiente].map((tarea) => (
+              <tr key={tarea.idTarea} className="border-b border-gray-100 dark:border-gray-800">
+                <td className="px-3 py-2">#{tarea.orden}</td>
+                <td className="px-3 py-2 font-semibold">{tarea.nombre}</td>
+                <td className="px-3 py-2">{tarea.descripcion || "Sin descripción"}</td>
+                <td className="px-3 py-2">{/* TODO: Enviados / Inscritos */}</td>
+                <td className="px-3 py-2">{/* TODO: Pendientes / Enviados */}</td>
+                <td className="px-3 py-2">{new Date(tarea.fechaLimite).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                <td className="px-3 py-2">
+                  <Button size="xs" variant="outline" onClick={() => {/* TODO: Acción revisar */}}>
+                    Revisar
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
+      {/* (Eliminado: grid de columnas viejas, solo tabla ahora) */}
       {revisionSeleccionada && (
         <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50" onClick={() => setRevisionSeleccionada(null)} />

@@ -10,6 +10,7 @@ import Home from "./legacy/pages/Dashboard/Home";
 import SignInPage from "./features/auth/pages/SignInPage";
 import ProfilePage from "./features/profile/pages/ProfilePage";
 import UsuariosPage from "./features/admin/pages/UsuariosPage";
+import ProyectoPage from "./features/admin/pages/ProyectoPage";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ROLES } from "./constants/roles";
 
@@ -85,6 +86,7 @@ export default function App() {
               
               {/* Rutas de Admin */}
               <Route path="/usuarios" element={<UsuariosPage />} />
+              <Route path="/proyectos" element={<ProyectoPage />} />
               
               {/* Rutas de Estudiante */}
               <Route path="/estudiante/convocatorias" element={<ConvocatoriasPage />} />
