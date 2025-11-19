@@ -134,11 +134,15 @@ export const crearProyecto = async (
 // Crear la relación EstudianteProyecto
 export const crearEstudianteProyecto = async (
   idProyecto: string,
-  idEstudiante: string
+  idEstudiante: string,
+  esLider?: boolean,
+  invitacion?: boolean
 ): Promise<any> => {
   const response = await api.post("estudiante-proyectos", {
     idProyecto,
     idEstudiante,
+    ...(esLider !== undefined && { esLider }),
+    ...(invitacion !== undefined && { invitacion }),
   });
   return response.data.data;
 };

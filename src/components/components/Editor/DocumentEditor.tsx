@@ -26,6 +26,7 @@ import "./editor.css";
 type DocumentEditorProps = {
   idProyecto: string;
   initialContent?: JSONContent | null;
+  initialImages?: any[];
   className?: string;
 };
 
@@ -94,9 +95,47 @@ const HighlightIcon = ({ color }: { color?: string | null }) => (
   </span>
 );
 
+// Función auxiliar para reemplazar UUIDs con URLs firmadas
+const reemplazarUUIDsConUrlsHelper = (contenido: JSONContent, imagenes: any[]): JSONContent => {
+  if (!contenido) return contenido;
+
+  const procesarNodo = (nodo: any): any => {
+    if (!nodo) return nodo;
+
+    // Si es una imagen con formato file://UUID, reemplazar con URL firmada
+    if (nodo.type === 'image' && nodo.attrs?.src?.startsWith('file://')) {
+      const uuid = nodo.attrs.src.replace('file://', '');
+      const imagen = imagenes.find((img: any) => img.idArchivo === uuid);
+      
+      if (imagen?.urlFirmada) {
+        return {
+          ...nodo,
+          attrs: {
+            ...nodo.attrs,
+            src: imagen.urlFirmada,
+          },
+        };
+      }
+    }
+
+    // Procesar contenido anidado recursivamente
+    if (nodo.content && Array.isArray(nodo.content)) {
+      return {
+        ...nodo,
+        content: nodo.content.map(procesarNodo),
+      };
+    }
+
+    return nodo;
+  };
+
+  return procesarNodo(contenido);
+};
+
 export const DocumentEditor = ({
   idProyecto,
   initialContent,
+  initialImages = [],
   className,
 }: DocumentEditorProps) => {
   const { theme } = useTheme();
@@ -145,6 +184,19 @@ export const DocumentEditor = ({
     }
   }, [editorContainerRef.current]);
 
+  // Cargar imágenes del proyecto al inicializar
+  useEffect(() => {
+    const cargarImagenesIniciales = async () => {
+      try {
+        const imgs = await obtenerImagenesContenido(idProyecto);
+        setProjectImages(imgs || []);
+      } catch (error) {
+        console.error("Error al cargar imágenes iniciales:", error);
+      }
+    };
+    void cargarImagenesIniciales();
+  }, [idProyecto]);
+
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -164,7 +216,9 @@ export const DocumentEditor = ({
         },
       }),
     ],
-    content: initialContent ?? DEFAULT_CONTENT,
+    content: initialImages.length > 0 && initialContent 
+      ? reemplazarUUIDsConUrlsHelper(initialContent, initialImages)
+      : initialContent ?? DEFAULT_CONTENT,
     editorProps: {
       attributes: {
         class: "doc-editor__prose",
@@ -186,7 +240,14 @@ export const DocumentEditor = ({
       try {
         setIsSaving(true);
         const contenido = editor.getJSON();
-        await actualizarContenidoProyecto(idProyecto, contenido);
+        
+        // Obtener las imágenes actuales antes de guardar
+        const imagenesActuales = await obtenerImagenesContenido(idProyecto);
+        
+        // Reemplazar URLs firmadas con UUIDs antes de guardar
+        const contenidoConUUIDs = reemplazarUrlsConUUIDsHelper(contenido, imagenesActuales || []);
+        
+        await actualizarContenidoProyecto(idProyecto, contenidoConUUIDs);
         setLastSaved(new Date());
         hasPendingChangesRef.current = false;
       } catch (error) {
@@ -280,6 +341,53 @@ export const DocumentEditor = ({
     });
   }, [editor, remoteCursors]);
 
+  // Función auxiliar para reemplazar URLs firmadas con UUIDs antes de guardar
+  const reemplazarUrlsConUUIDsHelper = (
+    contenido: JSONContent, 
+    imagenes: Array<{ idArchivo: string; url?: string; urlFirmada?: string }>
+  ): JSONContent => {
+    if (!contenido) return contenido;
+
+    const procesarNodo = (nodo: any): any => {
+      if (!nodo) return nodo;
+
+      // Si es una imagen, buscar su UUID y reemplazar la URL
+      if (nodo.type === 'image' && nodo.attrs?.src) {
+        // Extraer la URL base sin parámetros de firma
+        const srcBase = nodo.attrs.src.split('?')[0];
+        
+        const imagen = imagenes.find(img => {
+          // Comparar URLs sin los parámetros de firma (query params)
+          const urlBase = img.url ? img.url.split('?')[0] : null;
+          const urlFirmadaBase = img.urlFirmada ? img.urlFirmada.split('?')[0] : null;
+          return urlBase === srcBase || urlFirmadaBase === srcBase;
+        });
+        
+        if (imagen?.idArchivo) {
+          return {
+            ...nodo,
+            attrs: {
+              ...nodo.attrs,
+              src: `file://${imagen.idArchivo}`, // Guardar como file://UUID
+            },
+          };
+        }
+      }
+
+      // Procesar contenido anidado recursivamente
+      if (nodo.content && Array.isArray(nodo.content)) {
+        return {
+          ...nodo,
+          content: nodo.content.map(procesarNodo),
+        };
+      }
+
+      return nodo;
+    };
+
+    return procesarNodo(contenido);
+  };
+
   // Enviar posición del cursor
   useEffect(() => {
     if (!editor || !socketRef.current) {
@@ -303,13 +411,29 @@ export const DocumentEditor = ({
       const { from } = selection;
 
       try {
-        // Obtener la posición DOM del cursor
+        // Obtener la posición DOM del cursor desde TipTap
         const coords = editor.view.coordsAtPos(from);
 
-        // Calcular posición relativa al contenedor del documento
-        const containerRect = container.getBoundingClientRect();
-        const relativeX = coords.left - containerRect.left;
-        const relativeY = coords.top - containerRect.top;
+        // Obtener el contenedor de la superficie del editor
+        const pageContainer = container.querySelector('.doc-editor__page-container') as HTMLElement;
+        if (!pageContainer) return;
+        
+        // Obtener posición del contenedor relativa al documento
+        const containerRect = pageContainer.getBoundingClientRect();
+        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        
+        // Calcular coordenadas absolutas del cursor en el documento
+        const absoluteX = coords.left + scrollLeft;
+        const absoluteY = coords.top + scrollTop;
+        
+        // Calcular coordenadas absolutas del contenedor
+        const containerAbsoluteX = containerRect.left + scrollLeft;
+        const containerAbsoluteY = containerRect.top + scrollTop;
+        
+        // Posición relativa al contenedor (siempre la misma sin importar viewport)
+        const relativeX = absoluteX - containerAbsoluteX;
+        const relativeY = absoluteY - containerAbsoluteY;
         const cursorHeight = coords.bottom - coords.top;
 
         // Preparar datos de posición
@@ -334,19 +458,27 @@ export const DocumentEditor = ({
             range.setEnd(domEnd.node, domEnd.offset);
             const rects = range.getBoundingClientRect();
             
+            const rectsAbsoluteX = rects.left + scrollLeft;
+            const rectsAbsoluteY = rects.top + scrollTop;
+            
             positionData.selection = {
-              x: rects.left - containerRect.left,
-              y: rects.top - containerRect.top,
+              x: rectsAbsoluteX - containerAbsoluteX,
+              y: rectsAbsoluteY - containerAbsoluteY,
               width: rects.width,
               height: rects.height,
             };
           } catch (e) {
             // Fallback a cálculo por coordenadas
+            const fromAbsoluteX = fromCoords.left + scrollLeft;
+            const fromAbsoluteY = fromCoords.top + scrollTop;
+            const toAbsoluteX = toCoords.left + scrollLeft;
+            const toAbsoluteY = toCoords.bottom + scrollTop;
+            
             positionData.selection = {
-              fromX: fromCoords.left - containerRect.left,
-              fromY: fromCoords.top - containerRect.top,
-              toX: toCoords.left - containerRect.left,
-              toY: toCoords.bottom - containerRect.top,
+              fromX: fromAbsoluteX - containerAbsoluteX,
+              fromY: fromAbsoluteY - containerAbsoluteY,
+              toX: toAbsoluteX - containerAbsoluteX,
+              toY: toAbsoluteY - containerAbsoluteY,
             };
           }
         }
@@ -553,9 +685,13 @@ export const DocumentEditor = ({
   const handleUploadImage = async (file: File) => {
     try {
       setIsUploadingImage(true);
-      const { url } = await subirImagenEditor(idProyecto, file);
-      await fetchProjectImages();
-      handleInsertImage(url);
+      const response = await subirImagenEditor(idProyecto, file);
+      
+      // Recargar imágenes para tener la lista actualizada con el nuevo UUID
+      const imgs = await obtenerImagenesContenido(idProyecto);
+      setProjectImages(imgs || []);
+      
+      handleInsertImage(response.url);
       setIsImageModalOpen(false);
     } catch (error) {
       console.error("Error al subir imagen:", error);
@@ -949,11 +1085,12 @@ export const DocumentEditor = ({
       </div>
 
       <div className="doc-editor__surface" ref={editorContainerRef}>
-        <div className="doc-editor__page">
-          <EditorContent editor={editor} />
-          
-          {/* Cursores remotos */}
-          {Array.from(remoteCursors.values()).map((cursor) => {
+        <div className="doc-editor__page-container">
+          <div className="doc-editor__page">
+            <EditorContent editor={editor} />
+            
+            {/* Cursores remotos */}
+            {Array.from(remoteCursors.values()).map((cursor) => {
             const color = getUserColor(cursor.userId);
             const rectSelection = cursor.selection && 'width' in cursor.selection ? cursor.selection : null;
             const coordSelection = cursor.selection && 'fromX' in cursor.selection ? cursor.selection : null;
@@ -1040,6 +1177,7 @@ export const DocumentEditor = ({
               </div>
             );
           })}
+          </div>
         </div>
       </div>
       <div className="doc-editor__status">

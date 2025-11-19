@@ -7,6 +7,7 @@ export default function DocumentoEditorPage() {
   const { idProyecto } = useParams<{ idProyecto: string }>();
   const navigate = useNavigate();
   const [contenido, setContenido] = useState<any>(null);
+  const [imagenes, setImagenes] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,6 +21,9 @@ export default function DocumentoEditorPage() {
       try {
         setIsLoading(true);
         const data = await obtenerContenidoEditor(idProyecto);
+
+        // Guardar imágenes
+        setImagenes(data.imagenes || []);
 
         if (data.contenido) {
           try {
@@ -70,5 +74,5 @@ export default function DocumentoEditorPage() {
     );
   }
 
-  return <DocumentEditor idProyecto={idProyecto!} initialContent={contenido} />;
+  return <DocumentEditor idProyecto={idProyecto!} initialContent={contenido} initialImages={imagenes} />;
 }

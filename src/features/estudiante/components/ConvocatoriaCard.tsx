@@ -37,10 +37,12 @@ export default function ConvocatoriaCard({
       // 2. Obtener el estudiante actual
       const estudiante = await obtenerEstudianteActual();
       
-      // 3. Crear la relación EstudianteProyecto
+      // 3. Crear la relación EstudianteProyecto con esLider e invitacion en true
       await crearEstudianteProyecto(
         proyectoCreado.idProyecto,
-        estudiante.idEstudiante
+        estudiante.idEstudiante,
+        true,  // esLider: el creador del proyecto es el líder
+        true   // invitacion: autoacepta la invitación ya que él creó el proyecto
       );
       
       // 4. Crear la revisión a la tarea de orden 0 (inscripción)
