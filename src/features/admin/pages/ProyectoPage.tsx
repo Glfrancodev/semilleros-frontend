@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState, type ReactNode, type CSSProperties } from "react";
+﻿import { useEffect, useMemo, useState, type ReactNode} from "react";
 import PageMeta from "../../../components/common/PageMeta";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import CustomSelect from "../../../components/common/CustomSelect";
@@ -28,8 +28,8 @@ type ColumnKey =
 
 const revisionOptions = [
   { value: "all", label: "Todas las tareas" },
-  { value: "pendientes", label: "Con pendientes de revisiÃ³n" },
-  { value: "sinPendientes", label: "Sin pendientes de revisiÃ³n" },
+  { value: "pendientes", label: "Con pendientes de revisión" },
+  { value: "sinPendientes", label: "Sin pendientes de revisión" },
 ];
 
 const envioOptions = [
@@ -121,6 +121,9 @@ export default function ProyectoPage() {
       .filter((tarea) => {
         const normalizedSearch = searchTerm.toLowerCase().trim();
         const matchesSearch =
+
+    // El ancho de todas las columnas se reparte de forma uniforme
+    // columnStyle ya calcula el ancho proporcional según el número de columnas visibles
           !normalizedSearch ||
           tarea.nombre.toLowerCase().includes(normalizedSearch) ||
           tarea.descripcion.toLowerCase().includes(normalizedSearch);
@@ -161,14 +164,6 @@ export default function ProyectoPage() {
     .map(([key]) => key as ColumnKey);
 
   const columnCount = activeColumns.length || 1;
-  const columnStyle: CSSProperties = useMemo(() => {
-    const widthPercent = `${(100 / columnCount).toFixed(2)}%`;
-    return {
-      width: widthPercent,
-      minWidth: widthPercent,
-      maxWidth: widthPercent,
-    };
-  }, [columnCount]);
 
   const renderContent = () => {
     if (loading) {
@@ -179,6 +174,14 @@ export default function ProyectoPage() {
       );
     }
 
+    // En el renderizado de la tabla, aplica getColumnStyle a cada columna
+    // Ejemplo para el header:
+    // <th style={getColumnStyle('orden')}>Orden</th>
+    // <th style={getColumnStyle('nombre')}>Nombre</th>
+    // ...etc.
+    // Y para las celdas del cuerpo:
+    // <td style={getColumnStyle('orden')}>{row.orden}</td>
+    // ...etc.
     if (error) {
       return (
         <div className="flex flex-col items-center gap-4 rounded-xl border border-gray-200 bg-white p-6 text-center dark:border-white/[0.05] dark:bg-white/[0.03]">
@@ -342,7 +345,6 @@ export default function ProyectoPage() {
                     <TableCell
                       isHeader
                       className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
-                      style={columnStyle}
                     >
                       ORDEN
                     </TableCell>
@@ -351,7 +353,6 @@ export default function ProyectoPage() {
                     <TableCell
                       isHeader
                       className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
-                      style={columnStyle}
                     >
                       NOMBRE
                     </TableCell>
@@ -360,7 +361,6 @@ export default function ProyectoPage() {
                     <TableCell
                       isHeader
                       className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
-                      style={columnStyle}
                     >
                       DESCRIPCIÓN
                     </TableCell>
@@ -369,7 +369,6 @@ export default function ProyectoPage() {
                     <TableCell
                       isHeader
                       className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
-                      style={columnStyle}
                     >
                       ENVIADOS / INSCRITOS
                     </TableCell>
@@ -378,7 +377,6 @@ export default function ProyectoPage() {
                     <TableCell
                       isHeader
                       className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
-                      style={columnStyle}
                     >
                       PENDIENTES / ENVIADOS
                     </TableCell>
@@ -387,7 +385,6 @@ export default function ProyectoPage() {
                     <TableCell
                       isHeader
                       className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
-                      style={columnStyle}
                     >
                       FECHA LÍMITE
                     </TableCell>
@@ -395,8 +392,7 @@ export default function ProyectoPage() {
                   {visibleColumns.acciones && (
                     <TableCell
                       isHeader
-                      className="px-5 py-3 text-center text-theme-xs font-medium text-gray-500 dark:text-gray-400"
-                      style={columnStyle}
+                      className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
                     >
                       ACCIONES
                     </TableCell>
@@ -420,23 +416,22 @@ export default function ProyectoPage() {
                       {visibleColumns.orden && (
                         <TableCell
                           className="px-5 py-4 text-sm font-semibold text-gray-900 dark:text-white"
-                          style={columnStyle}
                         >
                           #{tarea.orden}
                         </TableCell>
                       )}
                       {visibleColumns.nombre && (
-                        <TableCell className="px-5 py-4" style={columnStyle}>
+                        <TableCell className="px-5 py-4">
                           <p className="font-semibold text-gray-900 dark:text-white">{tarea.nombre}</p>
                         </TableCell>
                       )}
                       {visibleColumns.descripcion && (
-                        <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-300" style={columnStyle}>
+                        <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-300">
                           {tarea.descripcion}
                         </TableCell>
                       )}
                       {visibleColumns.enviados && (
-                        <TableCell className="px-5 py-4" style={columnStyle}>
+                        <TableCell className="px-5 py-4">
                           <div className="text-sm text-gray-900 dark:text-white">
                             {tarea.enviadosRevision.toLocaleString()} / {inscritosTotal.toLocaleString()}
                           </div>
@@ -444,7 +439,7 @@ export default function ProyectoPage() {
                         </TableCell>
                       )}
                       {visibleColumns.pendientes && (
-                        <TableCell className="px-5 py-4" style={columnStyle}>
+                        <TableCell className="px-5 py-4">
                           <div className="text-sm text-gray-900 dark:text-white">
                             {tarea.pendientesRevision.toLocaleString()} / {tarea.enviadosRevision.toLocaleString()}
                           </div>
@@ -452,15 +447,15 @@ export default function ProyectoPage() {
                         </TableCell>
                       )}
                       {visibleColumns.fechaLimite && (
-                        <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-300" style={columnStyle}>
+                        <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-300">
                           {formatDate(tarea.fechaLimite)}
                         </TableCell>
                       )}
                       {visibleColumns.acciones && (
-                        <TableCell className="px-5 py-4 text-center" style={columnStyle}>
-                          <div className="flex justify-center">
+                        <TableCell className="px-5 py-4 text-start">
+                          <div className="flex justify-start">
                             <Button
-                              variant="outline"
+                              variant="primary"
                               size="xs"
                               onClick={() => console.log("Revisar tarea", tarea.idTarea)}
                             >
