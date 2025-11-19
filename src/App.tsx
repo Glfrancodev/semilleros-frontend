@@ -70,11 +70,14 @@ export default function App() {
             }
           />
 
+          {/* Rutas públicas adicionales */}
+          <Route path="/estudiante/proyectos/:idProyecto/documento" element={<DocumentoEditorPage />} />
+          <Route element={<AppLayout />}>
+            <Route path="/estudiante/proyectos/:idProyecto" element={<ProyectoDetallePage />} />
+          </Route>
+
           {/* Rutas privadas */}
           <Route element={<PrivateRoute />}>
-            {/* Ruta del editor de documento (sin layout) */}
-            <Route path="/estudiante/proyectos/:idProyecto/documento" element={<DocumentoEditorPage />} />
-            
             <Route element={<AppLayout />}>
               <Route index path="/" element={<Home />} />
               <Route path="/profile" element={<ProfilePage />} />
@@ -89,7 +92,6 @@ export default function App() {
               <Route path="/estudiante/calendario" element={<CalendarioPage />} />
               <Route path="/estudiante/proyectos/guias" element={<GuiasDescubrirPage />} />
               <Route path="/estudiante/proyectos/mis-proyectos" element={<MisProyectosPage />} />
-              <Route path="/estudiante/proyectos/:idProyecto" element={<ProyectoDetallePage />} />
             </Route>
           </Route>
 

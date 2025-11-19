@@ -7,22 +7,28 @@ import ProyectoInfoCard from "../components/ProyectoInfoCard";
 import ProyectoBrandingCard from "../components/ProyectoBrandingCard";
 import ProyectoIntegrantesCard from "../components/ProyectoIntegrantesCard";
 import ProyectoTareasCard from "../components/ProyectoTareasCard";
+import { useAuth } from "../../../context/AuthContext";
+import { ROLES } from "../../../constants/roles";
+import api from "../../../services/api";
 
 export default function ProyectoDetallePage() {
   const { idProyecto } = useParams<{ idProyecto: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [proyecto, setProyecto] = useState<ProyectoDetalle | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [puedeVer, setPuedeVer] = useState(false);
 
   useEffect(() => {
     if (!idProyecto) {
-      navigate("/estudiante/proyectos/mis-proyectos");
+      setError("Proyecto no encontrado");
+      setLoading(false);
       return;
     }
-    
+
     cargarProyecto();
-  }, [idProyecto, navigate]);
+  }, [idProyecto, user?.idUsuario, user?.rol]);
 
   const cargarProyecto = async () => {
     if (!idProyecto) return;
@@ -32,11 +38,53 @@ export default function ProyectoDetallePage() {
       setError(null);
       const data = await obtenerProyectoPorId(idProyecto);
       setProyecto(data);
+      const acceso = await determinarAcceso(data);
+      setPuedeVer(acceso);
+      if (!acceso) {
+        setLoading(false);
+        return;
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || "Error al cargar el proyecto");
       console.error("Error al cargar proyecto:", err);
+      setPuedeVer(false);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const determinarAcceso = async (detalle: ProyectoDetalle): Promise<boolean> => {
+    if (!idProyecto) return false;
+
+    if (user?.rol === ROLES.ADMIN) {
+      return true;
+    }
+
+    if (user?.idUsuario) {
+      const esIntegrante = await esUsuarioIntegrante();
+      if (esIntegrante) return true;
+      if (detalle.esPublico) return true;
+      setError("Este proyecto es privado. Solo sus integrantes pueden verlo.");
+      return false;
+    }
+
+    if (detalle.esPublico) {
+      return true;
+    }
+
+    setError("Este proyecto es privado. Debes iniciar sesión y formar parte del proyecto para verlo.");
+    return false;
+  };
+
+  const esUsuarioIntegrante = async (): Promise<boolean> => {
+    if (!user?.idUsuario) return false;
+    try {
+      const response = await api.get(`/proyectos/${idProyecto}/integrantes`);
+      const items = response.data?.data?.items || [];
+      return items.some((integrante: any) => integrante.idUsuario && integrante.idUsuario === user.idUsuario);
+    } catch (err) {
+      console.error("Error al verificar integrantes:", err);
+      return false;
     }
   };
 
@@ -51,24 +99,25 @@ export default function ProyectoDetallePage() {
     );
   }
 
-  if (error) {
+  if (error && !puedeVer) {
     return (
-      <div className="rounded-2xl border border-red-200 bg-red-50 p-5 dark:border-red-800 dark:bg-red-900/20 lg:p-6">
-        <h3 className="mb-2 text-lg font-semibold text-red-800 dark:text-red-400">
-          Error al cargar el proyecto
-        </h3>
-        <p className="text-sm text-red-600 dark:text-red-300">{error}</p>
-        <button
-          onClick={cargarProyecto}
-          className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
-        >
-          Reintentar
-        </button>
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center max-w-md space-y-4">
+          <p className="text-red-600 dark:text-red-400">
+            {error}
+          </p>
+          <button
+            onClick={() => navigate("/")}
+            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Volver
+          </button>
+        </div>
       </div>
     );
   }
 
-  if (!proyecto) {
+  if (!proyecto || !puedeVer) {
     return null;
   }
 

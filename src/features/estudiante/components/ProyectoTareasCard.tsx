@@ -163,14 +163,14 @@ export default function ProyectoTareasCard({ idProyecto }: ProyectoTareasCardPro
       <div
         key={tarea.idTarea}
         onClick={handleClick}
-        className={`p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 ${
-          revision ? "cursor-pointer hover:border-primary-300 focus-within:border-primary-400" : ""
-        }`}
+        className={`rounded-3xl border border-gray-200 bg-white p-5 shadow-sm transition-colors dark:border-white/10 dark:bg-[#1c2639] ${
+          revision ? "cursor-pointer" : ""
+        } ${revision ? "hover:border-gray-300 dark:hover:border-white/25" : "hover:border-gray-200 dark:hover:border-white/15"}`}
       >
-      <div className="flex items-start justify-between mb-2">
-        <h4 className={`font-medium text-gray-900 dark:text-white ${esCompletado ? 'line-through opacity-60' : ''}`}>
-          {tarea.orden}. {tarea.nombre}
-        </h4>
+        <div className="flex items-start justify-between mb-2">
+          <h4 className={`font-medium text-gray-900 dark:text-white ${esCompletado ? 'line-through opacity-60' : ''}`}>
+            {tarea.orden}. {tarea.nombre}
+          </h4>
         {/* Etiqueta En Revisión */}
         {('enRevision' in tarea && (tarea as any).enRevision) && (
           <span className="ml-2 px-2 py-0.5 rounded-full bg-yellow-200 text-yellow-800 text-xs font-semibold border border-yellow-300">
@@ -195,7 +195,7 @@ export default function ProyectoTareasCard({ idProyecto }: ProyectoTareasCardPro
                 e.stopPropagation();
                 handleClick();
               }}
-              className="text-xs font-semibold text-primary-600 hover:text-primary-700"
+              className="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200 transition-colors"
             >
               Ver revisión
             </button>
@@ -283,41 +283,60 @@ export default function ProyectoTareasCard({ idProyecto }: ProyectoTareasCardPro
         </div>
       </div>
       {revisionSeleccionada && (
-        <div className="fixed inset-0 z-999999 flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-900">
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Detalle de Revisión</h4>
+        <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setRevisionSeleccionada(null)} />
+          <div className="relative z-[1000000] w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl transition-colors dark:border-gray-700 dark:bg-gray-800">
+            <div className="flex items-start justify-between border-b border-gray-200 p-6 dark:border-gray-700">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
+                  Revisión de tarea
+                </p>
+                <h4 className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">
+                  Detalle de Revisión
+                </h4>
+              </div>
               <button
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-300"
+                className="rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
                 onClick={() => setRevisionSeleccionada(null)}
                 aria-label="Cerrar modal de revisión"
               >
                 ✕
               </button>
             </div>
-            <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
-              <div>
-                <p className="font-semibold text-gray-900 dark:text-white">
-                  {revisionSeleccionada.tarea.orden}. {revisionSeleccionada.tarea.nombre}
-                </p>
-                <p className="text-gray-600 dark:text-gray-400">
-                  {revisionSeleccionada.tarea.descripcion || "Sin descripción"}
-                </p>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="font-medium text-gray-800 dark:text-white">Calificación</span>
-                <span className="text-base font-semibold text-primary-600 dark:text-primary-400">
-                  {revisionSeleccionada.revision.puntaje ?? "Sin calificación"} / 100
-                </span>
-              </div>
-              <div>
-                <span className="font-medium text-gray-800 dark:text-white">Comentario</span>
-                <p className="mt-1 text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                  {revisionSeleccionada.revision.comentario || "Sin comentario"}
-                </p>
+            <div
+              className="overflow-y-auto"
+              style={{ maxHeight: "calc(90vh - 140px)" }}
+            >
+              <div className="p-6 space-y-6 text-sm text-gray-700 dark:text-gray-100">
+                <div>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {revisionSeleccionada.tarea.orden}. {revisionSeleccionada.tarea.nombre}
+                  </p>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {revisionSeleccionada.tarea.descripcion || "Sin descripción"}
+                  </p>
+                </div>
+
+                <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-white/10 dark:bg-white/5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white">
+                    Calificación
+                  </span>
+                  <span className="text-xl font-semibold text-primary-600 dark:text-primary-300">
+                    {revisionSeleccionada.revision.puntaje ?? "Sin calificación"} / 100
+                  </span>
+                </div>
+
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white mb-2">
+                    Comentario
+                  </p>
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-gray-700 dark:border-white/10 dark:bg-white/5 dark:text-white">
+                    {revisionSeleccionada.revision.comentario || "Sin comentario"}
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="mt-6 text-right">
+            <div className="border-t border-gray-200 p-6 text-right dark:border-gray-700">
               <Button size="sm" variant="primary" onClick={() => setRevisionSeleccionada(null)}>
                 Cerrar
               </Button>

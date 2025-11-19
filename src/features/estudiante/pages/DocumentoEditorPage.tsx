@@ -16,11 +16,11 @@ export default function DocumentoEditorPage() {
   const [error, setError] = useState<string | null>(null);
   const [forceReadOnly, setForceReadOnly] = useState(true);
   const [puedeVer, setPuedeVer] = useState(false);
-  const [proyecto, setProyecto] = useState<ProyectoDetalle | null>(null);
 
   useEffect(() => {
     if (!idProyecto) {
-      navigate("/estudiante/proyectos/mis-proyectos");
+      setError("Proyecto no encontrado");
+      setIsLoading(false);
       return;
     }
 
@@ -31,7 +31,6 @@ export default function DocumentoEditorPage() {
 
       try {
         const detalle = await obtenerProyectoPorId(idProyecto);
-        setProyecto(detalle);
 
         const accesoPermitido = await determinarAcceso(detalle);
         if (!accesoPermitido) {
@@ -95,7 +94,7 @@ export default function DocumentoEditorPage() {
         return true;
       }
 
-      setError("Este proyecto es privado. Debes iniciar sesión y formar parte del proyecto para verlo.");
+      setError("Este proyecto es privado. Debes iniciar sesiÃ³n y formar parte del proyecto para verlo.");
       return false;
     };
 
@@ -114,7 +113,7 @@ export default function DocumentoEditorPage() {
     };
 
     void cargarProyecto();
-  }, [idProyecto, navigate, user?.idUsuario, user?.rol]);
+  }, [idProyecto, user?.idUsuario, user?.rol]);
 
   if (isLoading) {
     return (
@@ -135,9 +134,7 @@ export default function DocumentoEditorPage() {
             {error || "No tienes permiso para ver este documento."}
           </p>
           <button
-            onClick={() =>
-              proyecto?.esPublico ? navigate("/") : navigate("/estudiante/proyectos/mis-proyectos")
-            }
+            onClick={() => navigate("/")}
             className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
             Volver
