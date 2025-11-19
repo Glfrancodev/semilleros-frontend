@@ -45,6 +45,7 @@ export default function ProyectoTareasCard({ idProyecto }: ProyectoTareasCardPro
   const [loadingIntegrantes, setLoadingIntegrantes] = useState(true);
   const [enviandoRevision, setEnviandoRevision] = useState(false);
   const [errorRevision, setErrorRevision] = useState<string | null>(null);
+  const [revisionesMap, setRevisionesMap] = useState<Record<string, Revision>>({});
   const [revisionSeleccionada, setRevisionSeleccionada] = useState<{
     tarea: Tarea;
     revision: Revision;
@@ -100,8 +101,10 @@ export default function ProyectoTareasCard({ idProyecto }: ProyectoTareasCardPro
           map[rev.idTarea] = rev;
         }
       });
+      setRevisionesMap(map);
     } catch (error) {
       console.error("Error al cargar revisiones:", error);
+      setRevisionesMap({});
     }
   };
 
@@ -148,6 +151,60 @@ export default function ProyectoTareasCard({ idProyecto }: ProyectoTareasCardPro
     (i) => i.esLider && i.idUsuario && user && i.idUsuario === user.idUsuario
   );
 
+  const renderTarea = (tarea: Tarea, esCompletado: boolean = false) => {
+    const revision = revisionesMap[tarea.idTarea];
+    const handleClick = () => {
+      if (revision) {
+        setRevisionSeleccionada({ tarea, revision });
+      }
+    };
+
+    return (
+      <div
+        key={tarea.idTarea}
+        onClick={handleClick}
+        className={`rounded-3xl border border-gray-200 bg-white p-5 shadow-sm transition-colors dark:border-white/10 dark:bg-[#1c2639] ${
+          revision ? "cursor-pointer" : ""
+        } ${revision ? "hover:border-gray-300 dark:hover:border-white/25" : "hover:border-gray-200 dark:hover:border-white/15"}`}
+      >
+        <div className="flex items-start justify-between mb-2">
+          <h4 className={`font-medium text-gray-900 dark:text-white ${esCompletado ? 'line-through opacity-60' : ''}`}>
+            {tarea.orden}. {tarea.nombre}
+          </h4>
+        {/* Etiqueta En Revisión */}
+        {('enRevision' in tarea && (tarea as any).enRevision) && (
+          <span className="ml-2 px-2 py-0.5 rounded-full bg-yellow-200 text-yellow-800 text-xs font-semibold border border-yellow-300">
+            En Revisión
+          </span>
+        )}
+      </div>
+      <p className={`text-sm text-gray-600 dark:text-gray-400 mb-2 ${esCompletado ? 'line-through opacity-60' : ''}`}>
+        {tarea.descripcion || "Sin descripción"}
+      </p>
+      <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <span>Fecha límite: {new Date(tarea.fechaLimite).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+      </div>
+        {revision && (
+          <div className="mt-3 text-right">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClick();
+              }}
+              className="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200 transition-colors"
+            >
+              Ver revisión
+            </button>
+          </div>
+        )}
+    </div>
+    );
+  };
+
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
       <div className="mb-5 flex items-center justify-between lg:mb-7">
@@ -167,40 +224,64 @@ export default function ProyectoTareasCard({ idProyecto }: ProyectoTareasCardPro
             )}
       </div>
 
-      {/* Tabla de tareas con columnas de igual ancho */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full table-fixed border-separate border-spacing-0">
-          <thead>
-            <tr>
-              <th className="w-1/7 px-3 py-2 font-semibold text-left">ORDEN</th>
-              <th className="w-1/7 px-3 py-2 font-semibold text-left">NOMBRE</th>
-              <th className="w-1/7 px-3 py-2 font-semibold text-left">DESCRIPCIÓN</th>
-              <th className="w-1/7 px-3 py-2 font-semibold text-left">ENVIADOS / INSCRITOS</th>
-              <th className="w-1/7 px-3 py-2 font-semibold text-left">PENDIENTES / ENVIADOS</th>
-              <th className="w-1/7 px-3 py-2 font-semibold text-left">FECHA LÍMITE</th>
-              <th className="w-1/7 px-3 py-2 font-semibold text-left">ACCIONES</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[...tareas.enProceso, ...tareas.completado, ...tareas.pendiente].map((tarea) => (
-              <tr key={tarea.idTarea} className="border-b border-gray-100 dark:border-gray-800">
-                <td className="px-3 py-2">#{tarea.orden}</td>
-                <td className="px-3 py-2 font-semibold">{tarea.nombre}</td>
-                <td className="px-3 py-2">{tarea.descripcion || "Sin descripción"}</td>
-                <td className="px-3 py-2">{/* TODO: Enviados / Inscritos */}</td>
-                <td className="px-3 py-2">{/* TODO: Pendientes / Enviados */}</td>
-                <td className="px-3 py-2">{new Date(tarea.fechaLimite).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
-                <td className="px-3 py-2">
-                  <Button size="xs" variant="outline" onClick={() => {/* TODO: Acción revisar */}}>
-                    Revisar
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* En Proceso */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+            <h4 className="font-semibold text-gray-900 dark:text-white">
+              En Proceso ({tareas.enProceso.length})
+            </h4>
+          </div>
+          <div className="space-y-3">
+            {tareas.enProceso.length > 0 ? (
+              tareas.enProceso.map(t => renderTarea(t, false))
+            ) : (
+              <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+                No hay tareas en proceso
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Completado */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            <h4 className="font-semibold text-gray-900 dark:text-white">
+              Completado ({tareas.completado.length})
+            </h4>
+          </div>
+          <div className="space-y-3">
+            {tareas.completado.length > 0 ? (
+              tareas.completado.map(t => renderTarea(t, true))
+            ) : (
+              <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+                No hay tareas completadas
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Pendiente */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+            <h4 className="font-semibold text-gray-900 dark:text-white">
+              Pendiente ({tareas.pendiente.length})
+            </h4>
+          </div>
+          <div className="space-y-3">
+            {tareas.pendiente.length > 0 ? (
+              tareas.pendiente.map(t => renderTarea(t, false))
+            ) : (
+              <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+                No hay tareas pendientes
+              </p>
+            )}
+          </div>
+        </div>
       </div>
-      {/* (Eliminado: grid de columnas viejas, solo tabla ahora) */}
       {revisionSeleccionada && (
         <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50" onClick={() => setRevisionSeleccionada(null)} />
