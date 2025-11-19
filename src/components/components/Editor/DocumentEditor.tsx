@@ -103,7 +103,8 @@ const reemplazarUUIDsConUrlsHelper = (contenido: JSONContent, imagenes: any[]): 
     if (!nodo) return nodo;
 
     // Si es una imagen con formato file://UUID, reemplazar con URL firmada
-    if (nodo.type === 'image' && nodo.attrs?.src?.startsWith('file://')) {
+    // Soportar tanto 'image' como 'imageResize'
+    if ((nodo.type === 'image' || nodo.type === 'imageResize') && nodo.attrs?.src?.startsWith('file://')) {
       const uuid = nodo.attrs.src.replace('file://', '');
       const imagen = imagenes.find((img: any) => img.idArchivo === uuid);
       
@@ -352,7 +353,8 @@ export const DocumentEditor = ({
       if (!nodo) return nodo;
 
       // Si es una imagen, buscar su UUID y reemplazar la URL
-      if (nodo.type === 'image' && nodo.attrs?.src) {
+      // Soportar tanto 'image' como 'imageResize'
+      if ((nodo.type === 'image' || nodo.type === 'imageResize') && nodo.attrs?.src) {
         // Extraer la URL base sin parámetros de firma
         const srcBase = nodo.attrs.src.split('?')[0];
         
