@@ -45,7 +45,6 @@ export default function ProyectoTareasCard({ idProyecto }: ProyectoTareasCardPro
   const [loadingIntegrantes, setLoadingIntegrantes] = useState(true);
   const [enviandoRevision, setEnviandoRevision] = useState(false);
   const [errorRevision, setErrorRevision] = useState<string | null>(null);
-  const [revisionesMap, setRevisionesMap] = useState<Record<string, Revision>>({});
   const [revisionSeleccionada, setRevisionSeleccionada] = useState<{
     tarea: Tarea;
     revision: Revision;
@@ -101,10 +100,8 @@ export default function ProyectoTareasCard({ idProyecto }: ProyectoTareasCardPro
           map[rev.idTarea] = rev;
         }
       });
-      setRevisionesMap(map);
     } catch (error) {
       console.error("Error al cargar revisiones:", error);
-      setRevisionesMap({});
     }
   };
 
@@ -150,60 +147,6 @@ export default function ProyectoTareasCard({ idProyecto }: ProyectoTareasCardPro
   const esLiderActual = integrantes.some(
     (i) => i.esLider && i.idUsuario && user && i.idUsuario === user.idUsuario
   );
-
-  const renderTarea = (tarea: Tarea, esCompletado: boolean = false) => {
-    const revision = revisionesMap[tarea.idTarea];
-    const handleClick = () => {
-      if (revision) {
-        setRevisionSeleccionada({ tarea, revision });
-      }
-    };
-
-    return (
-      <div
-        key={tarea.idTarea}
-        onClick={handleClick}
-        className={`rounded-3xl border border-gray-200 bg-white p-5 shadow-sm transition-colors dark:border-white/10 dark:bg-[#1c2639] ${
-          revision ? "cursor-pointer" : ""
-        } ${revision ? "hover:border-gray-300 dark:hover:border-white/25" : "hover:border-gray-200 dark:hover:border-white/15"}`}
-      >
-        <div className="flex items-start justify-between mb-2">
-          <h4 className={`font-medium text-gray-900 dark:text-white ${esCompletado ? 'line-through opacity-60' : ''}`}>
-            {tarea.orden}. {tarea.nombre}
-          </h4>
-        {/* Etiqueta En Revisión */}
-        {('enRevision' in tarea && (tarea as any).enRevision) && (
-          <span className="ml-2 px-2 py-0.5 rounded-full bg-yellow-200 text-yellow-800 text-xs font-semibold border border-yellow-300">
-            En Revisión
-          </span>
-        )}
-      </div>
-      <p className={`text-sm text-gray-600 dark:text-gray-400 mb-2 ${esCompletado ? 'line-through opacity-60' : ''}`}>
-        {tarea.descripcion || "Sin descripción"}
-      </p>
-      <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-        <span>Fecha límite: {new Date(tarea.fechaLimite).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-      </div>
-        {revision && (
-          <div className="mt-3 text-right">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleClick();
-              }}
-              className="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200 transition-colors"
-            >
-              Ver revisión
-            </button>
-          </div>
-        )}
-    </div>
-    );
-  };
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
