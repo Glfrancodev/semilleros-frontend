@@ -84,7 +84,7 @@ export default function ProyectoDetallePage() {
       
       <div className="space-y-6">
         {/* Card de información del proyecto */}
-        <ProyectoInfoCard proyecto={proyecto} />
+        <ProyectoInfoCard proyecto={proyecto} onUpdate={cargarProyecto} />
         
         {/* Card de Branding */}
         <ProyectoBrandingCard proyecto={proyecto} onUpdate={cargarProyecto} />

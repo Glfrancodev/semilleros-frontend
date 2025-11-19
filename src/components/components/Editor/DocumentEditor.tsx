@@ -19,6 +19,7 @@ import {
   obtenerImagenesContenido,
   subirImagenEditor,
   eliminarImagen,
+  tieneRevisionActiva,
 } from "../../../services/proyectoService";
 import ImagePickerModal from "./ImagePickerModal";
 import "./editor.css";
@@ -28,6 +29,7 @@ type DocumentEditorProps = {
   initialContent?: JSONContent | null;
   initialImages?: any[];
   className?: string;
+  forceReadOnly?: boolean;
 };
 
 const DEFAULT_CONTENT: JSONContent = {
@@ -138,6 +140,7 @@ export const DocumentEditor = ({
   initialContent,
   initialImages = [],
   className,
+  forceReadOnly = false,
 }: DocumentEditorProps) => {
   const { theme } = useTheme();
   const { token } = useAuth();
@@ -149,10 +152,13 @@ export const DocumentEditor = ({
   const [isHeadingOpen, setIsHeadingOpen] = useState(false);
   const [isListOpen, setIsListOpen] = useState(false);
   const [isHighlightOpen, setIsHighlightOpen] = useState(false);
+  const [isAlignOpen, setIsAlignOpen] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [revisionActiva, setRevisionActiva] = useState(false);
   const headingRef = useRef<HTMLDivElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
   const highlightRef = useRef<HTMLDivElement | null>(null);
+  const alignRef = useRef<HTMLDivElement | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const ignoreRemoteRef = useRef(false);
   const [projectImages, setProjectImages] = useState<
@@ -198,6 +204,35 @@ export const DocumentEditor = ({
     void cargarImagenesIniciales();
   }, [idProyecto]);
 
+  const verificarRevision = useCallback(async () => {
+    try {
+      const hayRevision = await tieneRevisionActiva(idProyecto);
+      setRevisionActiva(hayRevision);
+    } catch (error) {
+      console.error("Error al verificar estado de revisión:", error);
+    }
+  }, [idProyecto]);
+
+  useEffect(() => {
+    void verificarRevision();
+    const interval = setInterval(() => void verificarRevision(), 15000);
+    return () => clearInterval(interval);
+  }, [verificarRevision]);
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<{ idProyecto?: string }>).detail;
+      if (detail?.idProyecto && detail.idProyecto !== idProyecto) {
+        return;
+      }
+      void verificarRevision();
+    };
+    window.addEventListener("revision-status-changed", handler as EventListener);
+    return () => {
+      window.removeEventListener("revision-status-changed", handler as EventListener);
+    };
+  }, [idProyecto, verificarRevision]);
+
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -228,6 +263,52 @@ export const DocumentEditor = ({
       },
     },
   });
+
+  const isReadOnly = forceReadOnly || revisionActiva;
+
+  useEffect(() => {
+    if (!editor) return;
+    editor.setEditable(!isReadOnly);
+    if (isReadOnly) {
+      setIsHeadingOpen(false);
+      setIsListOpen(false);
+      setIsHighlightOpen(false);
+      setIsImageModalOpen(false);
+    }
+  }, [editor, isReadOnly]);
+
+  useEffect(() => {
+    if (!editor) return;
+    if (!isReadOnly) return;
+    const dom = editor.view.dom;
+    const blockInteraction = (event: Event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) {
+        return;
+      }
+      const cursor = target.style?.cursor || "";
+      const isImageElement = target.tagName === "IMG";
+      const isResizeHandle = cursor.includes("resize");
+      const isResizerContainer =
+        target instanceof HTMLDivElement &&
+        cursor === "pointer" &&
+        !!target.querySelector("img");
+
+      if (isImageElement || isResizeHandle || isResizerContainer) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+    const listenerOptions: AddEventListenerOptions = { capture: true };
+    ["click", "mousedown", "touchstart"].forEach((type) =>
+      dom.addEventListener(type, blockInteraction, listenerOptions)
+    );
+    return () => {
+      ["click", "mousedown", "touchstart"].forEach((type) =>
+        dom.removeEventListener(type, blockInteraction, listenerOptions)
+      );
+    };
+  }, [editor, isReadOnly]);
 
   // Auto-guardado
   useEffect(() => {
@@ -606,6 +687,9 @@ export const DocumentEditor = ({
       if (highlightRef.current && !highlightRef.current.contains(event.target as Node)) {
         setIsHighlightOpen(false);
       }
+      if (alignRef.current && !alignRef.current.contains(event.target as Node)) {
+        setIsAlignOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -667,6 +751,21 @@ export const DocumentEditor = ({
       ? listOptions[1]
       : listOptions[0];
 
+  const alignmentOptions: Array<{
+    value: "left" | "center" | "right" | "justify";
+    label: string;
+    icon: string;
+  }> = [
+    { value: "left", label: "Alinear a la izquierda", icon: "doc-editor__icon-align-left" },
+    { value: "center", label: "Centrar", icon: "doc-editor__icon-align-center" },
+    { value: "right", label: "Alinear a la derecha", icon: "doc-editor__icon-align-right" },
+    { value: "justify", label: "Justificar", icon: "doc-editor__icon-align-justify" },
+  ];
+
+  const activeAlignment =
+    alignmentOptions.find((opt) => editor?.isActive({ textAlign: opt.value })) ||
+    alignmentOptions[0];
+
   const fetchProjectImages = async () => {
     try {
       setIsImagesLoading(true);
@@ -680,11 +779,12 @@ export const DocumentEditor = ({
   };
 
   const handleInsertImage = (src: string) => {
-    if (!editor) return;
+    if (!editor || isReadOnly) return;
     editor.chain().focus().setImage({ src }).run();
   };
 
   const handleUploadImage = async (file: File) => {
+    if (isReadOnly) return;
     try {
       setIsUploadingImage(true);
       const response = await subirImagenEditor(idProyecto, file);
@@ -703,6 +803,7 @@ export const DocumentEditor = ({
   };
 
   const handleDeleteImage = async (idArchivo: string) => {
+    if (isReadOnly) return;
     try {
       setIsImagesLoading(true);
       await eliminarImagen(idArchivo);
@@ -751,29 +852,38 @@ export const DocumentEditor = ({
 
   return (
     <div className={clsx("doc-editor__wrapper", theme === "dark" && "is-dark", className)}>
-      <div className="doc-editor__toolbar">
-        <div className="doc-editor__toolbar-inner">
-          <button
-            type="button"
-            className="doc-editor__btn"
-            onClick={() => editor.chain().focus().undo().run()}
-            disabled={!historyState.canUndo}
-            aria-label="Deshacer"
-            title="Deshacer"
-          >
-            ↺
-          </button>
-          <button
-            type="button"
-            className="doc-editor__btn"
-            onClick={() => editor.chain().focus().redo().run()}
-            disabled={!historyState.canRedo}
-            aria-label="Rehacer"
-            title="Rehacer"
-          >
-            ↻
-          </button>
-          <div className="doc-editor__toolbar-divider" />
+      {(revisionActiva || !forceReadOnly) && (
+        <div className="doc-editor__toolbar">
+          {revisionActiva && (
+            <div className="doc-editor__revision-alert" role="status">
+              El documento está en revisión. La edición permanecerá deshabilitada hasta que finalice la
+              revisión.
+            </div>
+          )}
+          {!isReadOnly && (
+            <div className="doc-editor__toolbar-inner">
+              <fieldset className="doc-editor__toolbar-controls">
+            <button
+              type="button"
+              className="doc-editor__btn"
+              onClick={() => editor.chain().focus().undo().run()}
+              disabled={!historyState.canUndo}
+              aria-label="Deshacer"
+              title="Deshacer"
+            >
+              ↺
+            </button>
+            <button
+              type="button"
+              className="doc-editor__btn"
+              onClick={() => editor.chain().focus().redo().run()}
+              disabled={!historyState.canRedo}
+              aria-label="Rehacer"
+              title="Rehacer"
+            >
+              ↻
+            </button>
+            <div className="doc-editor__toolbar-divider" />
 
           <div className="doc-editor__dropdown" ref={headingRef}>
             <button
@@ -1004,87 +1114,77 @@ export const DocumentEditor = ({
             <span className="doc-editor__icon-image" />
           </button>
           <div className="doc-editor__toolbar-divider" />
-          <button
-            type="button"
-            className={clsx(
-              "doc-editor__btn",
-              editor.isActive({ textAlign: "left" }) && "is-active"
-            )}
-            onClick={() => editor.chain().focus().setTextAlign("left").run()}
-            aria-label="Alinear a la izquierda"
-            title="Alinear a la izquierda"
-          >
-            <span className="doc-editor__icon-align doc-editor__icon-align-left" />
-          </button>
-          <button
-            type="button"
-            className={clsx(
-              "doc-editor__btn",
-              editor.isActive({ textAlign: "center" }) && "is-active"
-            )}
-            onClick={() => editor.chain().focus().setTextAlign("center").run()}
-            aria-label="Centrar"
-            title="Centrar"
-          >
-            <span className="doc-editor__icon-align doc-editor__icon-align-center" />
-          </button>
-          <button
-            type="button"
-            className={clsx(
-              "doc-editor__btn",
-              editor.isActive({ textAlign: "right" }) && "is-active"
-            )}
-            onClick={() => editor.chain().focus().setTextAlign("right").run()}
-            aria-label="Alinear a la derecha"
-            title="Alinear a la derecha"
-          >
-            <span className="doc-editor__icon-align doc-editor__icon-align-right" />
-          </button>
-          <button
-            type="button"
-            className={clsx(
-              "doc-editor__btn",
-              editor.isActive({ textAlign: "justify" }) && "is-active"
-            )}
-            onClick={() => editor.chain().focus().setTextAlign("justify").run()}
-            aria-label="Justificar"
-            title="Justificar"
-          >
-            <span className="doc-editor__icon-align doc-editor__icon-align-justify" />
-          </button>
-          <div className="doc-editor__toolbar-divider" />
-          {activeUsers.length > 0 && (
-            <>
-              <div className="doc-editor__active-users">
-                {activeUsers.slice(0, 5).map((user) => (
-                  <div
-                    key={user.id}
-                    className="doc-editor__user-avatar"
-                    title={`${user.nombre} - ${user.email}`}
-                    onClick={() => scrollToUser(user.id)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    {user.foto ? (
-                      <img src={user.foto} alt={user.nombre} className="doc-editor__user-photo" />
-                    ) : (
-                      <span className="doc-editor__user-initials">{user.iniciales}</span>
-                    )}
-                  </div>
-                ))}
-                {activeUsers.length > 5 && (
-                  <div className="doc-editor__user-avatar" title={`+${activeUsers.length - 5} más`}>
-                    <span className="doc-editor__user-initials">+{activeUsers.length - 5}</span>
-                  </div>
-                )}
+          <div className="doc-editor__dropdown" ref={alignRef}>
+            <button
+              type="button"
+              className="doc-editor__btn"
+              onClick={() => setIsAlignOpen((prev) => !prev)}
+              aria-label={activeAlignment.label}
+              title={activeAlignment.label}
+            >
+              <span className={clsx("doc-editor__icon-align", activeAlignment.icon)} />
+            </button>
+            {isAlignOpen && (
+              <div className="doc-editor__dropdown-menu">
+                {alignmentOptions.map((opt) => {
+                  const isActive = editor?.isActive({ textAlign: opt.value });
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      className={clsx("doc-editor__dropdown-item", isActive && "is-active")}
+                      onClick={() => {
+                        editor?.chain().focus().setTextAlign(opt.value).run();
+                        setIsAlignOpen(false);
+                      }}
+                      aria-label={opt.label}
+                      title={opt.label}
+                    >
+                      <span className={clsx("doc-editor__icon-align", opt.icon)} />
+                      <span className="doc-editor__list-text">{opt.label}</span>
+                    </button>
+                  );
+                })}
               </div>
-              <div className="doc-editor__toolbar-divider" />
-            </>
-          )}
-          <div className="doc-editor__theme-toggle-wrapper">
-            <ThemeToggleButton />
+            )}
           </div>
+          <div className="doc-editor__toolbar-divider" />
+            {activeUsers.length > 0 && (
+              <>
+                <div className="doc-editor__active-users">
+                  {activeUsers.slice(0, 5).map((user) => (
+                    <div
+                      key={user.id}
+                      className="doc-editor__user-avatar"
+                      title={`${user.nombre} - ${user.email}`}
+                      onClick={() => scrollToUser(user.id)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {user.foto ? (
+                        <img src={user.foto} alt={user.nombre} className="doc-editor__user-photo" />
+                      ) : (
+                        <span className="doc-editor__user-initials">{user.iniciales}</span>
+                      )}
+                    </div>
+                  ))}
+                  {activeUsers.length > 5 && (
+                    <div className="doc-editor__user-avatar" title={`+${activeUsers.length - 5} más`}>
+                      <span className="doc-editor__user-initials">+{activeUsers.length - 5}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="doc-editor__toolbar-divider" />
+              </>
+            )}
+              </fieldset>
+              <div className="doc-editor__toolbar-divider" />
+              <div className="doc-editor__theme-toggle-wrapper">
+                <ThemeToggleButton />
+              </div>
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
       <div className="doc-editor__surface" ref={editorContainerRef}>
         <div className="doc-editor__page-container">
@@ -1191,7 +1291,7 @@ export const DocumentEditor = ({
       </div>
 
       <ImagePickerModal
-        isOpen={isImageModalOpen}
+        isOpen={isImageModalOpen && !isReadOnly}
         onClose={() => setIsImageModalOpen(false)}
         images={projectImages}
         loading={isImagesLoading}
@@ -1209,6 +1309,3 @@ export const DocumentEditor = ({
 };
 
 export default DocumentEditor;
-
-
-

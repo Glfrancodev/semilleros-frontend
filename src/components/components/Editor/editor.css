@@ -40,8 +40,43 @@
   background: transparent;
 }
 
+.doc-editor__toolbar-controls {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.doc-editor__toolbar-controls:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .doc-editor__wrapper.is-dark .doc-editor__toolbar {
   background: rgba(15, 23, 42, 0.9);
+}
+
+.doc-editor__revision-alert {
+  width: 960px;
+  margin-left: 150px;
+  margin-bottom: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.doc-editor__wrapper.is-dark .doc-editor__revision-alert {
+  background: rgba(234, 179, 8, 0.1);
+  border-color: rgba(250, 204, 21, 0.3);
+  color: #fde68a;
 }
 
 .doc-editor__surface {
@@ -850,5 +885,4 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
-
 

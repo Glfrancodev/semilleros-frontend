@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ProyectoDetalle } from "../../../services/proyectoService";
+import { ProyectoDetalle, actualizarVisibilidadProyecto } from "../../../services/proyectoService";
 import api from "../../../services/api";
 import Button from "../../../components/ui/button/Button";
+import toast from "react-hot-toast";
+import { useAuth } from "../../../context/AuthContext";
 
 interface ProyectoInfoCardProps {
   proyecto: ProyectoDetalle;
+  onUpdate?: () => void;
 }
 
 interface DatosProgreso {
@@ -14,17 +17,25 @@ interface DatosProgreso {
   progreso: number;
 }
 
-export default function ProyectoInfoCard({ proyecto }: ProyectoInfoCardProps) {
+export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCardProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [datosProgreso, setDatosProgreso] = useState<DatosProgreso>({
     totalRevisiones: 0,
     totalTareas: 0,
     progreso: 0,
   });
+  const [isPublico, setIsPublico] = useState<boolean>(proyecto.esPublico ?? false);
+  const [esLiderActual, setEsLiderActual] = useState(false);
+  const [cambiandoVisibilidad, setCambiandoVisibilidad] = useState(false);
 
   useEffect(() => {
     cargarDatosProgreso();
   }, [proyecto.idProyecto]);
+
+  useEffect(() => {
+    setIsPublico(proyecto.esPublico ?? false);
+  }, [proyecto.esPublico]);
 
   const cargarDatosProgreso = async () => {
     try {
@@ -47,6 +58,29 @@ export default function ProyectoInfoCard({ proyecto }: ProyectoInfoCardProps) {
     }
   };
 
+  useEffect(() => {
+    const verificarLiderazgo = async () => {
+      try {
+        const response = await api.get(`/proyectos/${proyecto.idProyecto}/integrantes`);
+        const items = response.data?.data?.items || [];
+        const esLider = items.some(
+          (integrante: any) =>
+            integrante.esLider && integrante.idUsuario && integrante.idUsuario === user?.idUsuario
+        );
+        setEsLiderActual(esLider);
+      } catch (error) {
+        console.error("Error al obtener integrantes para verificar liderazgo:", error);
+        setEsLiderActual(false);
+      }
+    };
+
+    if (user?.idUsuario) {
+      void verificarLiderazgo();
+    } else {
+      setEsLiderActual(false);
+    }
+  }, [proyecto.idProyecto, user?.idUsuario]);
+
   // Determinar el estado del proyecto (null = En revisión, true = Aprobado, false = Denegado)
   const estado = proyecto.estaAprobado === null 
     ? "En revisión" 
@@ -59,6 +93,37 @@ export default function ProyectoInfoCard({ proyecto }: ProyectoInfoCardProps) {
     : proyecto.estaAprobado 
       ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" 
       : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300";
+  const visibilidadColor = isPublico
+    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+    : "bg-gray-200 text-gray-700 dark:bg-gray-800/50 dark:text-gray-200";
+  const estadoFeriaLabel =
+    proyecto.esFinal === null
+      ? "En proceso para exposición en feria"
+      : proyecto.esFinal
+      ? "Aprobado para exposición en feria"
+      : "Denegado para exposición en feria";
+  const estadoFeriaColor =
+    proyecto.esFinal === null
+      ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-200"
+      : proyecto.esFinal
+      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+      : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300";
+
+  const handleToggleVisibilidad = async () => {
+    try {
+      setCambiandoVisibilidad(true);
+      const nuevoEstado = !isPublico;
+      await actualizarVisibilidadProyecto(proyecto.idProyecto, nuevoEstado);
+      setIsPublico(nuevoEstado);
+      onUpdate?.();
+      toast.success(`El proyecto ahora es ${nuevoEstado ? "público" : "privado"}.`);
+    } catch (error: any) {
+      console.error("Error al cambiar visibilidad del proyecto:", error);
+      toast.error(error?.response?.data?.message || "No se pudo cambiar la visibilidad.");
+    } finally {
+      setCambiandoVisibilidad(false);
+    }
+  };
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
@@ -76,9 +141,19 @@ export default function ProyectoInfoCard({ proyecto }: ProyectoInfoCardProps) {
             {proyecto.descripcion}
           </p>
         </div>
-        <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap self-start ${estadoColor}`}>
-          {estado}
-        </span>
+        <div className="flex flex-col gap-2 items-start">
+          <div className="flex flex-wrap gap-2">
+            <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap self-start ${estadoColor}`}>
+              {estado}
+            </span>
+            <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap self-start ${visibilidadColor}`}>
+              {isPublico ? "Público" : "Privado"}
+            </span>
+            <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap self-start ${estadoFeriaColor}`}>
+              {estadoFeriaLabel}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Información adicional */}
@@ -133,6 +208,20 @@ export default function ProyectoInfoCard({ proyecto }: ProyectoInfoCardProps) {
       >
         Ir al documento
       </Button>
+      {esLiderActual && (
+        <Button
+          size="sm"
+          className="w-full mt-3"
+          onClick={() => void handleToggleVisibilidad()}
+          disabled={cambiandoVisibilidad}
+        >
+          {cambiandoVisibilidad
+            ? "Actualizando..."
+            : isPublico
+            ? "Hacer privado 🔒"
+            : "Hacer público 🔓"}
+        </Button>
+      )}
     </div>
   );
 }

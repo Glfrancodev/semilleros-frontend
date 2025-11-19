@@ -10,7 +10,8 @@ export interface Proyecto {
   nombreDocente: string;
   urlLogo: string | null;
   estaAprobado: boolean;
-  esFinal: boolean;
+  esFinal: boolean | null;
+  esPublico: boolean;
   fechaCreacion: string;
 }
 
@@ -35,7 +36,7 @@ export interface ProyectoDetalle {
   descripcion: string;
   contenido?: string | null;
   estaAprobado: boolean | null;
-  esFinal: boolean;
+  esFinal: boolean | null;
   fechaCreacion: string;
   fechaActualizacion: string;
   nombreDocente: string;
@@ -44,6 +45,7 @@ export interface ProyectoDetalle {
   urlLogo: string | null;
   urlTriptico: string | null;
   urlBanner: string | null;
+  esPublico: boolean;
 }
 
 export interface CrearProyectoData {
@@ -51,6 +53,7 @@ export interface CrearProyectoData {
   descripcion: string;
   idGrupoMateria: string;
   idConvocatoria?: string; // Ahora es opcional porque ya no se relaciona directamente
+  esPublico?: boolean;
 }
 
 interface MisProyectosResponse {
@@ -120,6 +123,7 @@ export const crearProyecto = async (
     estaAprobado: null, // null = En revisión
     esFinal: false,
     idGrupoMateria: data.idGrupoMateria,
+    esPublico: data.esPublico ?? false,
   };
   
   // Solo incluir idConvocatoria si existe (para compatibilidad con código antiguo)
@@ -159,6 +163,17 @@ export const actualizarContenidoProyecto = async (
   return response.data.data;
 };
 
+export const actualizarVisibilidadProyecto = async (
+  idProyecto: string,
+  esPublico: boolean
+): Promise<ProyectoDetalle> => {
+  const response = await api.put<ProyectoDetalleResponse>(
+    `/proyectos/${idProyecto}`,
+    { esPublico }
+  );
+  return response.data.data;
+};
+
 // Subir imagen del editor al S3
 export const subirImagenEditor = async (
   idProyecto: string,
@@ -193,6 +208,13 @@ export const obtenerImagenesContenido = async (
 // Eliminar imagen del S3
 export const eliminarImagen = async (idArchivo: string): Promise<void> => {
   await api.delete(`/archivos/${idArchivo}`);
+};
+
+// Verificar si existe una tarea en revisión activa
+export const tieneRevisionActiva = async (idProyecto: string): Promise<boolean> => {
+  const response = await api.get(`/proyectos/${idProyecto}/tareas-organizadas`);
+  const enProceso = response.data?.data?.enProceso ?? [];
+  return enProceso.some((tarea: any) => Boolean(tarea?.enRevision));
 };
 
 // Obtener contenido del editor con imágenes

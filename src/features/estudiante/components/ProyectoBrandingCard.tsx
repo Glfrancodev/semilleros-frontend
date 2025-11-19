@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { ProyectoDetalle } from "../../../services/proyectoService";
 import api from "../../../services/api";
 import Button from "../../../components/ui/button/Button";
 import ImagenNoEncontrada from "../../../assets/ImagenNoEncontrada.png";
 import toast from "react-hot-toast";
+import { useAuth } from "../../../context/AuthContext";
 
 const ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
 const ALLOWED_PDF_TYPES = ["application/pdf"];
@@ -13,13 +14,81 @@ interface ProyectoBrandingCardProps {
   onUpdate: () => void;
 }
 
+interface Integrante {
+  idEstudianteProyecto: string;
+  idUsuario?: string;
+  esLider: boolean;
+}
+
+interface TareaEnProceso {
+  idTarea: string;
+  enRevision?: boolean;
+}
+
 export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardProps) {
+  const { user } = useAuth();
   const [uploading, setUploading] = useState<string | null>(null);
   const [urls, setUrls] = useState({
     logo: proyecto.urlLogo,
     banner: proyecto.urlBanner,
     triptico: proyecto.urlTriptico,
   });
+  const [integrantes, setIntegrantes] = useState<Integrante[]>([]);
+  const [brandingBloqueado, setBrandingBloqueado] = useState(false);
+
+  useEffect(() => {
+    const cargarIntegrantes = async () => {
+      try {
+        const response = await api.get(`/proyectos/${proyecto.idProyecto}/integrantes`);
+        const items = response.data?.data?.items || [];
+        const mapped: Integrante[] = items.map((item: any) => ({
+          idEstudianteProyecto: item.idEstudianteProyecto,
+          idUsuario: item.idUsuario,
+          esLider: item.esLider,
+        }));
+        setIntegrantes(mapped);
+      } catch (error) {
+        console.error("Error al cargar integrantes del proyecto:", error);
+        setIntegrantes([]);
+      }
+    };
+
+    void cargarIntegrantes();
+  }, [proyecto.idProyecto]);
+
+  const verificarRevisionActiva = useCallback(async () => {
+    try {
+      const response = await api.get(`/proyectos/${proyecto.idProyecto}/tareas-organizadas`);
+      const enProceso: TareaEnProceso[] = response.data?.data?.enProceso || [];
+      const hayRevision = enProceso.some((tarea) => tarea.enRevision);
+      setBrandingBloqueado(hayRevision);
+    } catch (error) {
+      console.error("Error al verificar tareas en revisión:", error);
+      setBrandingBloqueado(false);
+    }
+  }, [proyecto.idProyecto]);
+
+  useEffect(() => {
+    void verificarRevisionActiva();
+  }, [verificarRevisionActiva]);
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<{ idProyecto?: string }>).detail;
+      if (detail?.idProyecto && detail.idProyecto !== proyecto.idProyecto) {
+        return;
+      }
+      void verificarRevisionActiva();
+    };
+    window.addEventListener("revision-status-changed", handler as EventListener);
+    return () => {
+      window.removeEventListener("revision-status-changed", handler as EventListener);
+    };
+  }, [proyecto.idProyecto, verificarRevisionActiva]);
+
+  const puedeGestionarBranding = integrantes.some(
+    (integrante) => integrante.idUsuario && user?.idUsuario && integrante.idUsuario === user.idUsuario
+  );
 
   const handleFileUpload = async (file: File, tipo: "logo" | "banner" | "triptico") => {
     try {
@@ -69,6 +138,12 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
       <h3 className="mb-5 text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-7">
         Branding
       </h3>
+      {puedeGestionarBranding && brandingBloqueado && (
+        <p className="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-2 text-sm text-yellow-800 dark:border-yellow-900/40 dark:bg-yellow-900/20 dark:text-yellow-200">
+          Hay una tarea en revisión, por lo que la actualización de branding está temporalmente
+          deshabilitada.
+        </p>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Logo */}
@@ -92,29 +167,31 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
               />
             )}
           </div>
-          <label className="block">
-            <input
-              type="file"
-              className="hidden"
-              accept="image/*"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleFileUpload(file, "logo");
-              }}
-              disabled={uploading === "logo"}
-            />
-            <Button
-              size="sm"
-              className="w-full"
-              onClick={(e) => {
-                e.preventDefault();
-                (e.currentTarget.previousElementSibling as HTMLInputElement)?.click();
-              }}
-              disabled={uploading === "logo"}
-            >
-              {uploading === "logo" ? "Subiendo..." : "Subir Logo"}
-            </Button>
-          </label>
+          {puedeGestionarBranding && (
+            <label className="block">
+              <input
+                type="file"
+                className="hidden"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFileUpload(file, "logo");
+                }}
+                disabled={uploading === "logo" || brandingBloqueado}
+              />
+              <Button
+                size="sm"
+                className="w-full"
+                onClick={(e) => {
+                  e.preventDefault();
+                  (e.currentTarget.previousElementSibling as HTMLInputElement)?.click();
+                }}
+                disabled={uploading === "logo" || brandingBloqueado}
+              >
+                {uploading === "logo" ? "Subiendo..." : "Subir Logo"}
+              </Button>
+            </label>
+          )}
         </div>
 
         {/* Banner */}
@@ -138,29 +215,31 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
               />
             )}
           </div>
-          <label className="block">
-            <input
-              type="file"
-              className="hidden"
-              accept="image/*"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleFileUpload(file, "banner");
-              }}
-              disabled={uploading === "banner"}
-            />
-            <Button
-              size="sm"
-              className="w-full"
-              onClick={(e) => {
-                e.preventDefault();
-                (e.currentTarget.previousElementSibling as HTMLInputElement)?.click();
-              }}
-              disabled={uploading === "banner"}
-            >
-              {uploading === "banner" ? "Subiendo..." : "Subir Banner"}
-            </Button>
-          </label>
+          {puedeGestionarBranding && (
+            <label className="block">
+              <input
+                type="file"
+                className="hidden"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFileUpload(file, "banner");
+                }}
+                disabled={uploading === "banner" || brandingBloqueado}
+              />
+              <Button
+                size="sm"
+                className="w-full"
+                onClick={(e) => {
+                  e.preventDefault();
+                  (e.currentTarget.previousElementSibling as HTMLInputElement)?.click();
+                }}
+                disabled={uploading === "banner" || brandingBloqueado}
+              >
+                {uploading === "banner" ? "Subiendo..." : "Subir Banner"}
+              </Button>
+            </label>
+          )}
         </div>
 
         {/* Tríptico */}
@@ -188,29 +267,31 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
               </div>
             )}
           </div>
-          <label className="block">
-            <input
-              type="file"
-              className="hidden"
-              accept="application/pdf"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleFileUpload(file, "triptico");
-              }}
-              disabled={uploading === "triptico"}
-            />
-            <Button
-              size="sm"
-              className="w-full"
-              onClick={(e) => {
-                e.preventDefault();
-                (e.currentTarget.previousElementSibling as HTMLInputElement)?.click();
-              }}
-              disabled={uploading === "triptico"}
-            >
-              {uploading === "triptico" ? "Subiendo..." : "Subir Tríptico (PDF)"}
-            </Button>
-          </label>
+          {puedeGestionarBranding && (
+            <label className="block">
+              <input
+                type="file"
+                className="hidden"
+                accept="application/pdf"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFileUpload(file, "triptico");
+                }}
+                disabled={uploading === "triptico" || brandingBloqueado}
+              />
+              <Button
+                size="sm"
+                className="w-full"
+                onClick={(e) => {
+                  e.preventDefault();
+                  (e.currentTarget.previousElementSibling as HTMLInputElement)?.click();
+                }}
+                disabled={uploading === "triptico" || brandingBloqueado}
+              >
+                {uploading === "triptico" ? "Subiendo..." : "Subir Tríptico (PDF)"}
+              </Button>
+            </label>
+          )}
         </div>
       </div>
     </div>

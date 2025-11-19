@@ -1,15 +1,22 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { DocumentEditor } from "../../../components/components/Editor";
-import { obtenerContenidoEditor } from "../../../services/proyectoService";
+import { obtenerContenidoEditor, obtenerProyectoPorId, ProyectoDetalle } from "../../../services/proyectoService";
+import { useAuth } from "../../../context/AuthContext";
+import { ROLES } from "../../../constants/roles";
+import api from "../../../services/api";
 
 export default function DocumentoEditorPage() {
   const { idProyecto } = useParams<{ idProyecto: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [contenido, setContenido] = useState<any>(null);
   const [imagenes, setImagenes] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [forceReadOnly, setForceReadOnly] = useState(true);
+  const [puedeVer, setPuedeVer] = useState(false);
+  const [proyecto, setProyecto] = useState<ProyectoDetalle | null>(null);
 
   useEffect(() => {
     if (!idProyecto) {
@@ -18,11 +25,22 @@ export default function DocumentoEditorPage() {
     }
 
     const cargarProyecto = async () => {
-      try {
-        setIsLoading(true);
-        const data = await obtenerContenidoEditor(idProyecto);
+      setIsLoading(true);
+      setError(null);
+      setPuedeVer(false);
 
-        // Guardar imágenes
+      try {
+        const detalle = await obtenerProyectoPorId(idProyecto);
+        setProyecto(detalle);
+
+        const accesoPermitido = await determinarAcceso(detalle);
+        if (!accesoPermitido) {
+          setContenido(null);
+          setImagenes([]);
+          return;
+        }
+
+        const data = await obtenerContenidoEditor(idProyecto);
         setImagenes(data.imagenes || []);
 
         if (data.contenido) {
@@ -44,8 +62,59 @@ export default function DocumentoEditorPage() {
       }
     };
 
-    cargarProyecto();
-  }, [idProyecto, navigate]);
+    const determinarAcceso = async (detalle: ProyectoDetalle): Promise<boolean> => {
+      if (!idProyecto) return false;
+
+      if (user?.rol === ROLES.ADMIN) {
+        setForceReadOnly(true);
+        setPuedeVer(true);
+        return true;
+      }
+
+      if (user?.idUsuario) {
+        const esIntegrante = await esUsuarioIntegrante();
+        if (esIntegrante) {
+          setForceReadOnly(false);
+          setPuedeVer(true);
+          return true;
+        }
+
+        if (detalle.esPublico) {
+          setForceReadOnly(true);
+          setPuedeVer(true);
+          return true;
+        }
+
+        setError("Este proyecto es privado. Solo sus integrantes pueden ver el documento.");
+        return false;
+      }
+
+      if (detalle.esPublico) {
+        setForceReadOnly(true);
+        setPuedeVer(true);
+        return true;
+      }
+
+      setError("Este proyecto es privado. Debes iniciar sesión y formar parte del proyecto para verlo.");
+      return false;
+    };
+
+    const esUsuarioIntegrante = async (): Promise<boolean> => {
+      if (!user?.idUsuario) return false;
+      try {
+        const response = await api.get(`/proyectos/${idProyecto}/integrantes`);
+        const items = response.data?.data?.items || [];
+        return items.some(
+          (integrante: any) => integrante.idUsuario && integrante.idUsuario === user.idUsuario
+        );
+      } catch (err) {
+        console.error("Error al verificar integrantes:", err);
+        return false;
+      }
+    };
+
+    void cargarProyecto();
+  }, [idProyecto, navigate, user?.idUsuario, user?.rol]);
 
   if (isLoading) {
     return (
@@ -58,21 +127,32 @@ export default function DocumentoEditorPage() {
     );
   }
 
-  if (error) {
+  if (error || !puedeVer) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <p className="text-red-600 dark:text-red-400">{error}</p>
+        <div className="text-center max-w-md space-y-4">
+          <p className="text-red-600 dark:text-red-400">
+            {error || "No tienes permiso para ver este documento."}
+          </p>
           <button
-            onClick={() => navigate("/estudiante/proyectos/mis-proyectos")}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            onClick={() =>
+              proyecto?.esPublico ? navigate("/") : navigate("/estudiante/proyectos/mis-proyectos")
+            }
+            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
-            Volver a mis proyectos
+            Volver
           </button>
         </div>
       </div>
     );
   }
 
-  return <DocumentEditor idProyecto={idProyecto!} initialContent={contenido} initialImages={imagenes} />;
+  return (
+    <DocumentEditor
+      idProyecto={idProyecto!}
+      initialContent={contenido}
+      initialImages={imagenes}
+      forceReadOnly={forceReadOnly}
+    />
+  );
 }
