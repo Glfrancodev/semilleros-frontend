@@ -1,5 +1,4 @@
-
-
+﻿
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import NotFound from "./legacy/pages/OtherPage/NotFound";
@@ -23,6 +22,7 @@ import MisProyectosPage from "./features/estudiante/pages/MisProyectosPage";
 import ConvocatoriasPage from "./features/estudiante/pages/ConvocatoriasPage";
 import ProyectoDetallePage from "./features/estudiante/pages/ProyectoDetallePage";
 import DocumentoEditorPage from "./features/estudiante/pages/DocumentoEditorPage";
+import LandingPage from "./LandingPage";
 
 
 // Ruta privada: solo permite acceso si hay token
@@ -43,17 +43,17 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   if (user) {
     switch (user.rol) {
       case ROLES.ADMIN:
-        return <Navigate to="/" replace />;
+        return <Navigate to="/dashboard" replace />;
       case ROLES.DOCENTE:
         return <Navigate to="/docente/dashboard" replace />;
       case ROLES.ESTUDIANTE:
         return <Navigate to="/estudiante/convocatorias" replace />;
       default:
-        return <Navigate to="/" replace />;
+        return <Navigate to="/dashboard" replace />;
     }
   }
 
-  return <Navigate to="/" replace />;
+  return <Navigate to="/dashboard" replace />;
 }
 
 export default function App() {
@@ -63,6 +63,7 @@ export default function App() {
         <ScrollToTop />
         <Routes>
           {/* Rutas públicas */}
+          <Route path="/" element={<LandingPage />} />
           <Route
             path="/login"
             element={
@@ -81,7 +82,7 @@ export default function App() {
           {/* Rutas privadas */}
           <Route element={<PrivateRoute />}>
             <Route element={<AppLayout />}>
-              <Route index path="/" element={<Home />} />
+              <Route path="/dashboard" element={<Home />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/calendar" element={<Calendar />} />
               
