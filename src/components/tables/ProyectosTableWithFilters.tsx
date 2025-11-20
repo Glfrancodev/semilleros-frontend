@@ -1,8 +1,9 @@
-﻿import {
+﻿// src/components/tables/ProyectosTableWithFilters.tsx
+import {
   useEffect,
   useMemo,
   useState,
-  type ReactNode
+  type ReactNode,
 } from "react";
 import { useNavigate } from "react-router-dom";
 import CustomSelect from "../common/CustomSelect";
@@ -14,6 +15,9 @@ import {
   type ResumenFeriaActiva,
   type TareaResumenFeria,
 } from "../../services/feriaService";
+import TareaModal, { type TareaFormData } from "../modals/TareaModal";
+import { crearTarea, obtenerDetalleTarea } from "../../services/tareaService";
+import toast from "react-hot-toast";
 
 type ColumnKey =
   | "orden"
@@ -82,6 +86,9 @@ export default function ProyectosTableWithFilters() {
     fechaLimite: true,
     acciones: true,
   });
+
+  // estado del modal de tarea
+  const [isTareaModalOpen, setIsTareaModalOpen] = useState(false);
 
   useEffect(() => {
     void loadResumen();
@@ -158,8 +165,54 @@ export default function ProyectosTableWithFilters() {
   const activeColumns = Object.entries(visibleColumns)
     .filter(([, isVisible]) => isVisible)
     .map(([key]) => key as ColumnKey);
-
   const columnCount = activeColumns.length || 1;
+
+  // siguiente orden para la nueva tarea
+  const nextOrden =
+    resumen && resumen.tareas.length
+      ? Math.max(...resumen.tareas.map((t) => t.orden)) + 1
+      : 0;
+
+  const handleCrearTarea = async (data: TareaFormData): Promise<void> => {
+    if (!resumen) {
+      throw new Error("No hay una feria activa para crear la tarea.");
+    }
+
+    let idFeria: string | undefined = (resumen as any).idFeria as string | undefined;
+
+    // Si el resumen no trae idFeria, lo obtenemos desde el detalle de
+    // alguna tarea existente (todas pertenecen a la misma feria activa).
+    if (!idFeria) {
+      const tareaBase = resumen.tareas[0];
+      if (!tareaBase) {
+        throw new Error("No se pudo determinar la feria activa para crear la tarea.");
+      }
+
+      try {
+        const detalle = await obtenerDetalleTarea(tareaBase.idTarea);
+        idFeria = detalle.idFeria;
+      } catch (error) {
+        // Dejamos un mensaje amigable para el modal
+        console.error(error);
+        throw new Error("No se pudo obtener la feria activa para crear la tarea.");
+      }
+    }
+
+    if (!idFeria) {
+      throw new Error("No se encontró la feria activa para crear la tarea.");
+    }
+
+    await crearTarea({
+      nombre: data.nombre.trim(),
+      descripcion: data.descripcion.trim(),
+      fechaLimite: data.fechaLimite,
+      orden: nextOrden,
+      idFeria,
+    });
+
+    await loadResumen();
+    toast.success("Tarea creada correctamente");
+  };
 
   if (loading) {
     return (
@@ -198,7 +251,7 @@ export default function ProyectosTableWithFilters() {
             {resumen.nombreFeria}
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Semestre {resumen.semestre} - Año {resumen.anio}
+            Semestre {resumen.semestre} · Año {resumen.anio}
           </p>
         </div>
         <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/[0.05] dark:bg-white/[0.03]">
@@ -261,7 +314,7 @@ export default function ProyectosTableWithFilters() {
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex itemscenter gap-2">
             <div className="relative">
               <Button
                 variant="outline"
@@ -315,7 +368,7 @@ export default function ProyectosTableWithFilters() {
               )}
             </div>
 
-            <Button size="xs" onClick={() => console.log("AÃ±adir tarea")}>
+            <Button size="xs" onClick={() => setIsTareaModalOpen(true)}>
               Añadir tarea
             </Button>
           </div>
@@ -398,21 +451,17 @@ export default function ProyectosTableWithFilters() {
                 paginatedTareas.map((tarea: TareaResumenFeria) => (
                   <TableRow key={tarea.idTarea} className="align-top">
                     {visibleColumns.orden && (
-                      <TableCell
-                        className="px-5 py-4 text-sm font-semibold text-gray-900 dark:text-white"
-                      >
+                      <TableCell className="px-5 py-4 text-sm font-semibold text-gray-900 dark:text-white">
                         #{tarea.orden}
                       </TableCell>
                     )}
                     {visibleColumns.nombre && (
-                      <TableCell className="px-5 py-4" >
+                      <TableCell className="px-5 py-4">
                         <p className="font-semibold text-gray-900 dark:text-white">{tarea.nombre}</p>
                       </TableCell>
                     )}
                     {visibleColumns.descripcion && (
-                      <TableCell
-                        className="px-5 py-4 text-sm text-gray-600 dark:text-gray-300"
-                      >
+                      <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-300">
                         {tarea.descripcion}
                       </TableCell>
                     )}
@@ -433,15 +482,12 @@ export default function ProyectosTableWithFilters() {
                       </TableCell>
                     )}
                     {visibleColumns.fechaLimite && (
-                      <TableCell
-                        className="px-5 py-4 text-sm text-gray-600 dark:text-gray-300"
-
-                      >
+                      <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-300">
                         {formatDate(tarea.fechaLimite)}
                       </TableCell>
                     )}
                     {visibleColumns.acciones && (
-                      <TableCell className="px-5 py-4 text-start" >
+                      <TableCell className="px-5 py-4 text-start">
                         <div className="flex justify-start">
                           <Button
                             variant="primary"
@@ -461,7 +507,7 @@ export default function ProyectosTableWithFilters() {
         </div>
       </div>
 
-      {/* PaginaciÃ³n */}
+      {/* Paginación */}
       <div className="flex flex-col items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-white/[0.05] dark:bg-white/[0.03] sm:flex-row">
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-600 dark:text-gray-400">Rows per page:</span>
@@ -590,9 +636,14 @@ export default function ProyectosTableWithFilters() {
           </button>
         </div>
       </div>
+
+      {/* Modal de Añadir Tarea */}
+      <TareaModal
+        isOpen={isTareaModalOpen}
+        onClose={() => setIsTareaModalOpen(false)}
+        onSubmit={handleCrearTarea}
+        nextOrden={nextOrden}
+      />
     </div>
   );
 }
-
-
-

@@ -37,6 +37,14 @@ export interface TareaDetalle {
   proyectos: ProyectoRevision[];
 }
 
+export interface CrearTareaPayload {
+  nombre: string;
+  descripcion: string;
+  fechaLimite: string;
+  orden: number;
+  idFeria: string;
+}
+
 interface TareasInscripcionResponse {
   success: boolean;
   message: string;
@@ -59,4 +67,8 @@ export const obtenerTareasInscripcion = async (): Promise<Tarea[]> => {
 export const obtenerDetalleTarea = async (idTarea: string): Promise<TareaDetalle> => {
   const response = await api.get<TareaDetalleResponse>(`/tareas/${idTarea}/detalle`);
   return response.data.message;
+};
+
+export const crearTarea = async (payload: CrearTareaPayload): Promise<void> => {
+  await api.post("/tareas", payload);
 };
