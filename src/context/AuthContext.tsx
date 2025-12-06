@@ -8,6 +8,7 @@ interface DecodedToken {
   idUsuario: string;
   correo: string;
   nombre: string;
+  apellido?: string;
   iniciales: string;
   fotoPerfil: string | null;
   rol: string;

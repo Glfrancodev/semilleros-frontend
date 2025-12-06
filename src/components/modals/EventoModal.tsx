@@ -1,0 +1,311 @@
+import { useState, useEffect } from "react";
+import { Evento } from "../../services/eventoService";
+import Button from "../ui/button/Button";
+
+interface EventoModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: EventoFormData) => Promise<void>;
+  evento?: Evento | null;
+  title: string;
+}
+
+export interface EventoFormData {
+  nombre: string;
+  descripcion: string;
+  fechaProgramada: string;
+  estaActivo: boolean;
+}
+
+export default function EventoModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  evento,
+  title,
+}: EventoModalProps) {
+  const [formData, setFormData] = useState<EventoFormData>({
+    nombre: "",
+    descripcion: "",
+    fechaProgramada: "",
+    estaActivo: true,
+  });
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Partial<EventoFormData>>({});
+  const [serverError, setServerError] = useState<string | null>(null);
+
+  // Cargar datos del evento si es edición
+  useEffect(() => {
+    if (evento) {
+      // Convertir la fecha ISO a formato datetime-local (YYYY-MM-DDTHH:mm)
+      const fechaProgramada = evento.fechaProgramada 
+        ? new Date(evento.fechaProgramada).toISOString().slice(0, 16)
+        : "";
+      
+      setFormData({
+        nombre: evento.nombre,
+        descripcion: evento.descripcion || "",
+        fechaProgramada: fechaProgramada,
+        estaActivo: evento.estaActivo,
+      });
+    } else {
+      setFormData({
+        nombre: "",
+        descripcion: "",
+        fechaProgramada: "",
+        estaActivo: true,
+      });
+    }
+  }, [evento]);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+    // Limpiar error del campo
+    if (errors[name as keyof EventoFormData]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: undefined,
+      }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Partial<EventoFormData> = {};
+
+    if (!formData.nombre.trim()) newErrors.nombre = "Nombre es requerido";
+    if (!formData.fechaProgramada) newErrors.fechaProgramada = "Fecha programada es requerida";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) return;
+
+    setLoading(true);
+    setServerError(null);
+    try {
+      await onSubmit(formData);
+      onClose();
+      // Resetear formulario
+      setFormData({
+        nombre: "",
+        descripcion: "",
+        fechaProgramada: "",
+        estaActivo: true,
+      });
+      setErrors({});
+      setServerError(null);
+    } catch (error: any) {
+      console.error("Error al guardar evento:", error);
+      const errorMessage = error?.message || "Error al guardar evento. Por favor, intente nuevamente.";
+      setServerError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/50"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className="relative z-[1000000] w-full max-w-md max-h-[90vh] overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-gray-200 p-6 dark:border-gray-700">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            {title}
+          </h2>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+          >
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6">
+          {/* Error del servidor */}
+          {serverError && (
+            <div className="mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+              <svg
+                className="h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                  {serverError}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setServerError(null)}
+                className="flex-shrink-0 rounded-lg p-1 text-red-600 transition-colors hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/40"
+              >
+                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fillRule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            </div>
+          )}
+
+          <div className="space-y-6">
+            {/* Nombre */}
+            <div>
+              <label
+                htmlFor="nombre"
+                className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Nombre <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="nombre"
+                name="nombre"
+                value={formData.nombre}
+                onChange={handleChange}
+                className={`w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${
+                  errors.nombre
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                }`}
+                placeholder="Ingrese el nombre del evento"
+              />
+              {errors.nombre && (
+                <p className="mt-1 text-sm text-red-500">{errors.nombre}</p>
+              )}
+            </div>
+
+            {/* Descripción */}
+            <div>
+              <label
+                htmlFor="descripcion"
+                className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Descripción
+              </label>
+              <textarea
+                id="descripcion"
+                name="descripcion"
+                value={formData.descripcion}
+                onChange={handleChange}
+                rows={3}
+                className={`w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${
+                  errors.descripcion
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                }`}
+                placeholder="Ingrese la descripción del evento"
+              />
+              {errors.descripcion && (
+                <p className="mt-1 text-sm text-red-500">{errors.descripcion}</p>
+              )}
+            </div>
+
+            {/* Fecha Programada */}
+            <div>
+              <label
+                htmlFor="fechaProgramada"
+                className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Fecha Programada <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="datetime-local"
+                id="fechaProgramada"
+                name="fechaProgramada"
+                value={formData.fechaProgramada}
+                onChange={handleChange}
+                className={`w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${
+                  errors.fechaProgramada
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                }`}
+              />
+              {errors.fechaProgramada && (
+                <p className="mt-1 text-sm text-red-500">{errors.fechaProgramada}</p>
+              )}
+            </div>
+
+            {/* Estado Activo */}
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="estaActivo"
+                name="estaActivo"
+                checked={formData.estaActivo}
+                onChange={handleChange}
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+              />
+              <label
+                htmlFor="estaActivo"
+                className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Evento Activo
+              </label>
+            </div>
+          </div>
+
+          {/* Botones */}
+          <div className="mt-6 flex justify-end gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={loading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={loading}
+            >
+              {loading ? "Guardando..." : evento ? "Actualizar" : "Crear"}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

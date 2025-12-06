@@ -11,6 +11,12 @@ import ProfilePage from "./features/profile/pages/ProfilePage";
 import UsuariosPage from "./features/admin/pages/UsuariosPage";
 import ProyectoPage from "./features/admin/pages/ProyectoPage";
 import TareasDetallePage from "./features/admin/pages/TareasDetallePage";
+import CategoriasPage from "./features/admin/pages/CategoriasPage";
+import AreasPage from "./features/admin/pages/AreasPage";
+import EventosPage from "./features/admin/pages/EventosPage";
+import FeriasPage from "./features/admin/pages/FeriasPage";
+import SemestresPage from "./features/admin/pages/SemestresPage";
+import MateriasPage from "./features/admin/pages/MateriasPage";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ROLES } from "./constants/roles";
 
@@ -22,7 +28,8 @@ import MisProyectosPage from "./features/estudiante/pages/MisProyectosPage";
 import ConvocatoriasPage from "./features/estudiante/pages/ConvocatoriasPage";
 import ProyectoDetallePage from "./features/estudiante/pages/ProyectoDetallePage";
 import DocumentoEditorPage from "./features/estudiante/pages/DocumentoEditorPage";
-import LandingPage from "./LandingPage";
+import NewLandingPage from "./NewLandingPage";
+import ReunionPage from "./pages/ReunionPage";
 
 
 // Ruta privada: solo permite acceso si hay token
@@ -67,7 +74,7 @@ export default function App() {
             path="/"
             element={
               <PublicRoute>
-                <LandingPage />
+                <NewLandingPage />
               </PublicRoute>
             }
           />
@@ -81,6 +88,7 @@ export default function App() {
           />
 
           {/* Rutas públicas adicionales */}
+          <Route path="/reunion/:proyectoId" element={<ReunionPage />} />
           <Route path="/estudiante/proyectos/:idProyecto/documento" element={<DocumentoEditorPage />} />
           <Route element={<AppLayout />}>
             <Route path="/estudiante/proyectos/:idProyecto" element={<ProyectoDetallePage />} />
@@ -98,6 +106,12 @@ export default function App() {
               <Route path="/proyectos" element={<ProyectoPage />} />
               <Route path="/admin/proyectos/:idProyecto" element={<ProyectoDetallePage />} />
               <Route path="/proyectos/tareas/:idTarea" element={<TareasDetallePage />} />
+              <Route path="/categorias" element={<CategoriasPage />} />
+              <Route path="/areas" element={<AreasPage />} />
+              <Route path="/eventos" element={<EventosPage />} />
+              <Route path="/ferias" element={<FeriasPage />} />
+              <Route path="/semestres" element={<SemestresPage />} />
+              <Route path="/materias/:idSemestre" element={<MateriasPage />} />
               
               {/* Rutas de Estudiante */}
               <Route path="/estudiante/convocatorias" element={<ConvocatoriasPage />} />

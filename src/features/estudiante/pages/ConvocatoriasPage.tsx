@@ -36,7 +36,7 @@ export default function ConvocatoriasPage() {
       setLoadingEventos(true);
       setErrorEventos(null);
       const data = await obtenerEventos();
-      setEventos(data);
+      setEventos(data.eventos);
     } catch (err: any) {
       setErrorEventos(err.response?.data?.message || "Error al cargar los eventos");
     } finally {

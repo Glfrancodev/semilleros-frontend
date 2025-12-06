@@ -50,9 +50,11 @@ export default function UsuariosTableSimple({
   const [openActionsDropdown, setOpenActionsDropdown] = useState<string | null>(null);
   const [socialDropdownPosition, setSocialDropdownPosition] = useState<{ top: number; right: number } | null>(null);
   const [actionsDropdownPosition, setActionsDropdownPosition] = useState<{ top: number; right: number } | null>(null);
+  const [settingsDropdownPosition, setSettingsDropdownPosition] = useState<{ top: number; right: number } | null>(null);
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
   const socialButtonRef = useRef<HTMLButtonElement>(null);
   const actionsButtonRef = useRef<HTMLButtonElement>(null);
+  const settingsButtonRef = useRef<HTMLDivElement>(null);
 
   const handleImageError = (idUsuario: string) => {
     setImageErrors(prev => new Set(prev).add(idUsuario));
@@ -88,16 +90,28 @@ export default function UsuariosTableSimple({
     }
   }, [openActionsDropdown]);
 
+  // Calcular posición del dropdown de settings
+  useEffect(() => {
+    if (showColumnSettings && settingsButtonRef.current) {
+      const rect = settingsButtonRef.current.getBoundingClientRect();
+      setSettingsDropdownPosition({
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right,
+      });
+    }
+  }, [showColumnSettings]);
+
   // Cerrar dropdowns al hacer scroll
   useEffect(() => {
     const handleScroll = () => {
       if (openSocialDropdown) setOpenSocialDropdown(null);
       if (openActionsDropdown) setOpenActionsDropdown(null);
+      if (showColumnSettings) onToggleColumnSettings();
     };
 
     window.addEventListener('scroll', handleScroll, true);
     return () => window.removeEventListener('scroll', handleScroll, true);
-  }, [openSocialDropdown, openActionsDropdown]);
+  }, [openSocialDropdown, openActionsDropdown, showColumnSettings, onToggleColumnSettings]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
@@ -156,7 +170,7 @@ export default function UsuariosTableSimple({
         {/* Botones de acción */}
         <div className="flex items-center gap-2">
           {/* Botón Table Settings */}
-          <div className="relative">
+          <div ref={settingsButtonRef}>
             <Button 
               variant="outline" 
               size="xs"
@@ -170,104 +184,6 @@ export default function UsuariosTableSimple({
             >
               Table settings
             </Button>
-          
-          {/* Panel de configuración de columnas */}
-          {showColumnSettings && (
-            <>
-              <div
-                className="fixed inset-0 z-10"
-                onClick={onToggleColumnSettings}
-              />
-              <div className="absolute right-0 z-50 mt-2 w-64 rounded-lg border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-700 dark:bg-gray-800">
-                <div className="mb-3 text-sm font-medium text-gray-900 dark:text-white">
-                  Columnas Visibles
-                </div>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={visibleColumns.usuario}
-                      onChange={() => onToggleColumn('usuario')}
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Usuario (Foto + Nombre)</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={visibleColumns.ci}
-                      onChange={() => onToggleColumn('ci')}
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">CI</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={visibleColumns.correo}
-                      onChange={() => onToggleColumn('correo')}
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Correo</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={visibleColumns.rol}
-                      onChange={() => onToggleColumn('rol')}
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Rol</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={visibleColumns.codigo}
-                      onChange={() => onToggleColumn('codigo')}
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Código</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={visibleColumns.redesSociales}
-                      onChange={() => onToggleColumn('redesSociales')}
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Redes Sociales</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={visibleColumns.bio}
-                      onChange={() => onToggleColumn('bio')}
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Bio</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={visibleColumns.estaActivo}
-                      onChange={() => onToggleColumn('estaActivo')}
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Estado</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={visibleColumns.fechaCreacion}
-                      onChange={() => onToggleColumn('fechaCreacion')}
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Fecha Creación</span>
-                  </label>
-                </div>
-              </div>
-            </>
-          )}
           </div>
           
           {/* Botón Añadir Usuario */}
@@ -285,6 +201,110 @@ export default function UsuariosTableSimple({
           </Button>
         </div>
       </div>
+      
+      {/* Panel de configuración de columnas - Posicionado con fixed */}
+      {showColumnSettings && settingsDropdownPosition && (
+        <>
+          <div
+            className="fixed inset-0 z-10"
+            onClick={onToggleColumnSettings}
+          />
+          <div 
+            className="fixed z-50 w-64 rounded-lg border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+            style={{
+              top: `${settingsDropdownPosition.top}px`,
+              right: `${settingsDropdownPosition.right}px`,
+            }}
+          >
+            <div className="mb-3 text-sm font-medium text-gray-900 dark:text-white">
+              Columnas Visibles
+            </div>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={visibleColumns.usuario}
+                  onChange={() => onToggleColumn('usuario')}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Usuario (Foto + Nombre)</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={visibleColumns.ci}
+                  onChange={() => onToggleColumn('ci')}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">CI</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={visibleColumns.correo}
+                  onChange={() => onToggleColumn('correo')}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Correo</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={visibleColumns.rol}
+                  onChange={() => onToggleColumn('rol')}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Rol</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={visibleColumns.codigo}
+                  onChange={() => onToggleColumn('codigo')}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Código</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={visibleColumns.redesSociales}
+                  onChange={() => onToggleColumn('redesSociales')}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Redes Sociales</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={visibleColumns.bio}
+                  onChange={() => onToggleColumn('bio')}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Bio</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={visibleColumns.estaActivo}
+                  onChange={() => onToggleColumn('estaActivo')}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Estado</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={visibleColumns.fechaCreacion}
+                  onChange={() => onToggleColumn('fechaCreacion')}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Fecha Creación</span>
+              </label>
+            </div>
+          </div>
+        </>
+      )}
       
       {/* Tabla */}
       <div className="max-w-full overflow-x-auto">

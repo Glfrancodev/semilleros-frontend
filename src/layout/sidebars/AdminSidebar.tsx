@@ -40,7 +40,7 @@ const navItems: NavItem[] = [
     icon: <ShootingStarIcon />,
     name: "Actividades",
     subItems: [
-      { name: "Convocatorias", path: "/convocatorias", icon: <BoltIcon /> },
+      { name: "Ferias", path: "/ferias", icon: <BoltIcon /> },
       { name: "Eventos", path: "/eventos", icon: <CalenderIcon /> },
     ],
   },
@@ -48,7 +48,7 @@ const navItems: NavItem[] = [
     icon: <BoxCubeIcon />,
     name: "Organización Académica",
     subItems: [
-      { name: "Materias", path: "/materias", icon: <DocsIcon /> },
+      { name: "Semestres", path: "/semestres", icon: <DocsIcon /> },
       { name: "Áreas", path: "/areas", icon: <GridIcon /> },
       { name: "Categorías", path: "/categorias", icon: <TaskIcon /> },
     ],

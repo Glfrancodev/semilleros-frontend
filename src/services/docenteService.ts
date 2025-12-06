@@ -6,6 +6,11 @@ export interface Docente {
   fechaCreacion: string;
   fechaActualizacion: string;
   idUsuario: string;
+  usuario?: {
+    idUsuario: string;
+    nombre: string;
+    correo: string;
+  };
 }
 
 interface ApiSuccessResponse<T> {
@@ -13,6 +18,21 @@ interface ApiSuccessResponse<T> {
   message: string;
   data: T;
 }
+
+interface ApiListResponse<T> {
+  success: boolean;
+  message: string;
+  data: {
+    count: number;
+    items: T[];
+  };
+}
+
+// Obtener todos los docentes
+export const obtenerDocentes = async (): Promise<Docente[]> => {
+  const response = await api.get<ApiListResponse<Docente>>("/docentes");
+  return response.data.data.items;
+};
 
 // Crear un nuevo docente
 export const crearDocente = async (data: { codigoDocente: string; idUsuario: string }): Promise<Docente> => {

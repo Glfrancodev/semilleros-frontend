@@ -27,6 +27,7 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
   });
   const [isPublico, setIsPublico] = useState<boolean>(proyecto.esPublico ?? false);
   const [esLiderActual, setEsLiderActual] = useState(false);
+  const [esIntegrante, setEsIntegrante] = useState(false);
   const [cambiandoVisibilidad, setCambiandoVisibilidad] = useState(false);
 
   useEffect(() => {
@@ -67,10 +68,16 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
           (integrante: any) =>
             integrante.esLider && integrante.idUsuario && integrante.idUsuario === user?.idUsuario
         );
+        // Verificar si el usuario es integrante del proyecto
+        const esIntegranteProyecto = items.some(
+          (integrante: any) => integrante.idUsuario === user?.idUsuario
+        );
         setEsLiderActual(esLider);
+        setEsIntegrante(esIntegranteProyecto);
       } catch (error) {
         console.error("Error al obtener integrantes para verificar liderazgo:", error);
         setEsLiderActual(false);
+        setEsIntegrante(false);
       }
     };
 
@@ -78,6 +85,7 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
       void verificarLiderazgo();
     } else {
       setEsLiderActual(false);
+      setEsIntegrante(false);
     }
   }, [proyecto.idProyecto, user?.idUsuario]);
 
@@ -123,6 +131,20 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
     } finally {
       setCambiandoVisibilidad(false);
     }
+  };
+
+  const handleUnirseReunion = () => {
+    // Verificar que el usuario sea integrante del proyecto
+    if (!esIntegrante) {
+      toast.error('Solo los integrantes del proyecto pueden acceder a la reunión');
+      return;
+    }
+    
+    // Abrir sala de videollamada en nueva pestaña
+    const userName = user?.nombre ? `${user.nombre}|| ''}`.trim() : 'Usuario';
+    const url = `/reunion/${proyecto.idProyecto}?userName=${encodeURIComponent(userName)}&proyecto=${encodeURIComponent(proyecto.nombre)}`;
+    window.open(url, '_blank');
+    toast.success('Abriendo sala de reunión...');
   };
 
   return (
@@ -208,6 +230,17 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
       >
         Ir al documento
       </Button>
+      
+      {/* Botón Unirse a la reunión - solo para integrantes */}
+      {esIntegrante && (
+        <Button
+          onClick={handleUnirseReunion}
+          className="w-full mt-3"
+        >
+          📹 Unirse a la reunión
+        </Button>
+      )}
+
       {esLiderActual && (
         <Button
           size="sm"

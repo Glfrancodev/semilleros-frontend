@@ -38,3 +38,41 @@ export const obtenerEstudianteActual = async (): Promise<Estudiante> => {
   return response.data.data;
 };
 
+// Interfaz para el perfil destacado del leaderboard
+export interface PerfilDestacado {
+  idEstudiante: string;
+  codigoEstudiante: string;
+  nombreCompleto: string;
+  email: string;
+  redesSociales: {
+    instagram: string | null;
+    linkedin: string | null;
+    github: string | null;
+  };
+  totalProyectos: number;
+  promedioNotas: number;
+  proyectosGanadores: number;
+  posicion: number;
+}
+
+interface ApiResponseLeaderboard {
+  success: boolean;
+  message: string;
+  data: {
+    items: PerfilDestacado[];
+    count: number;
+  };
+}
+
+// Obtener el top de estudiantes destacados
+export const obtenerPerfilesDestacados = async (limite: number = 10): Promise<PerfilDestacado[]> => {
+  const response = await api.get<ApiResponseLeaderboard>(`/estudiantes/leaderboard?limite=${limite}`);
+  const items = response.data?.data?.items || [];
+  
+  // Convertir promedioNotas de string a number si viene como string
+  return items.map(item => ({
+    ...item,
+    promedioNotas: typeof item.promedioNotas === 'string' ? parseFloat(item.promedioNotas) : item.promedioNotas
+  }));
+};
+
