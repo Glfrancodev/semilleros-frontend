@@ -261,35 +261,37 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
         }
       });
 
-      // Manejar stream remoto - CRÍTICO: Este evento se dispara PARA CADA TRACK (audio y video por separado)
+      // CRÍTICO: Manejar tracks remotos - USAR event.streams directamente (documentación oficial WebRTC)
       peerConnection.ontrack = (event) => {
-        console.log(`📥 ¡¡¡ONTRACK DISPARADO!!! Track recibido de ${userId}:`, event.track.kind, '- enabled:', event.track.enabled, '- readyState:', event.track.readyState);
+        console.log(`📥 ¡¡¡ONTRACK DISPARADO!!! de ${userId}:`, {
+          kind: event.track.kind,
+          streams: event.streams.length,
+          trackId: event.track.id,
+          enabled: event.track.enabled
+        });
         
-        // Obtener o crear stream remoto para este usuario
-        let remoteStream = remoteStreamsRef.current.get(userId);
-        if (!remoteStream) {
-          remoteStream = new MediaStream();
-          remoteStreamsRef.current.set(userId, remoteStream);
-          console.log(`🆕 Nuevo MediaStream creado para ${userId}`);
-        }
-        
-        // Agregar el track al stream si no existe ya
-        const existingTrack = remoteStream.getTracks().find(t => t.kind === event.track.kind);
-        if (!existingTrack) {
-          remoteStream.addTrack(event.track);
-          console.log(`✅ Track ${event.track.kind} agregado al MediaStream de ${userId}`);
-          console.log(`📊 MediaStream ahora tiene ${remoteStream.getTracks().length} tracks:`, remoteStream.getTracks().map(t => `${t.kind} (enabled: ${t.enabled})`));
+        // SEGÚN LA DOCUMENTACIÓN OFICIAL: usar event.streams[0] directamente
+        if (event.streams && event.streams[0]) {
+          const remoteStream = event.streams[0];
+          console.log(`🎬 Stream remoto recibido de ${userId}:`, {
+            streamId: remoteStream.id,
+            tracks: remoteStream.getTracks().length,
+            trackTypes: remoteStream.getTracks().map(t => t.kind)
+          });
           
-          // Actualizar el estado con el stream actualizado
+          // Guardar referencia al stream
+          remoteStreamsRef.current.set(userId, remoteStream);
+          
+          // Actualizar estado con el stream completo
           setParticipants((prev) => {
             const updated = prev.map((p) =>
               p.id === userId ? { ...p, stream: remoteStream } : p
             );
-            console.log(`🔄 Estado actualizado - Participante ${userId} ahora tiene stream con ${remoteStream!.getTracks().length} tracks`);
+            console.log(`✅ Participante ${userId} actualizado con stream`);
             return updated;
           });
         } else {
-          console.log(`⚠️ Track ${event.track.kind} ya existe para ${userId}, ignorando`);
+          console.warn(`⚠️ No hay streams en el evento ontrack de ${userId}`);
         }
       };
 
