@@ -337,6 +337,14 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
           }
         } else {
           console.log(`🧊 Todos los ICE candidates enviados para ${userId}`);
+          // Cuando terminan los candidates, verificar receivers
+          setTimeout(() => {
+            const receivers = peerConnection.getReceivers();
+            console.log(`📊 Verificación post-ICE para ${userId}:`, {
+              receivers: receivers.length,
+              tracks: receivers.map(r => r.track ? `${r.track.kind} (id: ${r.track.id})` : 'null')
+            });
+          }, 1000);
         }
       };
 
@@ -419,13 +427,58 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
 
   const handleAnswer = async ({ answer, from }: { answer: RTCSessionDescriptionInit; from: string }) => {
     try {
-      console.log(`📨 Answer recibida de ${from}`);
+      console.log(`📨 Answer recibida de ${from}`, {
+        type: answer.type,
+        hasAudio: answer.sdp?.includes('m=audio'),
+        hasVideo: answer.sdp?.includes('m=video')
+      });
+      
       const peerConnection = peerConnectionsRef.current.get(from);
       if (peerConnection) {
         if (peerConnection.signalingState === 'have-local-offer') {
           console.log(`📝 Estableciendo remote description (answer) para ${from}`);
           await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
           console.log(`✅ Answer procesada correctamente para ${from}`);
+          
+          // Verificar receivers después de establecer remote description
+          setTimeout(() => {
+            const receivers = peerConnection.getReceivers();
+            console.log(`📊 Receivers después de answer de ${from}:`, {
+              count: receivers.length,
+              tracks: receivers.map(r => ({
+                kind: r.track?.kind,
+                id: r.track?.id,
+                enabled: r.track?.enabled,
+                readyState: r.track?.readyState
+              }))
+            });
+            
+            // Si hay receivers pero no se disparó ontrack, forzar manualmente
+            if (receivers.length > 0 && receivers.some(r => r.track)) {
+              console.warn(`⚠️ Forzando procesamiento manual de tracks para ${from}`);
+              const remoteStream = new MediaStream();
+              receivers.forEach(receiver => {
+                if (receiver.track) {
+                  remoteStream.addTrack(receiver.track);
+                  console.log(`➕ Track agregado manualmente: ${receiver.track.kind}`);
+                }
+              });
+              
+              if (remoteStream.getTracks().length > 0) {
+                console.log(`🎬 Stream creado manualmente para ${from}:`, {
+                  tracks: remoteStream.getTracks().length,
+                  active: remoteStream.active
+                });
+                setParticipants((prev) => {
+                  const updated = prev.map((p) =>
+                    p.id === from ? { ...p, stream: remoteStream } : p
+                  );
+                  console.log(`🔄 Participantes actualizados MANUALMENTE:`, updated.map(p => ({ id: p.id, hasStream: !!p.stream })));
+                  return updated;
+                });
+              }
+            }
+          }, 500);
         } else {
           console.warn(`⚠️ Estado de señalización incorrecto para ${from}:`, peerConnection.signalingState);
         }
