@@ -20,12 +20,13 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
-  
+
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
   const remoteVideosRef = useRef<Map<string, HTMLVideoElement>>(new Map());
   const remoteStreamsRef = useRef<Map<string, MediaStream>>(new Map()); // Streams remotos persistentes
+  const iceCandidatesQueue = useRef<Map<string, RTCIceCandidateInit[]>>(new Map()); // Cola de candidatos ICE
   const isInitializedRef = useRef(false); // Bandera para evitar doble inicialización
 
   // Configuración de servidores STUN/TURN
@@ -57,22 +58,22 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
 
   useEffect(() => {
     let isActive = true;
-    
+
     const setup = async () => {
       // Evitar doble inicialización en desarrollo (StrictMode)
       if (isInitializedRef.current) {
         console.log('⚠️ Componente ya inicializado, evitando duplicado');
         return;
       }
-      
+
       if (isActive) {
         isInitializedRef.current = true;
         await initializeCall();
       }
     };
-    
+
     setup();
-    
+
     return () => {
       isActive = false;
       isInitializedRef.current = false;
@@ -123,10 +124,10 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
       let apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
       // Remover /api si existe en la URL
       apiUrl = apiUrl.replace('/api', '');
-      
+
       console.log('🔌 Conectando a Socket.io:', apiUrl);
       console.log('🔑 Token disponible:', !!token);
-      
+
       const newSocket = io(apiUrl, {
         auth: {
           token,
@@ -171,7 +172,7 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
       newSocket.emit('join-video-room', { proyectoId, userName });
     } catch (error: any) {
       console.error('❌ Error al inicializar la llamada:', error);
-      
+
       // Manejar errores específicos de permisos
       if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
         toast.error('Permisos de cámara/micrófono denegados. Por favor, habilítalos en la configuración de tu navegador.');
@@ -184,7 +185,7 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
       } else {
         toast.error(`Error al inicializar videollamada: ${error.message || 'Error desconocido'}`);
       }
-      
+
       // Cerrar y volver
       onClose();
     }
@@ -193,36 +194,38 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
   const handleUserJoined = async ({ userId, userName }: { userId: string; userName: string }) => {
     console.log('Usuario se unió:', userName);
     setParticipants((prev) => [...prev, { id: userId, name: userName }]);
-    
+
     // Crear conexión peer-to-peer con el nuevo usuario
-    await createPeerConnection(userId, true);
+    // FIX: Glare - El usuario existente NO crea oferta, espera a que el nuevo usuario (que recibe participants-list) la inicie
+    await createPeerConnection(userId, false);
   };
 
   const handleUserLeft = ({ userId }: { userId: string }) => {
     console.log('Usuario salió:', userId);
     setParticipants((prev) => prev.filter((p) => p.id !== userId));
-    
+
     // Limpiar stream remoto
     const stream = remoteStreamsRef.current.get(userId);
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
       remoteStreamsRef.current.delete(userId);
     }
-    
+
     // Cerrar conexión con ese usuario
     const peerConnection = peerConnectionsRef.current.get(userId);
     if (peerConnection) {
       peerConnection.close();
       peerConnectionsRef.current.delete(userId);
     }
-    
+
     remoteVideosRef.current.delete(userId);
+    iceCandidatesQueue.current.delete(userId);
   };
 
   const handleParticipantsList = (participantsList: Participant[]) => {
     console.log(`📋 Lista de participantes recibida:`, participantsList.length, participantsList.map(p => p.name));
     setParticipants(participantsList);
-    
+
     // Crear conexiones con usuarios existentes - ELLOS esperan nuestra oferta
     participantsList.forEach((participant) => {
       console.log(`🤝 Creando conexión y enviando oferta a participante existente:`, participant.name);
@@ -233,7 +236,7 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
   const createPeerConnection = async (userId: string, shouldCreateOffer: boolean) => {
     try {
       console.log(`🔗 Creando peer connection con ${userId}, shouldCreateOffer:`, shouldCreateOffer);
-      
+
       // Verificar que tengamos stream local antes de crear la conexión
       if (!localStreamRef.current) {
         console.error('❌ No hay stream local disponible para crear peer connection');
@@ -246,7 +249,7 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
       // Agregar stream local a la conexión
       const tracks = localStreamRef.current.getTracks();
       console.log(`🎥 Agregando ${tracks.length} tracks locales:`, tracks.map(t => `${t.kind} (${t.label}) - enabled: ${t.enabled}`));
-      
+
       tracks.forEach((track) => {
         try {
           peerConnection.addTrack(track, localStreamRef.current!);
@@ -269,7 +272,7 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
           trackId: event.track.id,
           enabled: event.track.enabled
         });
-        
+
         // SEGÚN LA DOCUMENTACIÓN OFICIAL: usar event.streams[0] directamente
         if (event.streams && event.streams[0]) {
           const remoteStream = event.streams[0];
@@ -278,10 +281,10 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
             tracks: remoteStream.getTracks().length,
             trackTypes: remoteStream.getTracks().map(t => t.kind)
           });
-          
+
           // Guardar referencia al stream
           remoteStreamsRef.current.set(userId, remoteStream);
-          
+
           // Actualizar estado con el stream completo
           setParticipants((prev) => {
             const updated = prev.map((p) =>
@@ -356,7 +359,7 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
       if (shouldCreateOffer) {
         console.log(`📤 Creando oferta para ${userId}...`);
         console.log(`📊 Tracks agregados antes de crear oferta:`, peerConnection.getSenders().map(s => s.track ? `${s.track.kind}` : 'null'));
-        
+
         const offer = await peerConnection.createOffer({
           offerToReceiveAudio: true,
           offerToReceiveVideo: true
@@ -366,10 +369,10 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
           sdpHasAudio: offer.sdp?.includes('m=audio'),
           sdpHasVideo: offer.sdp?.includes('m=video')
         });
-        
+
         await peerConnection.setLocalDescription(offer);
         console.log(`✅ Local description establecida, enviando oferta a ${userId}`);
-        
+
         socket?.emit('video-offer', {
           offer,
           to: userId,
@@ -390,15 +393,15 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
         hasAudio: offer.sdp?.includes('m=audio'),
         hasVideo: offer.sdp?.includes('m=video')
       });
-      
+
       let peerConnection = peerConnectionsRef.current.get(from);
-      
+
       // CRÍTICO: Si no existe la conexión, crearla COMPLETAMENTE (con todos los handlers) ANTES de setRemoteDescription
       if (!peerConnection) {
         console.log(`🔨 Peer connection NO existe para ${from} - creando AHORA con todos los handlers`);
         await createPeerConnection(from, false); // Esto configura ontrack ANTES de setRemoteDescription
         peerConnection = peerConnectionsRef.current.get(from);
-        
+
         if (!peerConnection) {
           console.error(`❌ FATAL: No se pudo crear peer connection para ${from}`);
           return;
@@ -408,24 +411,39 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
 
       console.log(`📝 Estableciendo remote description (offer) para ${from}...`);
       console.log(`🎯 ontrack handler existe:`, !!peerConnection.ontrack);
-      
+
       // AHORA sí, con ontrack ya configurado, establecer remote description
       await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
       console.log(`✅ Remote description establecida - ontrack debería dispararse si hay tracks`);
-      
+
+      // FIX: Race Condition - Procesar candidatos ICE en cola
+      const pendingCandidates = iceCandidatesQueue.current.get(from);
+      if (pendingCandidates && pendingCandidates.length > 0) {
+        console.log(`🧊 Procesando ${pendingCandidates.length} candidatos ICE en cola para ${from}`);
+        for (const candidate of pendingCandidates) {
+          try {
+            await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+            console.log(`✅ Candidato ICE en cola agregado para ${from}`);
+          } catch (err) {
+            console.error(`❌ Error al agregar candidato ICE de cola para ${from}:`, err);
+          }
+        }
+        iceCandidatesQueue.current.delete(from);
+      }
+
       console.log(`💬 Creando answer para ${from}...`);
       console.log(`📊 Tracks locales en peer:`, peerConnection.getSenders().map(s => s.track ? `${s.track.kind}` : 'null'));
-      
+
       const answer = await peerConnection.createAnswer();
       console.log(`📝 Answer creada:`, {
         type: answer.type,
         hasAudio: answer.sdp?.includes('m=audio'),
         hasVideo: answer.sdp?.includes('m=video')
       });
-      
+
       await peerConnection.setLocalDescription(answer);
       console.log(`✅ Local description (answer) establecida`);
-      
+
       console.log(`📤 Enviando answer a ${from}`);
       socket?.emit('video-answer', {
         answer,
@@ -444,14 +462,29 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
         hasAudio: answer.sdp?.includes('m=audio'),
         hasVideo: answer.sdp?.includes('m=video')
       });
-      
+
       const peerConnection = peerConnectionsRef.current.get(from);
       if (peerConnection) {
         if (peerConnection.signalingState === 'have-local-offer') {
           console.log(`📝 Estableciendo remote description (answer) para ${from}`);
           await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
           console.log(`✅ Answer procesada correctamente para ${from}`);
-          
+
+          // FIX: Race Condition - Procesar candidatos ICE en cola
+          const pendingCandidates = iceCandidatesQueue.current.get(from);
+          if (pendingCandidates && pendingCandidates.length > 0) {
+            console.log(`🧊 Procesando ${pendingCandidates.length} candidatos ICE en cola para ${from} (Answer)`);
+            for (const candidate of pendingCandidates) {
+              try {
+                await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+                console.log(`✅ Candidato ICE en cola agregado para ${from}`);
+              } catch (err) {
+                console.error(`❌ Error al agregar candidato ICE de cola para ${from}:`, err);
+              }
+            }
+            iceCandidatesQueue.current.delete(from);
+          }
+
           // Verificar receivers después de establecer remote description
           setTimeout(() => {
             const receivers = peerConnection.getReceivers();
@@ -464,7 +497,7 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
                 readyState: r.track?.readyState
               }))
             });
-            
+
             // Si hay receivers pero no se disparó ontrack, forzar manualmente
             if (receivers.length > 0 && receivers.some(r => r.track)) {
               console.warn(`⚠️ Forzando procesamiento manual de tracks para ${from}`);
@@ -475,7 +508,7 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
                   console.log(`➕ Track agregado manualmente: ${receiver.track.kind}`);
                 }
               });
-              
+
               if (remoteStream.getTracks().length > 0) {
                 console.log(`🎬 Stream creado manualmente para ${from}:`, {
                   tracks: remoteStream.getTracks().length,
@@ -511,7 +544,11 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
           await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
           console.log(`✅ ICE Candidate agregado para ${from}`);
         } else {
-          console.warn(`⚠️ Esperando remote description para agregar ICE candidate de ${from}`);
+          console.warn(`⚠️ Remote description no lista para ${from} - Encolando candidato ICE`);
+          // FIX: Race Condition - Encolar candidato
+          const currentQueue = iceCandidatesQueue.current.get(from) || [];
+          currentQueue.push(candidate);
+          iceCandidatesQueue.current.set(from, currentQueue);
         }
       } else {
         console.error(`❌ No se encontró peer connection para agregar ICE candidate de ${from}`);
@@ -543,7 +580,7 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
 
   const cleanup = () => {
     console.log('🧹 Limpiando recursos de videollamada...');
-    
+
     // Detener todos los tracks locales
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((track) => {
@@ -552,21 +589,22 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
       });
       localStreamRef.current = null;
     }
-    
+
     // Limpiar streams remotos
     remoteStreamsRef.current.forEach((stream, userId) => {
       stream.getTracks().forEach(track => track.stop());
       console.log('⏹️ Stream remoto detenido:', userId);
     });
     remoteStreamsRef.current.clear();
-    
+    iceCandidatesQueue.current.clear();
+
     // Cerrar todas las conexiones peer
     peerConnectionsRef.current.forEach((pc, userId) => {
       console.log('🔌 Cerrando conexión peer con:', userId);
       pc.close();
     });
     peerConnectionsRef.current.clear();
-    
+
     // Desconectar socket
     if (socket) {
       console.log('👋 Saliendo de la sala:', proyectoId);
@@ -655,9 +693,8 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
       <div className="bg-gray-800 p-4 flex items-center justify-center gap-4">
         <button
           onClick={toggleAudio}
-          className={`p-4 rounded-full transition-colors ${
-            isAudioEnabled ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-700'
-          }`}
+          className={`p-4 rounded-full transition-colors ${isAudioEnabled ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-700'
+            }`}
           title={isAudioEnabled ? 'Silenciar' : 'Activar audio'}
         >
           <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -671,9 +708,8 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
 
         <button
           onClick={toggleVideo}
-          className={`p-4 rounded-full transition-colors ${
-            isVideoEnabled ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-700'
-          }`}
+          className={`p-4 rounded-full transition-colors ${isVideoEnabled ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-700'
+            }`}
           title={isVideoEnabled ? 'Desactivar cámara' : 'Activar cámara'}
         >
           <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
