@@ -25,6 +25,7 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
   const localStreamRef = useRef<MediaStream | null>(null);
   const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
   const remoteVideosRef = useRef<Map<string, HTMLVideoElement>>(new Map());
+  const remoteStreamsRef = useRef<Map<string, MediaStream>>(new Map()); // Streams remotos persistentes
   const isInitializedRef = useRef(false); // Bandera para evitar doble inicialización
 
   // Configuración de servidores STUN/TURN
@@ -201,6 +202,13 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
     console.log('Usuario salió:', userId);
     setParticipants((prev) => prev.filter((p) => p.id !== userId));
     
+    // Limpiar stream remoto
+    const stream = remoteStreamsRef.current.get(userId);
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      remoteStreamsRef.current.delete(userId);
+    }
+    
     // Cerrar conexión con ese usuario
     const peerConnection = peerConnectionsRef.current.get(userId);
     if (peerConnection) {
@@ -253,41 +261,35 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
         }
       });
 
-      // Manejar stream remoto - CRÍTICO: Este evento se dispara cuando el peer remoto envía tracks
+      // Manejar stream remoto - CRÍTICO: Este evento se dispara PARA CADA TRACK (audio y video por separado)
       peerConnection.ontrack = (event) => {
-        console.log(`📥 ¡¡¡EVENTO ONTRACK DISPARADO!!! Track recibido de ${userId}:`, {
-          kind: event.track.kind,
-          label: event.track.label,
-          enabled: event.track.enabled,
-          muted: event.track.muted,
-          readyState: event.track.readyState,
-          streams: event.streams.length
-        });
+        console.log(`📥 Track recibido de ${userId}:`, event.track.kind, '- enabled:', event.track.enabled, '- readyState:', event.track.readyState);
         
-        if (event.streams && event.streams[0]) {
-          const remoteStream = event.streams[0];
-          console.log(`🎬 Stream remoto completo de ${userId}:`, {
-            id: remoteStream.id,
-            active: remoteStream.active,
-            tracks: remoteStream.getTracks().map(t => ({
-              kind: t.kind,
-              label: t.label,
-              enabled: t.enabled,
-              muted: t.muted,
-              readyState: t.readyState
-            }))
-          });
+        // Obtener o crear stream remoto para este usuario
+        let remoteStream = remoteStreamsRef.current.get(userId);
+        if (!remoteStream) {
+          remoteStream = new MediaStream();
+          remoteStreamsRef.current.set(userId, remoteStream);
+          console.log(`🆕 Nuevo stream creado para ${userId}`);
+        }
+        
+        // Agregar el track al stream si no existe ya
+        const existingTrack = remoteStream.getTracks().find(t => t.kind === event.track.kind);
+        if (!existingTrack) {
+          remoteStream.addTrack(event.track);
+          console.log(`✅ Track ${event.track.kind} agregado al stream de ${userId}`);
+          console.log(`📊 Stream ahora tiene ${remoteStream.getTracks().length} tracks:`, remoteStream.getTracks().map(t => t.kind));
           
-          // CRÍTICO: Actualizar estado inmediatamente
+          // Actualizar el estado con el stream actualizado
           setParticipants((prev) => {
             const updated = prev.map((p) =>
               p.id === userId ? { ...p, stream: remoteStream } : p
             );
-            console.log(`🔄 Participantes actualizados con stream de ${userId}:`, updated.map(p => ({ id: p.id, hasStream: !!p.stream })));
+            console.log(`🔄 Participante ${userId} actualizado - tiene ${remoteStream!.getTracks().length} tracks`);
             return updated;
           });
         } else {
-          console.warn('⚠️ No hay stream en el evento ontrack de', userId);
+          console.log(`⚠️ Track ${event.track.kind} ya existe para ${userId}, ignorando`);
         }
       };
 
@@ -541,6 +543,13 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
       localStreamRef.current = null;
     }
     
+    // Limpiar streams remotos
+    remoteStreamsRef.current.forEach((stream, userId) => {
+      stream.getTracks().forEach(track => track.stop());
+      console.log('⏹️ Stream remoto detenido:', userId);
+    });
+    remoteStreamsRef.current.clear();
+    
     // Cerrar todas las conexiones peer
     peerConnectionsRef.current.forEach((pc, userId) => {
       console.log('🔌 Cerrando conexión peer con:', userId);
@@ -601,26 +610,11 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
             <video
               ref={(el) => {
                 if (el && participant.stream) {
-                  console.log(`🎬 Asignando stream remoto a video element para ${participant.name}:`, {
-                    streamId: participant.stream.id,
-                    active: participant.stream.active,
-                    tracks: participant.stream.getTracks().map(t => ({
-                      kind: t.kind,
-                      enabled: t.enabled,
-                      readyState: t.readyState,
-                      muted: t.muted
-                    }))
-                  });
                   el.srcObject = participant.stream;
-                  
-                  // Forzar reproducción después de asignar
                   el.play().catch(err => {
                     console.error(`❌ Error al reproducir video de ${participant.name}:`, err);
                   });
-                  
                   remoteVideosRef.current.set(participant.id, el);
-                } else if (el && !participant.stream) {
-                  console.warn(`⚠️ No hay stream para ${participant.name}`);
                 }
               }}
               autoPlay
@@ -631,9 +625,15 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
               {participant.name}
             </div>
             {!participant.stream && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
-                <div className="text-white text-center">
-                  <div className="animate-pulse">Esperando video...</div>
+              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800">
+                <div className="text-center px-4">
+                  <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-700 flex items-center justify-center">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <div className="text-white text-sm font-medium mb-1">{participant.name}</div>
+                  <div className="text-gray-400 text-xs animate-pulse">Conectando...</div>
                 </div>
               </div>
             )}
