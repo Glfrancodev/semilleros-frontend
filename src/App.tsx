@@ -63,7 +63,14 @@ export default function App() {
         <ScrollToTop />
         <Routes>
           {/* Rutas públicas */}
-          <Route path="/" element={<LandingPage />} />
+          <Route
+            path="/"
+            element={
+              <PublicRoute>
+                <LandingPage />
+              </PublicRoute>
+            }
+          />
           <Route
             path="/login"
             element={

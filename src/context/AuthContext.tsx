@@ -88,7 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Redirigir según el rol del usuario
         switch (decoded.rol) {
           case ROLES.ADMIN:
-            navigate("/");
+            navigate("/dashboard");
             break;
           case ROLES.DOCENTE:
             navigate("/docente/dashboard");
@@ -97,7 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             navigate("/estudiante/convocatorias");
             break;
           default:
-            navigate("/");
+            navigate("/dashboard");
         }
       } catch (decodeError) {
         console.error("Error al decodificar el token:", decodeError);
@@ -136,9 +136,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // 🔹 LOGOUT
   const logout = () => {
     localStorage.removeItem("token");
+    delete api.defaults.headers.common["Authorization"];
     setUser(null);
     setToken(null);
-    navigate("/signin");
+    // Dar tiempo para que el estado se actualice antes de navegar
+    setTimeout(() => {
+      navigate("/", { replace: true });
+    }, 0);
   };
 
   // 🔹 UPDATE TOKEN (útil al actualizar foto de perfil)
