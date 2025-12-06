@@ -263,29 +263,29 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
 
       // Manejar stream remoto - CRÍTICO: Este evento se dispara PARA CADA TRACK (audio y video por separado)
       peerConnection.ontrack = (event) => {
-        console.log(`📥 Track recibido de ${userId}:`, event.track.kind, '- enabled:', event.track.enabled, '- readyState:', event.track.readyState);
+        console.log(`📥 ¡¡¡ONTRACK DISPARADO!!! Track recibido de ${userId}:`, event.track.kind, '- enabled:', event.track.enabled, '- readyState:', event.track.readyState);
         
         // Obtener o crear stream remoto para este usuario
         let remoteStream = remoteStreamsRef.current.get(userId);
         if (!remoteStream) {
           remoteStream = new MediaStream();
           remoteStreamsRef.current.set(userId, remoteStream);
-          console.log(`🆕 Nuevo stream creado para ${userId}`);
+          console.log(`🆕 Nuevo MediaStream creado para ${userId}`);
         }
         
         // Agregar el track al stream si no existe ya
         const existingTrack = remoteStream.getTracks().find(t => t.kind === event.track.kind);
         if (!existingTrack) {
           remoteStream.addTrack(event.track);
-          console.log(`✅ Track ${event.track.kind} agregado al stream de ${userId}`);
-          console.log(`📊 Stream ahora tiene ${remoteStream.getTracks().length} tracks:`, remoteStream.getTracks().map(t => t.kind));
+          console.log(`✅ Track ${event.track.kind} agregado al MediaStream de ${userId}`);
+          console.log(`📊 MediaStream ahora tiene ${remoteStream.getTracks().length} tracks:`, remoteStream.getTracks().map(t => `${t.kind} (enabled: ${t.enabled})`));
           
           // Actualizar el estado con el stream actualizado
           setParticipants((prev) => {
             const updated = prev.map((p) =>
               p.id === userId ? { ...p, stream: remoteStream } : p
             );
-            console.log(`🔄 Participante ${userId} actualizado - tiene ${remoteStream!.getTracks().length} tracks`);
+            console.log(`🔄 Estado actualizado - Participante ${userId} ahora tiene stream con ${remoteStream!.getTracks().length} tracks`);
             return updated;
           });
         } else {
@@ -383,7 +383,7 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
 
   const handleOffer = async ({ offer, from }: { offer: RTCSessionDescriptionInit; from: string }) => {
     try {
-      console.log(`📨 Oferta recibida de ${from}`, {
+      console.log(`📨 ===== OFERTA RECIBIDA DE ${from} =====`, {
         type: offer.type,
         hasAudio: offer.sdp?.includes('m=audio'),
         hasVideo: offer.sdp?.includes('m=video')
@@ -391,37 +391,45 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
       
       let peerConnection = peerConnectionsRef.current.get(from);
       
-      // Si no existe la conexión, crearla PRIMERO
+      // CRÍTICO: Si no existe la conexión, crearla COMPLETAMENTE (con todos los handlers) ANTES de setRemoteDescription
       if (!peerConnection) {
-        console.log(`🔨 Creando nueva peer connection para responder a ${from}`);
-        await createPeerConnection(from, false);
+        console.log(`🔨 Peer connection NO existe para ${from} - creando AHORA con todos los handlers`);
+        await createPeerConnection(from, false); // Esto configura ontrack ANTES de setRemoteDescription
         peerConnection = peerConnectionsRef.current.get(from);
+        
+        if (!peerConnection) {
+          console.error(`❌ FATAL: No se pudo crear peer connection para ${from}`);
+          return;
+        }
+        console.log(`✅ Peer connection creada exitosamente para ${from} con ontrack ya configurado`);
       }
 
-      if (peerConnection) {
-        console.log(`📝 Estableciendo remote description para ${from}`);
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-        
-        console.log(`💬 Creando answer para ${from}`);
-        console.log(`📊 Tracks en peer antes de answer:`, peerConnection.getSenders().map(s => s.track ? `${s.track.kind}` : 'null'));
-        
-        const answer = await peerConnection.createAnswer();
-        console.log(`📝 Answer creada:`, {
-          type: answer.type,
-          hasAudio: answer.sdp?.includes('m=audio'),
-          hasVideo: answer.sdp?.includes('m=video')
-        });
-        
-        await peerConnection.setLocalDescription(answer);
-        
-        console.log(`📤 Enviando answer a ${from}`);
-        socket?.emit('video-answer', {
-          answer,
-          to: from,
-        });
-      } else {
-        console.error(`❌ No se pudo obtener peer connection para ${from}`);
-      }
+      console.log(`📝 Estableciendo remote description (offer) para ${from}...`);
+      console.log(`🎯 ontrack handler existe:`, !!peerConnection.ontrack);
+      
+      // AHORA sí, con ontrack ya configurado, establecer remote description
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+      console.log(`✅ Remote description establecida - ontrack debería dispararse si hay tracks`);
+      
+      console.log(`💬 Creando answer para ${from}...`);
+      console.log(`📊 Tracks locales en peer:`, peerConnection.getSenders().map(s => s.track ? `${s.track.kind}` : 'null'));
+      
+      const answer = await peerConnection.createAnswer();
+      console.log(`📝 Answer creada:`, {
+        type: answer.type,
+        hasAudio: answer.sdp?.includes('m=audio'),
+        hasVideo: answer.sdp?.includes('m=video')
+      });
+      
+      await peerConnection.setLocalDescription(answer);
+      console.log(`✅ Local description (answer) establecida`);
+      
+      console.log(`📤 Enviando answer a ${from}`);
+      socket?.emit('video-answer', {
+        answer,
+        to: from,
+      });
+      console.log(`📨 ===== ANSWER ENVIADA A ${from} =====`);
     } catch (error) {
       console.error('❌ Error al manejar oferta:', error);
     }
