@@ -17,6 +17,7 @@ interface Participant {
 
 export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, onClose }: VideoCallRoomProps) {
   const [socket, setSocket] = useState<Socket | null>(null);
+  const socketRef = useRef<Socket | null>(null); // Ref para acceso inmediato en callbacks
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
@@ -136,6 +137,7 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
       });
 
       setSocket(newSocket);
+      socketRef.current = newSocket;
 
       // Eventos de conexión
       newSocket.on('connect', () => {
@@ -243,6 +245,14 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
         return;
       }
 
+      // FIX: Evitar sobrescribir conexión existente (Race Condition: Offer llega antes que UserJoined)
+      if (peerConnectionsRef.current.has(userId)) {
+        console.log(`⚠️ Peer connection ya existe para ${userId} - reutilizando conexión existente`);
+        // Si deberíamos crear oferta pero ya existe la conexión, verificamos si necesitamos renegociar
+        // Por ahora, asumimos que si existe, está siendo manejada
+        return;
+      }
+
       const peerConnection = new RTCPeerConnection(iceServers);
       peerConnectionsRef.current.set(userId, peerConnection);
 
@@ -336,8 +346,8 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
             address: event.candidate.address,
             relatedAddress: event.candidate.relatedAddress
           });
-          if (socket) {
-            socket.emit('video-ice-candidate', {
+          if (socketRef.current) {
+            socketRef.current.emit('video-ice-candidate', {
               candidate: event.candidate,
               to: userId,
             });
@@ -373,7 +383,7 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
         await peerConnection.setLocalDescription(offer);
         console.log(`✅ Local description establecida, enviando oferta a ${userId}`);
 
-        socket?.emit('video-offer', {
+        socketRef.current?.emit('video-offer', {
           offer,
           to: userId,
         });
@@ -445,7 +455,7 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
       console.log(`✅ Local description (answer) establecida`);
 
       console.log(`📤 Enviando answer a ${from}`);
-      socket?.emit('video-answer', {
+      socketRef.current?.emit('video-answer', {
         answer,
         to: from,
       });
@@ -606,11 +616,12 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
     peerConnectionsRef.current.clear();
 
     // Desconectar socket
-    if (socket) {
+    if (socketRef.current) {
       console.log('👋 Saliendo de la sala:', proyectoId);
-      socket.emit('leave-video-room', { proyectoId });
-      socket.off(); // Remover todos los listeners
-      socket.disconnect();
+      socketRef.current.emit('leave-video-room', { proyectoId });
+      socketRef.current.off(); // Remover todos los listeners
+      socketRef.current.disconnect();
+      socketRef.current = null;
       setSocket(null);
     }
   };
