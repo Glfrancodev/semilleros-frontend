@@ -253,9 +253,9 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
         }
       });
 
-      // Manejar stream remoto
+      // Manejar stream remoto - CRÍTICO: Este evento se dispara cuando el peer remoto envía tracks
       peerConnection.ontrack = (event) => {
-        console.log(`📥 Track recibido de ${userId}:`, {
+        console.log(`📥 ¡¡¡EVENTO ONTRACK DISPARADO!!! Track recibido de ${userId}:`, {
           kind: event.track.kind,
           label: event.track.label,
           enabled: event.track.enabled,
@@ -278,13 +278,16 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
             }))
           });
           
-          setParticipants((prev) =>
-            prev.map((p) =>
+          // CRÍTICO: Actualizar estado inmediatamente
+          setParticipants((prev) => {
+            const updated = prev.map((p) =>
               p.id === userId ? { ...p, stream: remoteStream } : p
-            )
-          );
+            );
+            console.log(`🔄 Participantes actualizados con stream de ${userId}:`, updated.map(p => ({ id: p.id, hasStream: !!p.stream })));
+            return updated;
+          });
         } else {
-          console.warn('⚠️ No hay stream en el evento ontrack');
+          console.warn('⚠️ No hay stream en el evento ontrack de', userId);
         }
       };
 
@@ -295,7 +298,14 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
           console.error('❌ Conexión fallida con', userId);
           toast.error(`Conexión perdida con ${userId}`);
         } else if (peerConnection.connectionState === 'connected') {
-          console.log('✅ Conexión establecida con', userId);
+          console.log('✅ ¡¡¡CONEXIÓN ESTABLECIDA CON!!!', userId);
+          console.log('📊 Estado actual de la peer connection:', {
+            connectionState: peerConnection.connectionState,
+            iceConnectionState: peerConnection.iceConnectionState,
+            signalingState: peerConnection.signalingState,
+            localTracks: peerConnection.getSenders().map(s => s.track ? `${s.track.kind} (enabled: ${s.track.enabled})` : 'no track'),
+            remoteTracks: peerConnection.getReceivers().map(r => r.track ? `${r.track.kind} (enabled: ${r.track.enabled})` : 'no track')
+          });
           toast.success(`Conectado con ${userId}`);
         }
       };
@@ -333,8 +343,18 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
       // Si somos el iniciador, crear oferta
       if (shouldCreateOffer) {
         console.log(`📤 Creando oferta para ${userId}...`);
-        const offer = await peerConnection.createOffer();
-        console.log(`📝 Oferta creada, estableciendo local description...`);
+        console.log(`📊 Tracks agregados antes de crear oferta:`, peerConnection.getSenders().map(s => s.track ? `${s.track.kind}` : 'null'));
+        
+        const offer = await peerConnection.createOffer({
+          offerToReceiveAudio: true,
+          offerToReceiveVideo: true
+        });
+        console.log(`📝 Oferta creada:`, {
+          type: offer.type,
+          sdpHasAudio: offer.sdp?.includes('m=audio'),
+          sdpHasVideo: offer.sdp?.includes('m=video')
+        });
+        
         await peerConnection.setLocalDescription(offer);
         console.log(`✅ Local description establecida, enviando oferta a ${userId}`);
         
@@ -344,7 +364,7 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
         });
         console.log(`📨 Oferta enviada exitosamente a ${userId}`);
       } else {
-        console.log(`⏸️ No creando oferta para ${userId} (shouldCreateOffer: false)`);
+        console.log(`⏸️ No creando oferta para ${userId} (shouldCreateOffer: false) - esperando oferta remota`);
       }
     } catch (error) {
       console.error('❌ Error al crear peer connection:', error);
@@ -353,7 +373,12 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
 
   const handleOffer = async ({ offer, from }: { offer: RTCSessionDescriptionInit; from: string }) => {
     try {
-      console.log(`📨 Oferta recibida de ${from}`);
+      console.log(`📨 Oferta recibida de ${from}`, {
+        type: offer.type,
+        hasAudio: offer.sdp?.includes('m=audio'),
+        hasVideo: offer.sdp?.includes('m=video')
+      });
+      
       let peerConnection = peerConnectionsRef.current.get(from);
       
       // Si no existe la conexión, crearla PRIMERO
@@ -368,7 +393,15 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
         await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
         
         console.log(`💬 Creando answer para ${from}`);
+        console.log(`📊 Tracks en peer antes de answer:`, peerConnection.getSenders().map(s => s.track ? `${s.track.kind}` : 'null'));
+        
         const answer = await peerConnection.createAnswer();
+        console.log(`📝 Answer creada:`, {
+          type: answer.type,
+          hasAudio: answer.sdp?.includes('m=audio'),
+          hasVideo: answer.sdp?.includes('m=video')
+        });
+        
         await peerConnection.setLocalDescription(answer);
         
         console.log(`📤 Enviando answer a ${from}`);
