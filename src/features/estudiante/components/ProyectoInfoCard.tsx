@@ -141,7 +141,7 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
     }
     
     // Abrir sala de videollamada en nueva pestaña
-    const userName = user?.nombre ? `${user.nombre}|| ''}`.trim() : 'Usuario';
+    const userName = user?.nombre ? `${user.nombre} ${user.apellido || ''}`.trim() : 'Usuario';
     const url = `/reunion/${proyecto.idProyecto}?userName=${encodeURIComponent(userName)}&proyecto=${encodeURIComponent(proyecto.nombre)}`;
     window.open(url, '_blank');
     toast.success('Abriendo sala de reunión...');
