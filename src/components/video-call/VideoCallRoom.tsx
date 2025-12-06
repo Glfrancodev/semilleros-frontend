@@ -27,15 +27,14 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
   const remoteVideosRef = useRef<Map<string, HTMLVideoElement>>(new Map());
   const isInitializedRef = useRef(false); // Bandera para evitar doble inicialización
 
-  // Configuración de servidores STUN/TURN (usando servidores públicos gratuitos)
+  // Configuración de servidores STUN/TURN
   const iceServers = {
     iceServers: [
+      // Servidores STUN de Google
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'stun:stun1.l.google.com:19302' },
       { urls: 'stun:stun2.l.google.com:19302' },
-      { urls: 'stun:stun3.l.google.com:19302' },
-      { urls: 'stun:stun4.l.google.com:19302' },
-      // TURN server público gratuito (limitado pero funcional)
+      // Servidor TURN público (para atravesar firewalls/NAT)
       {
         urls: 'turn:openrelay.metered.ca:80',
         username: 'openrelayproject',
@@ -43,6 +42,11 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
       },
       {
         urls: 'turn:openrelay.metered.ca:443',
+        username: 'openrelayproject',
+        credential: 'openrelayproject',
+      },
+      {
+        urls: 'turn:openrelay.metered.ca:443?transport=tcp',
         username: 'openrelayproject',
         credential: 'openrelayproject',
       },
@@ -211,10 +215,10 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
     console.log(`📋 Lista de participantes recibida:`, participantsList.length, participantsList.map(p => p.name));
     setParticipants(participantsList);
     
-    // Crear conexiones con usuarios existentes
+    // Crear conexiones con usuarios existentes - ELLOS esperan nuestra oferta
     participantsList.forEach((participant) => {
-      console.log(`🤝 Creando conexión con participante existente:`, participant.name);
-      createPeerConnection(participant.id, false);
+      console.log(`🤝 Creando conexión y enviando oferta a participante existente:`, participant.name);
+      createPeerConnection(participant.id, true); // Nosotros iniciamos (somos los que llegamos)
     });
   };
 
@@ -308,72 +312,114 @@ export default function VideoCallRoom({ proyectoId, userName, proyectoNombre, on
 
       // Manejar candidatos ICE
       peerConnection.onicecandidate = (event) => {
-        if (event.candidate && socket) {
-          socket.emit('video-ice-candidate', {
-            candidate: event.candidate,
-            to: userId,
+        if (event.candidate) {
+          console.log(`🧊 ICE Candidate generado para ${userId}:`, {
+            type: event.candidate.type,
+            protocol: event.candidate.protocol,
+            address: event.candidate.address,
+            relatedAddress: event.candidate.relatedAddress
           });
+          if (socket) {
+            socket.emit('video-ice-candidate', {
+              candidate: event.candidate,
+              to: userId,
+            });
+          }
+        } else {
+          console.log(`🧊 Todos los ICE candidates enviados para ${userId}`);
         }
       };
 
       // Si somos el iniciador, crear oferta
       if (shouldCreateOffer) {
+        console.log(`📤 Creando oferta para ${userId}...`);
         const offer = await peerConnection.createOffer();
+        console.log(`📝 Oferta creada, estableciendo local description...`);
         await peerConnection.setLocalDescription(offer);
+        console.log(`✅ Local description establecida, enviando oferta a ${userId}`);
         
         socket?.emit('video-offer', {
           offer,
           to: userId,
         });
+        console.log(`📨 Oferta enviada exitosamente a ${userId}`);
+      } else {
+        console.log(`⏸️ No creando oferta para ${userId} (shouldCreateOffer: false)`);
       }
     } catch (error) {
-      console.error('Error al crear peer connection:', error);
+      console.error('❌ Error al crear peer connection:', error);
     }
   };
 
   const handleOffer = async ({ offer, from }: { offer: RTCSessionDescriptionInit; from: string }) => {
     try {
+      console.log(`📨 Oferta recibida de ${from}`);
       let peerConnection = peerConnectionsRef.current.get(from);
       
+      // Si no existe la conexión, crearla PRIMERO
       if (!peerConnection) {
+        console.log(`🔨 Creando nueva peer connection para responder a ${from}`);
         await createPeerConnection(from, false);
         peerConnection = peerConnectionsRef.current.get(from);
       }
 
       if (peerConnection) {
+        console.log(`📝 Estableciendo remote description para ${from}`);
         await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+        
+        console.log(`💬 Creando answer para ${from}`);
         const answer = await peerConnection.createAnswer();
         await peerConnection.setLocalDescription(answer);
         
+        console.log(`📤 Enviando answer a ${from}`);
         socket?.emit('video-answer', {
           answer,
           to: from,
         });
+      } else {
+        console.error(`❌ No se pudo obtener peer connection para ${from}`);
       }
     } catch (error) {
-      console.error('Error al manejar oferta:', error);
+      console.error('❌ Error al manejar oferta:', error);
     }
   };
 
   const handleAnswer = async ({ answer, from }: { answer: RTCSessionDescriptionInit; from: string }) => {
     try {
+      console.log(`📨 Answer recibida de ${from}`);
       const peerConnection = peerConnectionsRef.current.get(from);
       if (peerConnection) {
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+        if (peerConnection.signalingState === 'have-local-offer') {
+          console.log(`📝 Estableciendo remote description (answer) para ${from}`);
+          await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+          console.log(`✅ Answer procesada correctamente para ${from}`);
+        } else {
+          console.warn(`⚠️ Estado de señalización incorrecto para ${from}:`, peerConnection.signalingState);
+        }
+      } else {
+        console.error(`❌ No se encontró peer connection para ${from}`);
       }
     } catch (error) {
-      console.error('Error al manejar respuesta:', error);
+      console.error('❌ Error al manejar respuesta:', error);
     }
   };
 
   const handleIceCandidate = async ({ candidate, from }: { candidate: RTCIceCandidateInit; from: string }) => {
     try {
+      console.log(`🧊 ICE Candidate recibido de ${from}:`, candidate.candidate?.substring(0, 50) + '...');
       const peerConnection = peerConnectionsRef.current.get(from);
       if (peerConnection) {
-        await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+        if (peerConnection.remoteDescription) {
+          await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+          console.log(`✅ ICE Candidate agregado para ${from}`);
+        } else {
+          console.warn(`⚠️ Esperando remote description para agregar ICE candidate de ${from}`);
+        }
+      } else {
+        console.error(`❌ No se encontró peer connection para agregar ICE candidate de ${from}`);
       }
     } catch (error) {
-      console.error('Error al agregar candidato ICE:', error);
+      console.error('❌ Error al agregar candidato ICE:', error);
     }
   };
 
