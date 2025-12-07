@@ -71,6 +71,7 @@ export interface Feria {
   semestre: number;
   año: number;
   estaActivo: boolean;
+  estaFinalizado: boolean;
   fechaCreacion: string;
   fechaActualizacion: string;
   tipoCalificacion?: TipoCalificacion;

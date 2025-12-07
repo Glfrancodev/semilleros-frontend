@@ -18,6 +18,7 @@ interface FeriasTableProps {
     semestre: boolean;
     año: boolean;
     estaActivo: boolean;
+    estaFinalizado: boolean;
     tareas: boolean;
     fechaCreacion: boolean;
     fechaActualizacion: boolean;
@@ -221,6 +222,15 @@ export default function FeriasTableSimple({
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
+                  checked={visibleColumns.estaFinalizado}
+                  onChange={() => onToggleColumn('estaFinalizado')}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Finalizado</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
                   checked={visibleColumns.tareas}
                   onChange={() => onToggleColumn('tareas')}
                   className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -274,6 +284,11 @@ export default function FeriasTableSimple({
               {visibleColumns.estaActivo && (
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   ESTADO
+                </TableCell>
+              )}
+              {visibleColumns.estaFinalizado && (
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  FINALIZADO
                 </TableCell>
               )}
               {visibleColumns.tareas && (
@@ -336,6 +351,18 @@ export default function FeriasTableSimple({
                         : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
                       }`}>
                       {feria.estaActivo ? 'Activa' : 'Inactiva'}
+                    </span>
+                  </TableCell>
+                )}
+
+                {/* FINALIZADO */}
+                {visibleColumns.estaFinalizado && (
+                  <TableCell className="px-5 py-4 text-start">
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${feria.estaFinalizado
+                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                        : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                      }`}>
+                      {feria.estaFinalizado ? 'Finalizado' : 'En Proceso'}
                     </span>
                   </TableCell>
                 )}

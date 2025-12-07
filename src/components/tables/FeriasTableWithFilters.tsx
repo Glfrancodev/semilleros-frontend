@@ -23,6 +23,7 @@ export default function FeriasTableWithFilters() {
     semestre: true,
     año: true,
     estaActivo: true,
+    estaFinalizado: true,
     tareas: true,
     fechaCreacion: false,
     fechaActualizacion: false,
