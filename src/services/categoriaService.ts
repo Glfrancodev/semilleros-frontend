@@ -6,6 +6,14 @@ export interface Categoria {
   nombre: string;
   fechaCreacion: string;
   fechaActualizacion: string;
+  areaCategorias?: Array<{
+    idAreaCategoria: string;
+    materias?: Array<{
+      idMateria: string;
+      sigla: string;
+      nombre: string;
+    }>;
+  }>;
 }
 
 interface ApiResponse<T> {

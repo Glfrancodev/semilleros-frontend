@@ -6,6 +6,9 @@ export interface Evento {
   nombre: string;
   descripcion: string;
   fechaProgramada: string;
+  capacidadMaxima: number | null;
+  cantidadInscritos?: number;
+  totalEstudiantes?: number;
   estaActivo: boolean;
   fechaCreacion: string;
   fechaActualizacion: string;
@@ -44,6 +47,7 @@ export interface EventoCreacion {
   nombre: string;
   descripcion?: string;
   fechaProgramada: string;
+  capacidadMaxima?: number | null;
   estaActivo?: boolean;
 }
 
@@ -51,6 +55,7 @@ export interface EventoActualizacion {
   nombre?: string;
   descripcion?: string;
   fechaProgramada?: string;
+  capacidadMaxima?: number | null;
   estaActivo?: boolean;
 }
 

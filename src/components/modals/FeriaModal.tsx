@@ -26,7 +26,7 @@ export default function FeriaModal({
   title,
 }: FeriaModalProps) {
   const currentYear = new Date().getFullYear();
-  
+
   const [formData, setFormData] = useState<FeriaFormData>({
     nombre: "",
     semestre: 1,
@@ -41,7 +41,7 @@ export default function FeriaModal({
       }
     ],
   });
-  
+
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
   const [serverError, setServerError] = useState<string | null>(null);
@@ -54,14 +54,19 @@ export default function FeriaModal({
         semestre: feria.semestre,
         año: feria.año,
         estaActivo: feria.estaActivo,
-        tareas: [
+        tareas: feria.tareas && feria.tareas.length > 0 ? feria.tareas.map(t => ({
+          nombre: t.nombre,
+          descripcion: t.descripcion || "",
+          fechaLimite: t.fechaLimite ? t.fechaLimite.slice(0, 16) : "", // Format for datetime-local
+          orden: t.orden
+        })) : [
           {
             nombre: "Inscripción",
             descripcion: "Tarea de inscripción al proyecto",
             fechaLimite: "",
             orden: 0,
           }
-        ], // En edición solo mostramos info básica, las tareas se manejan aparte
+        ],
       });
     } else {
       setFormData({
@@ -86,12 +91,12 @@ export default function FeriaModal({
   ) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
-    
+
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : type === "number" ? Number(value) : value,
     }));
-    
+
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
@@ -107,7 +112,7 @@ export default function FeriaModal({
         i === index ? { ...tarea, [field]: value } : tarea
       ),
     }));
-    
+
     if (errors[`tarea${index}_${field}`]) {
       setErrors((prev) => ({
         ...prev,
@@ -137,7 +142,7 @@ export default function FeriaModal({
       alert("No se puede eliminar la tarea de Inscripción");
       return;
     }
-    
+
     setFormData(prev => ({
       ...prev,
       tareas: prev.tareas.filter((_, i) => i !== index).map((tarea, i) => ({
@@ -153,18 +158,16 @@ export default function FeriaModal({
     if (!formData.nombre.trim()) newErrors.nombre = "Nombre es requerido";
     if (formData.semestre < 1 || formData.semestre > 2) newErrors.semestre = "Semestre debe ser 1 o 2";
     if (formData.año < 2000) newErrors.año = "Año inválido";
-    
-    // Validar tareas solo si es creación
-    if (!feria) {
-      formData.tareas.forEach((tarea, index) => {
-        if (!tarea.nombre.trim()) {
-          newErrors[`tarea${index}_nombre`] = "Nombre de tarea requerido";
-        }
-        if (!tarea.fechaLimite) {
-          newErrors[`tarea${index}_fechaLimite`] = "Fecha límite requerida";
-        }
-      });
-    }
+
+    // Validar tareas siempre
+    formData.tareas.forEach((tarea, index) => {
+      if (!tarea.nombre.trim()) {
+        newErrors[`tarea${index}_nombre`] = "Nombre de tarea requerido";
+      }
+      if (!tarea.fechaLimite) {
+        newErrors[`tarea${index}_fechaLimite`] = "Fecha límite requerida";
+      }
+    });
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -297,11 +300,10 @@ export default function FeriaModal({
                   name="nombre"
                   value={formData.nombre}
                   onChange={handleChange}
-                  className={`w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${
-                    errors.nombre
-                      ? "border-red-500 focus:ring-red-500"
-                      : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                  }`}
+                  className={`w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${errors.nombre
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    }`}
                   placeholder="Ej: Feria de Proyectos 2025"
                 />
                 {errors.nombre && (
@@ -322,11 +324,10 @@ export default function FeriaModal({
                   name="semestre"
                   value={formData.semestre}
                   onChange={handleChange}
-                  className={`w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${
-                    errors.semestre
-                      ? "border-red-500 focus:ring-red-500"
-                      : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                  }`}
+                  className={`w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${errors.semestre
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    }`}
                 >
                   <option value={1}>1</option>
                   <option value={2}>2</option>
@@ -352,11 +353,10 @@ export default function FeriaModal({
                   onChange={handleChange}
                   min={2000}
                   max={2100}
-                  className={`w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${
-                    errors.año
-                      ? "border-red-500 focus:ring-red-500"
-                      : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                  }`}
+                  className={`w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${errors.año
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    }`}
                 />
                 {errors.año && (
                   <p className="mt-1 text-sm text-red-500">{errors.año}</p>
@@ -382,105 +382,101 @@ export default function FeriaModal({
               </label>
             </div>
 
-            {/* Tareas - Solo al crear */}
-            {!feria && (
-              <div className="border-t border-gray-200 pt-6 dark:border-gray-700">
-                <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    Tareas de la Feria
-                  </h3>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="xs"
-                    onClick={agregarTarea}
-                  >
-                    + Agregar Tarea
-                  </Button>
-                </div>
+            {/* Tareas */}
+            <div className="border-t border-gray-200 pt-6 dark:border-gray-700">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Tareas de la Feria
+                </h3>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="xs"
+                  onClick={agregarTarea}
+                >
+                  + Agregar Tarea
+                </Button>
+              </div>
 
-                <div className="space-y-4">
-                  {formData.tareas.map((tarea, index) => (
-                    <div
-                      key={index}
-                      className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50"
-                    >
-                      <div className="mb-3 flex items-center justify-between">
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                          Tarea {index} {index === 0 && "(Inscripción - Obligatoria)"}
-                        </h4>
-                        {index > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => eliminarTarea(index)}
-                            className="text-red-600 hover:text-red-700 dark:text-red-400"
-                          >
-                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
+              <div className="space-y-4">
+                {formData.tareas.map((tarea, index) => (
+                  <div
+                    key={index}
+                    className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50"
+                  >
+                    <div className="mb-3 flex items-center justify-between">
+                      <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                        Tarea {index} {index === 0 && "(Inscripción - Obligatoria)"}
+                      </h4>
+                      {index > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => eliminarTarea(index)}
+                          className="text-red-600 hover:text-red-700 dark:text-red-400"
+                        >
+                          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <div className="md:col-span-2">
+                        <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+                          Nombre <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={tarea.nombre}
+                          onChange={(e) => handleTareaChange(index, 'nombre', e.target.value)}
+                          disabled={index === 0}
+                          className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${errors[`tarea${index}_nombre`]
+                            ? "border-red-500 focus:ring-red-500"
+                            : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white disabled:opacity-50"
+                            }`}
+                          placeholder="Nombre de la tarea"
+                        />
+                        {errors[`tarea${index}_nombre`] && (
+                          <p className="mt-1 text-xs text-red-500">{errors[`tarea${index}_nombre`]}</p>
                         )}
                       </div>
 
-                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <div className="md:col-span-2">
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
-                            Nombre <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            value={tarea.nombre}
-                            onChange={(e) => handleTareaChange(index, 'nombre', e.target.value)}
-                            disabled={index === 0}
-                            className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
-                              errors[`tarea${index}_nombre`]
-                                ? "border-red-500 focus:ring-red-500"
-                                : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white disabled:opacity-50"
-                            }`}
-                            placeholder="Nombre de la tarea"
-                          />
-                          {errors[`tarea${index}_nombre`] && (
-                            <p className="mt-1 text-xs text-red-500">{errors[`tarea${index}_nombre`]}</p>
-                          )}
-                        </div>
+                      <div className="md:col-span-2">
+                        <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+                          Descripción
+                        </label>
+                        <textarea
+                          value={tarea.descripcion}
+                          onChange={(e) => handleTareaChange(index, 'descripcion', e.target.value)}
+                          rows={2}
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                          placeholder="Descripción de la tarea"
+                        />
+                      </div>
 
-                        <div className="md:col-span-2">
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
-                            Descripción
-                          </label>
-                          <textarea
-                            value={tarea.descripcion}
-                            onChange={(e) => handleTareaChange(index, 'descripcion', e.target.value)}
-                            rows={2}
-                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                            placeholder="Descripción de la tarea"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
-                            Fecha Límite <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="datetime-local"
-                            value={tarea.fechaLimite}
-                            onChange={(e) => handleTareaChange(index, 'fechaLimite', e.target.value)}
-                            className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
-                              errors[`tarea${index}_fechaLimite`]
-                                ? "border-red-500 focus:ring-red-500"
-                                : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+                          Fecha Límite <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={tarea.fechaLimite}
+                          onChange={(e) => handleTareaChange(index, 'fechaLimite', e.target.value)}
+                          className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${errors[`tarea${index}_fechaLimite`]
+                            ? "border-red-500 focus:ring-red-500"
+                            : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                             }`}
-                          />
-                          {errors[`tarea${index}_fechaLimite`] && (
-                            <p className="mt-1 text-xs text-red-500">{errors[`tarea${index}_fechaLimite`]}</p>
-                          )}
-                        </div>
+                        />
+                        {errors[`tarea${index}_fechaLimite`] && (
+                          <p className="mt-1 text-xs text-red-500">{errors[`tarea${index}_fechaLimite`]}</p>
+                        )}
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
-            )}
+            </div>
           </div>
 
           {/* Botones */}
@@ -502,7 +498,7 @@ export default function FeriaModal({
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }

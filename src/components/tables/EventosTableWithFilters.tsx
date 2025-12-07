@@ -23,6 +23,7 @@ export default function EventosTableWithFilters() {
     nombre: true,
     descripcion: true,
     fechaProgramada: true,
+    inscritos: true,
     estaActivo: true,
     fechaCreacion: false,
     fechaActualizacion: false,
@@ -94,6 +95,7 @@ export default function EventosTableWithFilters() {
           nombre: data.nombre,
           descripcion: data.descripcion,
           fechaProgramada: data.fechaProgramada,
+          capacidadMaxima: data.capacidadMaxima,
           estaActivo: data.estaActivo
         });
       } else {
@@ -102,6 +104,7 @@ export default function EventosTableWithFilters() {
           nombre: data.nombre,
           descripcion: data.descripcion,
           fechaProgramada: data.fechaProgramada,
+          capacidadMaxima: data.capacidadMaxima,
           estaActivo: data.estaActivo
         });
       }

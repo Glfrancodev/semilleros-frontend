@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Materia } from "../../services/materiaService";
 import { obtenerAreasCategorias, AreaCategoria } from "../../services/areaService";
 import { obtenerDocentes, Docente } from "../../services/docenteService";
@@ -41,7 +41,7 @@ export default function MateriaModal({
     idSemestre: idSemestre,
     grupos: [],
   });
-  
+
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
   const [serverError, setServerError] = useState<string | null>(null);
@@ -64,7 +64,7 @@ export default function MateriaModal({
         console.error('Error al cargar datos:', error);
       }
     };
-    
+
     if (isOpen) {
       fetchData();
     }
@@ -78,9 +78,15 @@ export default function MateriaModal({
         nombre: materia.nombre,
         idAreaCategoria: materia.idAreaCategoria,
         idSemestre: materia.idSemestre,
-        grupos: [],
+        grupos: materia.grupoMaterias ? materia.grupoMaterias.map(gm => ({
+          sigla: gm.grupo.sigla,
+          idDocente: gm.docente.idDocente
+        })) : [],
       });
-      setGrupos([]);
+      setGrupos(materia.grupoMaterias ? materia.grupoMaterias.map(gm => ({
+        sigla: gm.grupo.sigla,
+        idDocente: gm.docente.idDocente
+      })) : []);
     } else {
       setFormData({
         sigla: "",
@@ -200,70 +206,66 @@ export default function MateriaModal({
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Sigla */}
-          <div>
-            <label htmlFor="sigla" className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Sigla <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="sigla"
-              name="sigla"
-              value={formData.sigla}
-              onChange={handleChange}
-              className={`w-full rounded-lg border ${
-                errors.sigla ? 'border-red-500' : 'border-gray-300'
-              } bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
-              placeholder="Ej: INF-123"
-            />
-            {errors.sigla && <p className="mt-1 text-sm text-red-500">{errors.sigla}</p>}
-          </div>
+            {/* Sigla */}
+            <div>
+              <label htmlFor="sigla" className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Sigla <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="sigla"
+                name="sigla"
+                value={formData.sigla}
+                onChange={handleChange}
+                className={`w-full rounded-lg border ${errors.sigla ? 'border-red-500' : 'border-gray-300'
+                  } bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
+                placeholder="Ej: INF-123"
+              />
+              {errors.sigla && <p className="mt-1 text-sm text-red-500">{errors.sigla}</p>}
+            </div>
 
-          {/* Nombre */}
-          <div>
-            <label htmlFor="nombre" className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Nombre <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="nombre"
-              name="nombre"
-              value={formData.nombre}
-              onChange={handleChange}
-              className={`w-full rounded-lg border ${
-                errors.nombre ? 'border-red-500' : 'border-gray-300'
-              } bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
-              placeholder="Ej: Programación I"
-            />
-            {errors.nombre && <p className="mt-1 text-sm text-red-500">{errors.nombre}</p>}
-          </div>
+            {/* Nombre */}
+            <div>
+              <label htmlFor="nombre" className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Nombre <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="nombre"
+                name="nombre"
+                value={formData.nombre}
+                onChange={handleChange}
+                className={`w-full rounded-lg border ${errors.nombre ? 'border-red-500' : 'border-gray-300'
+                  } bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
+                placeholder="Ej: Programación I"
+              />
+              {errors.nombre && <p className="mt-1 text-sm text-red-500">{errors.nombre}</p>}
+            </div>
 
-          {/* Área-Categoría */}
-          <div>
-            <label htmlFor="idAreaCategoria" className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Área-Categoría <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="idAreaCategoria"
-              name="idAreaCategoria"
-              value={formData.idAreaCategoria}
-              onChange={handleChange}
-              className={`w-full rounded-lg border ${
-                errors.idAreaCategoria ? 'border-red-500' : 'border-gray-300'
-              } bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
-            >
-              <option value="">Seleccionar área-categoría</option>
-              {areasCategorias.map((ac) => (
-                <option key={ac.idAreaCategoria} value={ac.idAreaCategoria}>
-                  {ac.area?.nombre} - {ac.Categoria?.nombre || ac.categoria?.nombre}
-                </option>
-              ))}
-            </select>
-            {errors.idAreaCategoria && <p className="mt-1 text-sm text-red-500">{errors.idAreaCategoria}</p>}
-          </div>
+            {/* Área-Categoría */}
+            <div>
+              <label htmlFor="idAreaCategoria" className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Área-Categoría <span className="text-red-500">*</span>
+              </label>
+              <select
+                id="idAreaCategoria"
+                name="idAreaCategoria"
+                value={formData.idAreaCategoria}
+                onChange={handleChange}
+                className={`w-full rounded-lg border ${errors.idAreaCategoria ? 'border-red-500' : 'border-gray-300'
+                  } bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
+              >
+                <option value="">Seleccionar área-categoría</option>
+                {areasCategorias.map((ac) => (
+                  <option key={ac.idAreaCategoria} value={ac.idAreaCategoria}>
+                    {ac.area?.nombre} - {ac.Categoria?.nombre || ac.categoria?.nombre}
+                  </option>
+                ))}
+              </select>
+              {errors.idAreaCategoria && <p className="mt-1 text-sm text-red-500">{errors.idAreaCategoria}</p>}
+            </div>
 
-          {/* Añadir Grupos - Solo en modo creación */}
-          {!materia && (
+            {/* Añadir Grupos */}
             <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
               <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
                 Añadir Grupos
@@ -283,9 +285,8 @@ export default function MateriaModal({
                       setNuevoGrupo((prev) => ({ ...prev, sigla: e.target.value }));
                       setErrors((prev) => ({ ...prev, grupoSigla: undefined }));
                     }}
-                    className={`w-full rounded-lg border ${
-                      errors.grupoSigla ? 'border-red-500' : 'border-gray-300'
-                    } bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
+                    className={`w-full rounded-lg border ${errors.grupoSigla ? 'border-red-500' : 'border-gray-300'
+                      } bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
                     placeholder="Ej: A, B, 01"
                   />
                   {errors.grupoSigla && <p className="mt-1 text-sm text-red-500">{errors.grupoSigla}</p>}
@@ -302,9 +303,8 @@ export default function MateriaModal({
                       setNuevoGrupo((prev) => ({ ...prev, idDocente: e.target.value }));
                       setErrors((prev) => ({ ...prev, grupoDocente: undefined }));
                     }}
-                    className={`w-full rounded-lg border ${
-                      errors.grupoDocente ? 'border-red-500' : 'border-gray-300'
-                    } bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
+                    className={`w-full rounded-lg border ${errors.grupoDocente ? 'border-red-500' : 'border-gray-300'
+                      } bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
                   >
                     <option value="">Seleccionar docente</option>
                     {docentes.map((doc) => (
@@ -367,27 +367,27 @@ export default function MateriaModal({
                 </div>
               )}
             </div>
-          )}
 
-          {/* Botones */}
-          <div className="flex justify-end gap-3 pt-4 sticky bottom-0 bg-white dark:bg-gray-800 pb-2 border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={loading}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={loading}
-            >
-              {loading ? "Guardando..." : materia ? "Actualizar" : "Crear"}
-            </Button>
-          </div>
-        </form>
+
+            {/* Botones */}
+            <div className="flex justify-end gap-3 pt-4 sticky bottom-0 bg-white dark:bg-gray-800 pb-2 border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={loading}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={loading}
+              >
+                {loading ? "Guardando..." : materia ? "Actualizar" : "Crear"}
+              </Button>
+            </div>
+          </form>
         </div>
       </div>
     </div>

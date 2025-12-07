@@ -1,125 +1,192 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import MateriasTableSimple from "./MateriasTableSimple";
-import MateriaModal, { MateriaFormData } from "../modals/MateriaModal";
+import DocentesTableSimple from "./DocentesTableSimple";
+import DocenteModal, { DocenteFormData } from "../modals/DocenteModal";
 import CustomSelect from "../common/CustomSelect";
-import { Materia, obtenerMaterias, eliminarMateria, crearMateria, actualizarMateria } from "../../services/materiaService";
+import { Usuario, obtenerUsuarios, toggleEstadoUsuario as toggleEstadoUsuarioService, crearUsuario, actualizarUsuario } from "../../services/usuarioService";
+import { crearDocente, actualizarDocente } from "../../services/docenteService";
 
-export default function MateriasTableWithFilters() {
-  const { idSemestre } = useParams<{ idSemestre: string }>();
-
-  const [materias, setMaterias] = useState<Materia[]>([]);
-  const [totalMaterias, setTotalMaterias] = useState(0);
+export default function DocentesTableWithFilters() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState<string>("10");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedMateria, setSelectedMateria] = useState<Materia | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [totalUsuarios, setTotalUsuarios] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showColumnSettings, setShowColumnSettings] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedUsuario, setSelectedUsuario] = useState<Usuario | null>(null);
+  
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState<string>("10");
+
+  // Estado de columnas visibles
   const [visibleColumns, setVisibleColumns] = useState({
-    sigla: true,
-    nombre: true,
-    areaCategoria: true,
-    grupos: true,
+    usuario: true,           // Foto + Nombre + Apellido
+    ci: false,
+    correo: true,
+    codigoDocente: true,
+    redesSociales: false,     // Instagram + LinkedIn + GitHub
+    bio: false,
+    estaActivo: true,
     fechaCreacion: false,
-    fechaActualizacion: false,
   });
 
+  // Cargar usuarios al montar el componente
   useEffect(() => {
-    cargarMaterias();
-  }, [idSemestre]);
+    cargarUsuarios();
+  }, []);
 
-  const cargarMaterias = async () => {
-    if (!idSemestre) return;
+  const cargarUsuarios = async () => {
     try {
-      setIsLoading(true);
-      const data = await obtenerMaterias(1, 1000, "", idSemestre);
-      setMaterias(data.items);
-      setTotalMaterias(data.count);
+      setLoading(true);
+      const data = await obtenerUsuarios();
+      // Filtrar solo docentes
+      const docentes = data.usuarios.filter(u => u.Rol.nombre.toLowerCase() === 'docente');
+      setUsuarios(docentes);
+      setTotalUsuarios(docentes.length);
       setError(null);
     } catch (err) {
-      setError('Error al cargar materias');
+      setError('Error al cargar docentes');
       console.error(err);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const filteredData = materias.filter(materia => {
-    const matchesSearch =
-      materia.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      materia.sigla.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
+  // Filtrar usuarios según los criterios
+  const filteredData = usuarios.filter(usuario => {
+    const nombreCompleto = `${usuario.nombre} ${usuario.apellido}`.toLowerCase();
+    const codigoDoc = usuario.Docente?.codigoDocente || '';
+    const matchesSearch = 
+      nombreCompleto.includes(searchTerm.toLowerCase()) ||
+      usuario.correo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      usuario.ci.includes(searchTerm) ||
+      codigoDoc.includes(searchTerm);
+    
+    const matchesStatus = 
+      statusFilter === "all" || 
+      (statusFilter === "active" && usuario.estaActivo) ||
+      (statusFilter === "inactive" && !usuario.estaActivo);
+    
+    return matchesSearch && matchesStatus;
   });
 
+  // Paginación
   const itemsPerPage = parseInt(rowsPerPage);
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedData = filteredData.slice(startIndex, endIndex);
 
-  const handleAddMateria = () => {
-    setSelectedMateria(null);
-    setIsModalOpen(true);
+  const handleEdit = (usuario: Usuario) => {
+    setSelectedUsuario(usuario);
+    setShowModal(true);
   };
 
-  const handleEdit = (materia: Materia) => {
-    setSelectedMateria(materia);
-    setIsModalOpen(true);
-  };
-
-  const handleDelete = async (idMateria: string) => {
-    if (window.confirm("¿Estás seguro de que deseas eliminar esta materia?")) {
-      try {
-        await eliminarMateria(idMateria);
-        await cargarMaterias();
-      } catch (error) {
-        console.error("Error al eliminar la materia:", error);
-        alert("Hubo un error al eliminar la materia");
-      }
+  const handleDelete = async (idUsuario: string) => {
+    if (window.confirm('¿Estás seguro de que deseas eliminar este docente?')) {
+      console.log('Eliminar docente:', idUsuario);
+      // TODO: Implementar eliminación
+      await cargarUsuarios();
     }
   };
 
-  const handleSubmitMateria = async (data: MateriaFormData) => {
+  const handleToggleStatus = async (idUsuario: string) => {
     try {
-      if (selectedMateria) {
-        await actualizarMateria(selectedMateria.idMateria, {
-          sigla: data.sigla,
-          nombre: data.nombre,
-          idAreaCategoria: data.idAreaCategoria,
-          grupos: data.grupos
-        });
-      } else {
-        await crearMateria({
-          sigla: data.sigla,
-          nombre: data.nombre,
-          idAreaCategoria: data.idAreaCategoria,
-          idSemestre: data.idSemestre,
-          grupos: data.grupos
-        });
-      }
-      setIsModalOpen(false);
-      setSelectedMateria(null);
-      await cargarMaterias();
-    } catch (error) {
-      console.error('Error al guardar materia:', error);
-      throw error;
+      await toggleEstadoUsuarioService(idUsuario);
+      await cargarUsuarios(); // Recargar la lista
+    } catch (err) {
+      console.error('Error al cambiar estado:', err);
+      alert('Error al cambiar el estado del docente');
     }
   };
 
-  const handleToggleColumn = (column: keyof typeof visibleColumns) => {
+  const handleAddUser = () => {
+    setSelectedUsuario(null);
+    setShowModal(true);
+  };
+
+  const handleSubmitUsuario = async (data: DocenteFormData) => {
+    try {
+      // Obtener el rol de docente
+      const roles = await import("../../services/rolService").then(m => m.obtenerRoles());
+      const rolDocente = roles.find(r => r.nombre.toLowerCase() === "docente");
+      
+      if (!rolDocente) {
+        throw new Error('No se encontró el rol de docente');
+      }
+
+      if (selectedUsuario) {
+        // Actualizar docente existente
+        await actualizarUsuario(selectedUsuario.idUsuario, {
+          ci: data.ci,
+          nombre: data.nombre,
+          apellido: data.apellido,
+          correo: data.correo,
+          idRol: rolDocente.idRol
+        });
+
+        // Actualizar código de docente
+        if (selectedUsuario.Docente) {
+          await actualizarDocente(selectedUsuario.Docente.idDocente, {
+            codigoDocente: data.codigoDocente
+          });
+        } else {
+          // Crear registro de docente si no existe
+          await crearDocente({
+            codigoDocente: data.codigoDocente,
+            idUsuario: selectedUsuario.idUsuario
+          });
+        }
+      } else {
+        // Crear nuevo docente
+        const responseUsuario = await crearUsuario({
+          ci: data.ci,
+          nombre: data.nombre,
+          apellido: data.apellido,
+          correo: data.correo,
+          contrasena: data.contrasena!,
+          idRol: rolDocente.idRol
+        });
+
+        const idUsuario = responseUsuario.idUsuario;
+        
+        if (!idUsuario) {
+          throw new Error('No se recibió el ID del usuario creado');
+        }
+
+        // Crear registro de docente
+        await crearDocente({
+          codigoDocente: data.codigoDocente,
+          idUsuario: idUsuario
+        });
+      }
+      
+      await cargarUsuarios(); // Recargar la lista
+    } catch (err) {
+      console.error('Error al guardar docente:', err);
+      throw err;
+    }
+  };
+
+  const toggleColumn = (column: keyof typeof visibleColumns) => {
     setVisibleColumns(prev => ({
       ...prev,
       [column]: !prev[column]
     }));
   };
 
-  if (isLoading) {
+  const statusOptions = [
+    { value: "all", label: "Todos los estados" },
+    { value: "active", label: "Activo" },
+    { value: "inactive", label: "Inactivo" },
+  ];
+
+  if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="text-gray-600 dark:text-gray-400">Cargando materias...</div>
+        <div className="text-gray-600 dark:text-gray-400">Cargando docentes...</div>
       </div>
     );
   }
@@ -129,7 +196,7 @@ export default function MateriasTableWithFilters() {
       <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-600 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-400">
         {error}
         <button 
-          onClick={cargarMaterias}
+          onClick={cargarUsuarios}
           className="ml-4 underline hover:no-underline"
         >
           Reintentar
@@ -140,30 +207,40 @@ export default function MateriasTableWithFilters() {
 
   return (
     <div className="space-y-4">
-      {/* Barra de búsqueda */}
+      {/* Barra de búsqueda y filtros */}
       <div className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-white/[0.05] dark:bg-white/[0.03] sm:flex-row sm:items-center">
+        {/* Buscador */}
         <div className="flex-1">
           <input
             type="text"
-            placeholder="Buscar por nombre o sigla..."
+            placeholder="Buscar por nombre, correo, CI o código..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:focus:border-blue-500"
           />
         </div>
+
+        {/* Filtro de Estado */}
+        <CustomSelect
+          options={statusOptions}
+          value={statusFilter}
+          onChange={setStatusFilter}
+          className="w-full sm:w-48"
+        />
       </div>
 
       {/* Tabla */}
-      <MateriasTableSimple
-        materias={paginatedData}
-        totalMaterias={totalMaterias}
+      <DocentesTableSimple 
+        usuarios={paginatedData}
+        totalUsuarios={totalUsuarios}
         visibleColumns={visibleColumns}
         showColumnSettings={showColumnSettings}
         onToggleColumnSettings={() => setShowColumnSettings(!showColumnSettings)}
-        onToggleColumn={handleToggleColumn}
-        onAddMateria={handleAddMateria}
+        onToggleColumn={toggleColumn}
+        onAddUser={handleAddUser}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onToggleStatus={handleToggleStatus}
       />
 
       {/* Paginación */}
@@ -205,7 +282,6 @@ export default function MateriasTableWithFilters() {
             const maxVisiblePages = 5;
             
             if (totalPages <= maxVisiblePages) {
-              // Mostrar todas las páginas si son pocas
               for (let i = 1; i <= totalPages; i++) {
                 pageNumbers.push(
                   <button
@@ -222,7 +298,6 @@ export default function MateriasTableWithFilters() {
                 );
               }
             } else {
-              // Lógica con elipsis para muchas páginas
               pageNumbers.push(
                 <button
                   key={1}
@@ -300,20 +375,17 @@ export default function MateriasTableWithFilters() {
         </div>
       </div>
 
-      {/* Modal */}
-      {isModalOpen && idSemestre && (
-        <MateriaModal
-          isOpen={isModalOpen}
-          onClose={() => {
-            setIsModalOpen(false);
-            setSelectedMateria(null);
-          }}
-          onSubmit={handleSubmitMateria}
-          materia={selectedMateria}
-          title={selectedMateria ? 'Editar Materia' : 'Crear Materia'}
-          idSemestre={idSemestre}
-        />
-      )}
+      {/* Modal de Docente */}
+      <DocenteModal
+        isOpen={showModal}
+        onClose={() => {
+          setShowModal(false);
+          setSelectedUsuario(null);
+        }}
+        onSubmit={handleSubmitUsuario}
+        usuario={selectedUsuario}
+        title={selectedUsuario ? 'Editar Docente' : 'Crear Docente'}
+      />
     </div>
   );
 }

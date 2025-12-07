@@ -10,7 +10,14 @@ export interface Materia {
   fechaActualizacion: string;
   areaCategoria?: {
     idAreaCategoria: string;
-    nombre: string;
+    idArea: string;
+    idCategoria: string;
+    area?: {
+      nombre: string;
+    };
+    categoria?: {
+      nombre: string;
+    };
   };
   grupoMaterias?: Array<{
     idGrupoMateria: string;
@@ -71,12 +78,20 @@ export interface MateriaCreacion {
   nombre: string;
   idAreaCategoria: string;
   idSemestre: string;
+  grupos?: Array<{
+    sigla: string;
+    idDocente: string;
+  }>;
 }
 
 export interface MateriaActualizacion {
   sigla?: string;
   nombre?: string;
   idAreaCategoria?: string;
+  grupos?: Array<{
+    sigla: string;
+    idDocente: string;
+  }>;
 }
 
 interface ApiSuccessResponse<T> {

@@ -9,6 +9,9 @@ import Home from "./legacy/pages/Dashboard/Home";
 import SignInPage from "./features/auth/pages/SignInPage";
 import ProfilePage from "./features/profile/pages/ProfilePage";
 import UsuariosPage from "./features/admin/pages/UsuariosPage";
+import AdministrativosPage from "./features/admin/pages/AdministrativosPage";
+import EstudiantesPage from "./features/admin/pages/EstudiantesPage";
+import DocentesPage from "./features/admin/pages/DocentesPage";
 import ProyectoPage from "./features/admin/pages/ProyectoPage";
 import TareasDetallePage from "./features/admin/pages/TareasDetallePage";
 import CategoriasPage from "./features/admin/pages/CategoriasPage";
@@ -103,7 +106,10 @@ export default function App() {
               
               {/* Rutas de Admin */}
               <Route path="/usuarios" element={<UsuariosPage />} />
-              <Route path="/proyectos" element={<ProyectoPage />} />
+              <Route path="/administrativos" element={<AdministrativosPage />} />
+              <Route path="/estudiantes" element={<EstudiantesPage />} />
+              <Route path="/docentes" element={<DocentesPage />} />
+              <Route path="/tareas-revisiones" element={<ProyectoPage />} />
               <Route path="/admin/proyectos/:idProyecto" element={<ProyectoDetallePage />} />
               <Route path="/proyectos/tareas/:idTarea" element={<TareasDetallePage />} />
               <Route path="/categorias" element={<CategoriasPage />} />

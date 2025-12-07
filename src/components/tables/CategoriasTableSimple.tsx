@@ -5,6 +5,7 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
+import Badge from "../ui/badge/Badge";
 import Button from "../ui/button/Button";
 import { MoreDotIcon } from "../../assets/icons";
 import { useState, useRef, useEffect } from "react";
@@ -15,6 +16,7 @@ interface CategoriasTableProps {
   totalCategorias: number;
   visibleColumns: {
     nombre: boolean;
+    materias: boolean;
     fechaCreacion: boolean;
     fechaActualizacion: boolean;
   };
@@ -40,11 +42,18 @@ export default function CategoriasTableSimple({
   const [openActionsDropdown, setOpenActionsDropdown] = useState<string | null>(null);
   const [actionsDropdownPosition, setActionsDropdownPosition] = useState<{ top: number; right: number } | null>(null);
   const [settingsDropdownPosition, setSettingsDropdownPosition] = useState<{ top: number; right: number } | null>(null);
+  const [openMateriasDropdown, setOpenMateriasDropdown] = useState<string | null>(null);
+  const [materiasDropdownPosition, setMateriasDropdownPosition] = useState<{ top: number; right: number } | null>(null);
   const actionsButtonRef = useRef<HTMLButtonElement>(null);
   const settingsButtonRef = useRef<HTMLDivElement>(null);
+  const materiasButtonRef = useRef<HTMLButtonElement>(null);
 
   const toggleActionsDropdown = (idCategoria: string) => {
     setOpenActionsDropdown(openActionsDropdown === idCategoria ? null : idCategoria);
+  };
+
+  const toggleMateriasDropdown = (idCategoria: string) => {
+    setOpenMateriasDropdown(openMateriasDropdown === idCategoria ? null : idCategoria);
   };
 
   // Calcular posición del dropdown de actions
@@ -57,6 +66,17 @@ export default function CategoriasTableSimple({
       });
     }
   }, [openActionsDropdown]);
+
+  // Calcular posición del dropdown de materias
+  useEffect(() => {
+    if (openMateriasDropdown && materiasButtonRef.current) {
+      const rect = materiasButtonRef.current.getBoundingClientRect();
+      setMateriasDropdownPosition({
+        top: rect.top - 8,
+        right: window.innerWidth - rect.right,
+      });
+    }
+  }, [openMateriasDropdown]);
 
   // Calcular posición del dropdown de settings
   useEffect(() => {
@@ -73,12 +93,13 @@ export default function CategoriasTableSimple({
   useEffect(() => {
     const handleScroll = () => {
       if (openActionsDropdown) setOpenActionsDropdown(null);
+      if (openMateriasDropdown) setOpenMateriasDropdown(null);
       if (showColumnSettings) onToggleColumnSettings();
     };
 
     window.addEventListener('scroll', handleScroll, true);
     return () => window.removeEventListener('scroll', handleScroll, true);
-  }, [openActionsDropdown, showColumnSettings, onToggleColumnSettings]);
+  }, [openActionsDropdown, openMateriasDropdown, showColumnSettings, onToggleColumnSettings]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
@@ -86,6 +107,20 @@ export default function CategoriasTableSimple({
       month: 'short',
       day: 'numeric'
     });
+  };
+
+  // Función para obtener las materias de una categoría
+  const getMaterias = (categoria: Categoria): { idMateria: string; sigla: string; nombre: string }[] => {
+    if (!categoria.areaCategorias) return [];
+    
+    const materias: { idMateria: string; sigla: string; nombre: string }[] = [];
+    categoria.areaCategorias.forEach(areaCategoria => {
+      if (areaCategoria.materias) {
+        materias.push(...areaCategoria.materias);
+      }
+    });
+    
+    return materias;
   };
 
   return (
@@ -165,6 +200,15 @@ export default function CategoriasTableSimple({
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
+                  checked={visibleColumns.materias}
+                  onChange={() => onToggleColumn('materias')}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Materias</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
                   checked={visibleColumns.fechaCreacion}
                   onChange={() => onToggleColumn('fechaCreacion')}
                   className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -196,6 +240,11 @@ export default function CategoriasTableSimple({
                   NOMBRE
                 </TableCell>
               )}
+              {visibleColumns.materias && (
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  MATERIAS
+                </TableCell>
+              )}
               {visibleColumns.fechaCreacion && (
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   FECHA CREACIÓN
@@ -214,7 +263,10 @@ export default function CategoriasTableSimple({
 
           {/* Table Body */}
           <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-            {categorias.map((categoria) => (
+            {categorias.map((categoria) => {
+              const materias = getMaterias(categoria);
+              
+              return (
               <TableRow key={categoria.idCategoria}>
                 {/* NOMBRE */}
                 {visibleColumns.nombre && (
@@ -222,6 +274,78 @@ export default function CategoriasTableSimple({
                     <span className="font-medium text-gray-800 text-theme-sm dark:text-white/90 break-words">
                       {categoria.nombre}
                     </span>
+                  </TableCell>
+                )}
+
+                {/* MATERIAS */}
+                {visibleColumns.materias && (
+                  <TableCell className="px-5 py-4 text-start">
+                    <div className="relative flex items-center gap-2">
+                      {materias.length > 0 ? (
+                        <>
+                          {/* Mostrar solo la primera materia */}
+                          <Badge
+                            size="sm"
+                            color="light"
+                          >
+                            {materias[0].nombre}
+                          </Badge>
+
+                          {/* Botón +N si hay más materias */}
+                          {materias.length > 1 && (
+                            <div className="relative">
+                              <button
+                                ref={openMateriasDropdown === categoria.idCategoria ? materiasButtonRef : null}
+                                onClick={() => toggleMateriasDropdown(categoria.idCategoria)}
+                                className="flex h-6 w-auto min-w-[24px] items-center justify-center rounded-full border border-gray-300 bg-white px-2 text-xs font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
+                                aria-label={`${materias.length - 1} more subjects`}
+                              >
+                                +{materias.length - 1}
+                              </button>
+
+                              {/* Dropdown */}
+                              {openMateriasDropdown === categoria.idCategoria && materiasDropdownPosition && (
+                                <>
+                                  <div
+                                    className="fixed inset-0 z-10"
+                                    onClick={() => setOpenMateriasDropdown(null)}
+                                  />
+                                  
+                                  <div 
+                                    className="fixed z-50 w-64 rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+                                    style={{
+                                      bottom: `${window.innerHeight - materiasDropdownPosition.top}px`,
+                                      right: `${materiasDropdownPosition.right}px`,
+                                    }}
+                                  >
+                                    <div className="mb-2 px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-400">
+                                      Materias ({materias.length})
+                                    </div>
+                                    <div className="max-h-60 space-y-1 overflow-y-auto">
+                                      {materias.map((materia) => (
+                                        <div
+                                          key={materia.idMateria}
+                                          className="flex items-center gap-2 rounded-md px-2 py-2 text-sm text-gray-700 dark:text-gray-300"
+                                        >
+                                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700">
+                                            <svg className="h-3 w-3 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                              <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
+                                            </svg>
+                                          </div>
+                                          <span>{materia.nombre}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-sm text-gray-400 dark:text-gray-500">Sin materias</span>
+                      )}
+                    </div>
                   </TableCell>
                 )}
 
@@ -309,7 +433,8 @@ export default function CategoriasTableSimple({
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
+            );
+            })}
           </TableBody>
         </Table>
       </div>

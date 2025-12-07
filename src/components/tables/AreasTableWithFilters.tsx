@@ -31,6 +31,7 @@ export default function AreasTableWithFilters() {
   const [visibleColumns, setVisibleColumns] = useState({
     nombre: true,
     categorias: true,
+    materias: true,
     fechaCreacion: false,
     fechaActualizacion: false,
   });

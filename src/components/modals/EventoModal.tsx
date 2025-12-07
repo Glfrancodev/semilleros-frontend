@@ -14,6 +14,7 @@ export interface EventoFormData {
   nombre: string;
   descripcion: string;
   fechaProgramada: string;
+  capacidadMaxima: number | null;
   estaActivo: boolean;
 }
 
@@ -28,6 +29,7 @@ export default function EventoModal({
     nombre: "",
     descripcion: "",
     fechaProgramada: "",
+    capacidadMaxima: null,
     estaActivo: true,
   });
   const [loading, setLoading] = useState(false);
@@ -46,6 +48,7 @@ export default function EventoModal({
         nombre: evento.nombre,
         descripcion: evento.descripcion || "",
         fechaProgramada: fechaProgramada,
+        capacidadMaxima: evento.capacidadMaxima ?? null,
         estaActivo: evento.estaActivo,
       });
     } else {
@@ -53,6 +56,7 @@ export default function EventoModal({
         nombre: "",
         descripcion: "",
         fechaProgramada: "",
+        capacidadMaxima: null,
         estaActivo: true,
       });
     }
@@ -102,6 +106,7 @@ export default function EventoModal({
         nombre: "",
         descripcion: "",
         fechaProgramada: "",
+        capacidadMaxima: null,
         estaActivo: true,
       });
       setErrors({});
@@ -240,6 +245,32 @@ export default function EventoModal({
               {errors.descripcion && (
                 <p className="mt-1 text-sm text-red-500">{errors.descripcion}</p>
               )}
+            </div>
+
+            {/* Capacidad Máxima */}
+            <div>
+              <label
+                htmlFor="capacidadMaxima"
+                className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Capacidad Máxima de Estudiantes
+              </label>
+              <input
+                type="number"
+                id="capacidadMaxima"
+                name="capacidadMaxima"
+                value={formData.capacidadMaxima ?? ""}
+                onChange={(e) => {
+                  const value = e.target.value === "" ? null : parseInt(e.target.value);
+                  setFormData(prev => ({ ...prev, capacidadMaxima: value }));
+                }}
+                min="1"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                placeholder="Ej: 40"
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Dejar vacío si no hay límite de capacidad
+              </p>
             </div>
 
             {/* Fecha Programada */}

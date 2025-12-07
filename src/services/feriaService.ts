@@ -90,6 +90,7 @@ export interface FeriaActualizacion {
   semestre?: number;
   año?: number;
   estaActivo?: boolean;
+  tareas?: Omit<Tarea, 'idFeria' | 'fechaCreacion' | 'fechaActualizacion'>[];
 }
 
 interface ApiSuccessResponse<T> {

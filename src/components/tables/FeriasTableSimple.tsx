@@ -18,6 +18,7 @@ interface FeriasTableProps {
     semestre: boolean;
     año: boolean;
     estaActivo: boolean;
+    tareas: boolean;
     fechaCreacion: boolean;
     fechaActualizacion: boolean;
   };
@@ -29,7 +30,7 @@ interface FeriasTableProps {
   onDelete: (idFeria: string) => void;
 }
 
-export default function FeriasTableSimple({ 
+export default function FeriasTableSimple({
   ferias,
   totalFerias,
   visibleColumns,
@@ -41,13 +42,20 @@ export default function FeriasTableSimple({
   onDelete
 }: FeriasTableProps) {
   const [openActionsDropdown, setOpenActionsDropdown] = useState<string | null>(null);
+  const [openTareasDropdown, setOpenTareasDropdown] = useState<string | null>(null);
   const [actionsDropdownPosition, setActionsDropdownPosition] = useState<{ top: number; right: number } | null>(null);
+  const [tareasDropdownPosition, setTareasDropdownPosition] = useState<{ top: number; right: number } | null>(null);
   const [settingsDropdownPosition, setSettingsDropdownPosition] = useState<{ top: number; right: number } | null>(null);
   const actionsButtonRef = useRef<HTMLButtonElement>(null);
+  const tareasButtonRef = useRef<HTMLButtonElement>(null);
   const settingsButtonRef = useRef<HTMLDivElement>(null);
 
   const toggleActionsDropdown = (idFeria: string) => {
     setOpenActionsDropdown(openActionsDropdown === idFeria ? null : idFeria);
+  };
+
+  const toggleTareasDropdown = (idFeria: string) => {
+    setOpenTareasDropdown(openTareasDropdown === idFeria ? null : idFeria);
   };
 
   // Calcular posición del dropdown de actions
@@ -61,6 +69,17 @@ export default function FeriasTableSimple({
     }
   }, [openActionsDropdown]);
 
+  // Calcular posición del dropdown de tareas
+  useEffect(() => {
+    if (openTareasDropdown && tareasButtonRef.current) {
+      const rect = tareasButtonRef.current.getBoundingClientRect();
+      setTareasDropdownPosition({
+        top: rect.top - 8,
+        right: window.innerWidth - rect.right,
+      });
+    }
+  }, [openTareasDropdown]);
+
   // Calcular posición del dropdown de settings
   useEffect(() => {
     if (showColumnSettings && settingsButtonRef.current) {
@@ -72,16 +91,23 @@ export default function FeriasTableSimple({
     }
   }, [showColumnSettings]);
 
-  // Cerrar dropdowns al hacer scroll
+  // Cerrar dropdowns al hacer scroll (excepto scroll interno del dropdown)
   useEffect(() => {
-    const handleScroll = () => {
+    const handleScroll = (e: Event) => {
+      // No cerrar si el scroll es dentro del dropdown de tareas
+      const tareasDropdown = document.querySelector('[data-tareas-dropdown]');
+      if (tareasDropdown && tareasDropdown.contains(e.target as Node)) {
+        return;
+      }
+      
       if (openActionsDropdown) setOpenActionsDropdown(null);
+      if (openTareasDropdown) setOpenTareasDropdown(null);
       if (showColumnSettings) onToggleColumnSettings();
     };
 
     window.addEventListener('scroll', handleScroll, true);
     return () => window.removeEventListener('scroll', handleScroll, true);
-  }, [openActionsDropdown, showColumnSettings, onToggleColumnSettings]);
+  }, [openActionsDropdown, openTareasDropdown, showColumnSettings, onToggleColumnSettings]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
@@ -102,13 +128,13 @@ export default function FeriasTableSimple({
             <span className="font-semibold text-gray-900 dark:text-white">{totalFerias.toLocaleString()}</span>
           </div>
         </div>
-        
+
         {/* Botones de acción */}
         <div className="flex items-center gap-2">
           {/* Botón Table Settings */}
           <div ref={settingsButtonRef}>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="xs"
               onClick={onToggleColumnSettings}
               startIcon={
@@ -121,10 +147,10 @@ export default function FeriasTableSimple({
               Table settings
             </Button>
           </div>
-          
+
           {/* Botón Añadir Feria */}
-          <Button 
-            variant="primary" 
+          <Button
+            variant="primary"
             size="xs"
             onClick={onAddFeria}
             startIcon={
@@ -137,7 +163,7 @@ export default function FeriasTableSimple({
           </Button>
         </div>
       </div>
-      
+
       {/* Panel de configuración de columnas - Posicionado con fixed */}
       {showColumnSettings && settingsDropdownPosition && (
         <>
@@ -145,7 +171,7 @@ export default function FeriasTableSimple({
             className="fixed inset-0 z-10"
             onClick={onToggleColumnSettings}
           />
-          <div 
+          <div
             className="fixed z-50 w-64 rounded-lg border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-700 dark:bg-gray-800"
             style={{
               top: `${settingsDropdownPosition.top}px`,
@@ -195,6 +221,15 @@ export default function FeriasTableSimple({
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
+                  checked={visibleColumns.tareas}
+                  onChange={() => onToggleColumn('tareas')}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Tareas</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
                   checked={visibleColumns.fechaCreacion}
                   onChange={() => onToggleColumn('fechaCreacion')}
                   className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -214,7 +249,7 @@ export default function FeriasTableSimple({
           </div>
         </>
       )}
-      
+
       {/* Tabla */}
       <div className="max-w-full overflow-x-auto">
         <Table>
@@ -239,6 +274,11 @@ export default function FeriasTableSimple({
               {visibleColumns.estaActivo && (
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   ESTADO
+                </TableCell>
+              )}
+              {visibleColumns.tareas && (
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  TAREAS
                 </TableCell>
               )}
               {visibleColumns.fechaCreacion && (
@@ -291,13 +331,85 @@ export default function FeriasTableSimple({
                 {/* ESTADO */}
                 {visibleColumns.estaActivo && (
                   <TableCell className="px-5 py-4 text-start">
-                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      feria.estaActivo
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${feria.estaActivo
                         ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                         : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
-                    }`}>
+                      }`}>
                       {feria.estaActivo ? 'Activa' : 'Inactiva'}
                     </span>
+                  </TableCell>
+                )}
+
+                {/* TAREAS */}
+                {visibleColumns.tareas && (
+                  <TableCell className="px-5 py-4 text-start">
+                    <div className="relative flex items-center gap-2">
+                      {feria.tareas && feria.tareas.length > 0 ? (
+                        <>
+                          {/* Mostrar solo la primera tarea */}
+                          <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 dark:bg-blue-900/30 dark:text-blue-400 dark:ring-blue-400/30">
+                            {feria.tareas[0].nombre}
+                          </span>
+
+                          {/* Botón +N si hay más tareas */}
+                          {feria.tareas.length > 1 && (
+                            <div className="relative">
+                              <button
+                                ref={openTareasDropdown === feria.idFeria ? tareasButtonRef : null}
+                                onClick={() => toggleTareasDropdown(feria.idFeria)}
+                                className="flex h-6 w-6 items-center justify-center rounded-full border border-blue-300 bg-blue-50 text-xs font-medium text-blue-700 shadow-sm transition-colors hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+                                aria-label={`${feria.tareas.length - 1} more tasks`}
+                              >
+                                +{feria.tareas.length - 1}
+                              </button>
+
+                              {/* Dropdown */}
+                              {openTareasDropdown === feria.idFeria && tareasDropdownPosition && (
+                                <>
+                                  <div
+                                    className="fixed inset-0 z-10"
+                                    onClick={() => setOpenTareasDropdown(null)}
+                                  />
+                                  
+                                  <div 
+                                    data-tareas-dropdown
+                                    className="fixed z-50 w-64 rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+                                    style={{
+                                      bottom: `${window.innerHeight - tareasDropdownPosition.top}px`,
+                                      right: `${tareasDropdownPosition.right}px`,
+                                    }}
+                                  >
+                                    <div className="mb-2 px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-400">
+                                      Tareas de la Feria
+                                    </div>
+                                    <div className="space-y-1 max-h-64 overflow-y-auto">
+                                      {feria.tareas.map((tarea, index) => (
+                                        <div
+                                          key={index}
+                                          className="flex items-start gap-2 rounded-md px-2 py-2 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                                        >
+                                          <div className="flex-shrink-0 mt-0.5">
+                                            <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                                          </div>
+                                          <div className="flex-1">
+                                            <p className="text-gray-700 dark:text-gray-300 font-medium">{tarea.nombre}</p>
+                                            {tarea.descripcion && (
+                                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{tarea.descripcion}</p>
+                                            )}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-sm text-gray-400 dark:text-gray-500">Sin tareas</span>
+                      )}
+                    </div>
                   </TableCell>
                 )}
 
@@ -322,7 +434,7 @@ export default function FeriasTableSimple({
                 {/* ACCIONES */}
                 <TableCell className="px-5 py-4 text-start">
                   <div className="relative">
-                    <button 
+                    <button
                       ref={openActionsDropdown === feria.idFeria ? actionsButtonRef : null}
                       onClick={() => toggleActionsDropdown(feria.idFeria)}
                       className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
@@ -337,8 +449,8 @@ export default function FeriasTableSimple({
                           className="fixed inset-0 z-10"
                           onClick={() => setOpenActionsDropdown(null)}
                         />
-                        
-                        <div 
+
+                        <div
                           className="fixed z-50 w-48 rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-800"
                           style={{
                             bottom: `${window.innerHeight - actionsDropdownPosition.top}px`,
@@ -363,7 +475,7 @@ export default function FeriasTableSimple({
                               </div>
                               <span>Editar</span>
                             </button>
-                            
+
                             <button
                               onClick={() => {
                                 onDelete(feria.idFeria);

@@ -17,6 +17,7 @@ interface EventosTableProps {
     nombre: boolean;
     descripcion: boolean;
     fechaProgramada: boolean;
+    inscritos: boolean;
     estaActivo: boolean;
     fechaCreacion: boolean;
     fechaActualizacion: boolean;
@@ -196,6 +197,15 @@ export default function EventosTableSimple({
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
+                  checked={visibleColumns.inscritos}
+                  onChange={() => onToggleColumn('inscritos')}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Inscritos</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
                   checked={visibleColumns.estaActivo}
                   onChange={() => onToggleColumn('estaActivo')}
                   className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -246,6 +256,11 @@ export default function EventosTableSimple({
                   FECHA PROGRAMADA
                 </TableCell>
               )}
+              {visibleColumns.inscritos && (
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  INSCRITOS
+                </TableCell>
+              )}
               {visibleColumns.estaActivo && (
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   ESTADO
@@ -294,6 +309,15 @@ export default function EventosTableSimple({
                   <TableCell className="px-5 py-4 text-start">
                     <span className="text-sm text-gray-600 dark:text-gray-400">
                       {formatDateTime(evento.fechaProgramada)}
+                    </span>
+                  </TableCell>
+                )}
+
+                {/* INSCRITOS */}
+                {visibleColumns.inscritos && (
+                  <TableCell className="px-5 py-4 text-start">
+                    <span className="text-sm font-medium text-gray-800 dark:text-gray-300">
+                      {evento.cantidadInscritos ?? 0}/{evento.totalEstudiantes ?? 0}
                     </span>
                   </TableCell>
                 )}

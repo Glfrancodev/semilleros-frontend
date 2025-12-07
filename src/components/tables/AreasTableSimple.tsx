@@ -17,6 +17,7 @@ interface AreasTableProps {
   visibleColumns: {
     nombre: boolean;
     categorias: boolean;
+    materias: boolean;
     fechaCreacion: boolean;
     fechaActualizacion: boolean;
   };
@@ -41,11 +42,14 @@ export default function AreasTableSimple({
 }: AreasTableProps) {
   const [openActionsDropdown, setOpenActionsDropdown] = useState<string | null>(null);
   const [openCategoriasDropdown, setOpenCategoriasDropdown] = useState<string | null>(null);
+  const [openMateriasDropdown, setOpenMateriasDropdown] = useState<string | null>(null);
   const [actionsDropdownPosition, setActionsDropdownPosition] = useState<{ top: number; right: number } | null>(null);
   const [categoriasDropdownPosition, setCategoriasDropdownPosition] = useState<{ top: number; right: number } | null>(null);
+  const [materiasDropdownPosition, setMateriasDropdownPosition] = useState<{ top: number; right: number } | null>(null);
   const [settingsDropdownPosition, setSettingsDropdownPosition] = useState<{ top: number; right: number } | null>(null);
   const actionsButtonRef = useRef<HTMLButtonElement>(null);
   const categoriasButtonRef = useRef<HTMLButtonElement>(null);
+  const materiasButtonRef = useRef<HTMLButtonElement>(null);
   const settingsButtonRef = useRef<HTMLDivElement>(null);
 
   const toggleActionsDropdown = (idArea: string) => {
@@ -54,6 +58,10 @@ export default function AreasTableSimple({
 
   const toggleCategoriasDropdown = (idArea: string) => {
     setOpenCategoriasDropdown(openCategoriasDropdown === idArea ? null : idArea);
+  };
+
+  const toggleMateriasDropdown = (idArea: string) => {
+    setOpenMateriasDropdown(openMateriasDropdown === idArea ? null : idArea);
   };
 
   // Calcular posición del dropdown de actions
@@ -78,6 +86,17 @@ export default function AreasTableSimple({
     }
   }, [openCategoriasDropdown]);
 
+  // Calcular posición del dropdown de materias
+  useEffect(() => {
+    if (openMateriasDropdown && materiasButtonRef.current) {
+      const rect = materiasButtonRef.current.getBoundingClientRect();
+      setMateriasDropdownPosition({
+        top: rect.top - 8,
+        right: window.innerWidth - rect.right,
+      });
+    }
+  }, [openMateriasDropdown]);
+
   // Calcular posición del dropdown de settings
   useEffect(() => {
     if (showColumnSettings && settingsButtonRef.current) {
@@ -94,12 +113,13 @@ export default function AreasTableSimple({
     const handleScroll = () => {
       if (openActionsDropdown) setOpenActionsDropdown(null);
       if (openCategoriasDropdown) setOpenCategoriasDropdown(null);
+      if (openMateriasDropdown) setOpenMateriasDropdown(null);
       if (showColumnSettings) onToggleColumnSettings();
     };
 
     window.addEventListener('scroll', handleScroll, true);
     return () => window.removeEventListener('scroll', handleScroll, true);
-  }, [openActionsDropdown, openCategoriasDropdown, showColumnSettings, onToggleColumnSettings]);
+  }, [openActionsDropdown, openCategoriasDropdown, openMateriasDropdown, showColumnSettings, onToggleColumnSettings]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
@@ -195,6 +215,15 @@ export default function AreasTableSimple({
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
+                  checked={visibleColumns.materias}
+                  onChange={() => onToggleColumn('materias')}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Materias</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
                   checked={visibleColumns.fechaCreacion}
                   onChange={() => onToggleColumn('fechaCreacion')}
                   className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -229,6 +258,11 @@ export default function AreasTableSimple({
               {visibleColumns.categorias && (
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   CATEGORÍAS
+                </TableCell>
+              )}
+              {visibleColumns.materias && (
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  MATERIAS
                 </TableCell>
               )}
               {visibleColumns.fechaCreacion && (
@@ -328,6 +362,83 @@ export default function AreasTableSimple({
                       ) : (
                         <span className="text-sm text-gray-400 dark:text-gray-500">Sin categorías</span>
                       )}
+                    </div>
+                  </TableCell>
+                )}
+
+                {/* MATERIAS */}
+                {visibleColumns.materias && (
+                  <TableCell className="px-5 py-4 text-start">
+                    <div className="relative flex items-center gap-2">
+                      {(() => {
+                        // Recopilar todas las materias de todas las areaCategorias
+                        const todasLasMaterias = area.areaCategorias?.flatMap(ac => ac.materias || []) || [];
+                        
+                        return todasLasMaterias.length > 0 ? (
+                          <>
+                            {/* Mostrar solo la primera materia */}
+                            <Badge
+                              size="sm"
+                              color="light"
+                            >
+                              {todasLasMaterias[0].nombre}
+                            </Badge>
+
+                            {/* Botón +N si hay más materias */}
+                            {todasLasMaterias.length > 1 && (
+                              <div className="relative">
+                                <button
+                                  ref={openMateriasDropdown === area.idArea ? materiasButtonRef : null}
+                                  onClick={() => toggleMateriasDropdown(area.idArea)}
+                                  className="flex h-6 w-auto min-w-[24px] items-center justify-center rounded-full border border-gray-300 bg-white px-2 text-xs font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
+                                  aria-label={`${todasLasMaterias.length - 1} more subjects`}
+                                >
+                                  +{todasLasMaterias.length - 1}
+                                </button>
+
+                                {/* Dropdown */}
+                                {openMateriasDropdown === area.idArea && materiasDropdownPosition && (
+                                  <>
+                                    <div
+                                      className="fixed inset-0 z-10"
+                                      onClick={() => setOpenMateriasDropdown(null)}
+                                    />
+                                    
+                                    <div 
+                                      className="fixed z-50 w-64 rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+                                      style={{
+                                        bottom: `${window.innerHeight - materiasDropdownPosition.top}px`,
+                                        right: `${materiasDropdownPosition.right}px`,
+                                      }}
+                                    >
+                                      <div className="mb-2 px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-400">
+                                        Materias ({todasLasMaterias.length})
+                                      </div>
+                                      <div className="max-h-60 space-y-1 overflow-y-auto">
+                                        {todasLasMaterias.map((materia) => (
+                                          <div
+                                            key={materia.idMateria}
+                                            className="flex items-center gap-2 rounded-md px-2 py-2 text-sm text-gray-700 dark:text-gray-300"
+                                          >
+                                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700">
+                                              <svg className="h-3 w-3 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
+                                              </svg>
+                                            </div>
+                                            <span>{materia.nombre}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-sm text-gray-400 dark:text-gray-500">Sin materias</span>
+                        );
+                      })()}
                     </div>
                   </TableCell>
                 )}

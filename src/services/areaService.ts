@@ -1,5 +1,10 @@
 import api from "./api";
 
+export interface Materia {
+  idMateria: string;
+  nombre: string;
+}
+
 export interface AreaCategoria {
   idAreaCategoria: string;
   idArea: string;
@@ -18,6 +23,7 @@ export interface AreaCategoria {
     idCategoria: string;
     nombre: string;
   };
+  materias?: Materia[];
 }
 
 export interface Area {

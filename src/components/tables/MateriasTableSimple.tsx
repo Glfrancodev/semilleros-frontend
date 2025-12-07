@@ -153,7 +153,15 @@ export default function MateriasTableSimple({
               <TableRow key={materia.idMateria}>
                 {visibleColumns.sigla && <TableCell className="px-5 py-4 text-start"><span className="font-medium text-gray-800 text-theme-sm dark:text-white/90">{materia.sigla}</span></TableCell>}
                 {visibleColumns.nombre && <TableCell className="px-5 py-4 text-start"><span className="text-sm text-gray-600 dark:text-gray-400">{materia.nombre}</span></TableCell>}
-                {visibleColumns.areaCategoria && <TableCell className="px-5 py-4 text-start"><span className="text-sm text-gray-600 dark:text-gray-400">{materia.areaCategoria?.nombre || 'N/A'}</span></TableCell>}
+                {visibleColumns.areaCategoria && (
+                  <TableCell className="px-5 py-4 text-start">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {materia.areaCategoria?.area?.nombre && materia.areaCategoria?.categoria?.nombre
+                        ? `${materia.areaCategoria.area.nombre} - ${materia.areaCategoria.categoria.nombre}`
+                        : 'N/A'}
+                    </span>
+                  </TableCell>
+                )}
                 {visibleColumns.grupos && (
                   <TableCell className="px-5 py-4 text-start">
                     {materia.grupoMaterias && materia.grupoMaterias.length > 0 ? (

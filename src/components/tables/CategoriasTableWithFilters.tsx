@@ -21,6 +21,8 @@ export default function CategoriasTableWithFilters() {
   // Estado de columnas visibles
   const [visibleColumns, setVisibleColumns] = useState({
     nombre: true,
+    areas: true,
+    materias: true,
     fechaCreacion: false,
     fechaActualizacion: false,
   });

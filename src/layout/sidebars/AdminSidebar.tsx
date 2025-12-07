@@ -33,7 +33,9 @@ const navItems: NavItem[] = [
     icon: <UserCircleIcon />,
     name: "Cuentas",
     subItems: [
-      { name: "Usuarios", path: "/usuarios", icon: <UserIcon /> },
+      { name: "Administrativos", path: "/administrativos", icon: <UserIcon /> },
+      { name: "Estudiantes", path: "/estudiantes", icon: <UserIcon /> },
+      { name: "Docentes", path: "/docentes", icon: <UserIcon /> },
     ],
   },
   {
@@ -55,9 +57,10 @@ const navItems: NavItem[] = [
   },
   {
     icon: <FolderIcon />,
-    name: "Proyectos",
+    name: "Feria",
     subItems: [
-      { name: "Proyecto", path: "/proyectos", icon: <FolderIcon /> },
+      { name: "Tareas y Revisiones", path: "/tareas-revisiones", icon: <FolderIcon /> },
+      { name: "Asignar Jurados", path: "/asignar-jurados", icon: <UserIcon /> },
     ],
   },
 ];
