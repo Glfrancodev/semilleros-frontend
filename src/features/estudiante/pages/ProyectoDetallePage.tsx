@@ -142,7 +142,7 @@ export default function ProyectoDetallePage() {
         <ProyectoIntegrantesCard proyecto={proyecto} />
         
         {/* Card de Tareas */}
-        <ProyectoTareasCard idProyecto={proyecto.idProyecto} />
+        <ProyectoTareasCard idProyecto={proyecto.idProyecto} proyecto={proyecto} />
       </div>
     </>
   );

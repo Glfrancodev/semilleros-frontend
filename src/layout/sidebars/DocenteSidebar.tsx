@@ -24,23 +24,13 @@ const navItems: NavItem[] = [
   },
   {
     icon: <GridIcon />,
-    name: "Mis Proyectos",
-    path: "/mis-proyectos",
+    name: "Mis Materias",
+    path: "/mis-materias",
   },
   {
     icon: <CalenderIcon />,
-    name: "Revisiones",
-    path: "/revisiones",
-  },
-  {
-    icon: <CalenderIcon />,
-    name: "Eventos",
-    path: "/eventos",
-  },
-  {
-    icon: <UserCircleIcon />,
-    name: "Estudiantes",
-    path: "/estudiantes",
+    name: "Calificar Proyectos",
+    path: "/calificar-proyectos",
   },
   {
     icon: <UserCircleIcon />,

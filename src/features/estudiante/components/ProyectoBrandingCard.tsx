@@ -90,8 +90,9 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
     (integrante) => integrante.idUsuario && user?.idUsuario && integrante.idUsuario === user.idUsuario
   );
 
-  // Bloquear branding si el proyecto es final
+  // Bloquear branding si el proyecto es final o si no está aprobado por admin y tutor
   const brandingBloqueadoPorEsFinal = proyecto.esFinal === true;
+  const brandingBloqueadoPorAprobacion = proyecto.estaAprobado !== true || proyecto.estaAprobadoTutor !== true;
 
   const handleFileUpload = async (file: File, tipo: "logo" | "banner" | "triptico") => {
     try {
@@ -141,12 +142,17 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
       <h3 className="mb-5 text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-7">
         Branding
       </h3>
-      {puedeGestionarBranding && brandingBloqueadoPorEsFinal && (
+      {puedeGestionarBranding && brandingBloqueadoPorAprobacion && (
+        <p className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-200">
+          El proyecto debe estar aprobado por el Administrador y el Tutor antes de poder modificar el branding.
+        </p>
+      )}
+      {puedeGestionarBranding && brandingBloqueadoPorEsFinal && !brandingBloqueadoPorAprobacion && (
         <p className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-200">
           El proyecto ha sido marcado como final. No se pueden realizar modificaciones al branding.
         </p>
       )}
-      {puedeGestionarBranding && brandingBloqueado && !brandingBloqueadoPorEsFinal && (
+      {puedeGestionarBranding && brandingBloqueado && !brandingBloqueadoPorEsFinal && !brandingBloqueadoPorAprobacion && (
         <p className="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-2 text-sm text-yellow-800 dark:border-yellow-900/40 dark:bg-yellow-900/20 dark:text-yellow-200">
           Hay una tarea en revisión, por lo que la actualización de branding está temporalmente
           deshabilitada.
@@ -185,7 +191,7 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
                   const file = e.target.files?.[0];
                   if (file) handleFileUpload(file, "logo");
                 }}
-                disabled={uploading === "logo" || brandingBloqueado || brandingBloqueadoPorEsFinal}
+                disabled={uploading === "logo" || brandingBloqueado || brandingBloqueadoPorEsFinal || brandingBloqueadoPorAprobacion}
               />
               <Button
                 size="sm"
@@ -194,7 +200,7 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
                   e.preventDefault();
                   (e.currentTarget.previousElementSibling as HTMLInputElement)?.click();
                 }}
-                disabled={uploading === "logo" || brandingBloqueado || brandingBloqueadoPorEsFinal}
+                disabled={uploading === "logo" || brandingBloqueado || brandingBloqueadoPorEsFinal || brandingBloqueadoPorAprobacion}
               >
                 {uploading === "logo" ? "Subiendo..." : "Subir Logo"}
               </Button>
@@ -233,7 +239,7 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
                   const file = e.target.files?.[0];
                   if (file) handleFileUpload(file, "banner");
                 }}
-                disabled={uploading === "banner" || brandingBloqueado || brandingBloqueadoPorEsFinal}
+                disabled={uploading === "banner" || brandingBloqueado || brandingBloqueadoPorEsFinal || brandingBloqueadoPorAprobacion}
               />
               <Button
                 size="sm"
@@ -242,7 +248,7 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
                   e.preventDefault();
                   (e.currentTarget.previousElementSibling as HTMLInputElement)?.click();
                 }}
-                disabled={uploading === "banner" || brandingBloqueado || brandingBloqueadoPorEsFinal}
+                disabled={uploading === "banner" || brandingBloqueado || brandingBloqueadoPorEsFinal || brandingBloqueadoPorAprobacion}
               >
                 {uploading === "banner" ? "Subiendo..." : "Subir Banner"}
               </Button>
@@ -285,7 +291,7 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
                   const file = e.target.files?.[0];
                   if (file) handleFileUpload(file, "triptico");
                 }}
-                disabled={uploading === "triptico" || brandingBloqueado || brandingBloqueadoPorEsFinal}
+                disabled={uploading === "triptico" || brandingBloqueado || brandingBloqueadoPorEsFinal || brandingBloqueadoPorAprobacion}
               />
               <Button
                 size="sm"
@@ -294,7 +300,7 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
                   e.preventDefault();
                   (e.currentTarget.previousElementSibling as HTMLInputElement)?.click();
                 }}
-                disabled={uploading === "triptico" || brandingBloqueado || brandingBloqueadoPorEsFinal}
+                disabled={uploading === "triptico" || brandingBloqueado || brandingBloqueadoPorEsFinal || brandingBloqueadoPorAprobacion}
               >
                 {uploading === "triptico" ? "Subiendo..." : "Subir Tríptico (PDF)"}
               </Button>

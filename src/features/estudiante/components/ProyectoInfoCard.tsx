@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ProyectoDetalle, actualizarVisibilidadProyecto, actualizarProyectoEsFinal } from "../../../services/proyectoService";
+import { ProyectoDetalle, actualizarVisibilidadProyecto, actualizarProyectoEsFinal, actualizarProyectoAprobadoTutor } from "../../../services/proyectoService";
 import api from "../../../services/api";
 import Button from "../../../components/ui/button/Button";
 import toast from "react-hot-toast";
@@ -32,6 +32,7 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
   const [cambiandoVisibilidad, setCambiandoVisibilidad] = useState(false);
   const [tareaFinalCalificada, setTareaFinalCalificada] = useState(false);
   const [procesandoFeria, setProcesandoFeria] = useState(false);
+  const [procesandoTutor, setProcesandoTutor] = useState(false);
 
   useEffect(() => {
     cargarDatosProgreso();
@@ -104,12 +105,12 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
     }
   }, [proyecto.idProyecto, user?.idUsuario]);
 
-  // Determinar el estado del proyecto (null = En revisión, true = Aprobado, false = Denegado)
+  // Determinar el estado del proyecto (null = Pendiente, true = Aprobado, false = Rechazado)
   const estado = proyecto.estaAprobado === null 
-    ? "En revisión" 
+    ? "Pendiente de revisión del Administrador" 
     : proyecto.estaAprobado 
-      ? "Aprobado" 
-      : "Denegado";
+      ? "Aprobado por Administrador" 
+      : "Rechazado por Administrador";
   
   const estadoColor = proyecto.estaAprobado === null
     ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300"
@@ -130,6 +131,21 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
       ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-200"
       : proyecto.esFinal
       ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+      : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300";
+
+  // Estado de aprobación del tutor (solo para docentes)
+  const estadoTutorLabel =
+    proyecto.estaAprobadoTutor === null || proyecto.estaAprobadoTutor === undefined
+      ? "Pendiente de revisión del tutor"
+      : proyecto.estaAprobadoTutor === true
+      ? "Aprobado por el tutor"
+      : "Rechazado por el tutor";
+  
+  const estadoTutorColor =
+    proyecto.estaAprobadoTutor === null || proyecto.estaAprobadoTutor === undefined
+      ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"
+      : proyecto.estaAprobadoTutor === true
+      ? "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
       : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300";
 
   const handleToggleVisibilidad = async () => {
@@ -190,6 +206,34 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
     toast.success('Abriendo sala de reunión...');
   };
 
+  const handleAprobarTutor = async () => {
+    try {
+      setProcesandoTutor(true);
+      await actualizarProyectoAprobadoTutor(proyecto.idProyecto, true);
+      toast.success("Proyecto aprobado como tutor");
+      onUpdate?.();
+    } catch (error: any) {
+      console.error("Error al aprobar proyecto:", error);
+      toast.error(error?.response?.data?.message || "No se pudo aprobar el proyecto");
+    } finally {
+      setProcesandoTutor(false);
+    }
+  };
+
+  const handleRechazarTutor = async () => {
+    try {
+      setProcesandoTutor(true);
+      await actualizarProyectoAprobadoTutor(proyecto.idProyecto, false);
+      toast.success("Proyecto rechazado");
+      onUpdate?.();
+    } catch (error: any) {
+      console.error("Error al rechazar proyecto:", error);
+      toast.error(error?.response?.data?.message || "No se pudo rechazar el proyecto");
+    } finally {
+      setProcesandoTutor(false);
+    }
+  };
+
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
       <h3 className="mb-5 text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-7">
@@ -211,11 +255,15 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
             <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap self-start ${estadoColor}`}>
               {estado}
             </span>
-            <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap self-start ${visibilidadColor}`}>
-              {isPublico ? "Público" : "Privado"}
+            {/* Badge de aprobación del tutor - visible para todos */}
+            <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap self-start ${estadoTutorColor}`}>
+              {estadoTutorLabel}
             </span>
             <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap self-start ${estadoFeriaColor}`}>
               {estadoFeriaLabel}
+            </span>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap self-start ${visibilidadColor}`}>
+              {isPublico ? "Público" : "Privado"}
             </span>
           </div>
         </div>
@@ -290,6 +338,26 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
             className="flex-1"
           >
             {procesandoFeria ? "Procesando..." : "Rechazar para exponer en feria"}
+          </Button>
+        </div>
+      )}
+
+      {/* Botones de Aprobación/Rechazo del Tutor - Solo para docentes cuando está pendiente */}
+      {user?.rol === ROLES.DOCENTE && (proyecto.estaAprobadoTutor === null || proyecto.estaAprobadoTutor === undefined) && (
+        <div className="mt-3 flex gap-2">
+          <Button
+            onClick={handleAprobarTutor}
+            disabled={procesandoTutor}
+            className="flex-1"
+          >
+            {procesandoTutor ? "Procesando..." : "Aprobar proyecto"}
+          </Button>
+          <Button
+            onClick={handleRechazarTutor}
+            disabled={procesandoTutor}
+            className="flex-1"
+          >
+            {procesandoTutor ? "Procesando..." : "Rechazar proyecto"}
           </Button>
         </div>
       )}

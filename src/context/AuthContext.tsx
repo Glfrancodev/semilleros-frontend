@@ -92,7 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             navigate("/dashboard");
             break;
           case ROLES.DOCENTE:
-            navigate("/docente/dashboard");
+            navigate("/mis-materias");
             break;
           case ROLES.ESTUDIANTE:
             navigate("/estudiante/convocatorias");

@@ -32,6 +32,13 @@ import MisProyectosPage from "./features/estudiante/pages/MisProyectosPage";
 import ConvocatoriasPage from "./features/estudiante/pages/ConvocatoriasPage";
 import ProyectoDetallePage from "./features/estudiante/pages/ProyectoDetallePage";
 import DocumentoEditorPage from "./features/estudiante/pages/DocumentoEditorPage";
+
+// Páginas de Docente
+import CalificarProyectosPage from "./features/docente/pages/CalificarProyectosPage";
+import MisMateriasPage from "./features/docente/pages/MisMateriasPage";
+import MateriaProyectos from "./pages/MateriaProyectos";
+import ProyectoRevisionPage from "./features/docente/pages/ProyectoRevisionPage";
+
 import NewLandingPage from "./NewLandingPage";
 import ReunionPage from "./pages/ReunionPage";
 
@@ -127,6 +134,12 @@ export default function App() {
               <Route path="/estudiante/calendario" element={<CalendarioPage />} />
               <Route path="/estudiante/proyectos/guias" element={<GuiasDescubrirPage />} />
               <Route path="/estudiante/proyectos/mis-proyectos" element={<MisProyectosPage />} />
+              
+              {/* Rutas de Docente */}
+              <Route path="/mis-materias" element={<MisMateriasPage />} />
+              <Route path="/mis-materias/:idMateria/proyectos" element={<MateriaProyectos />} />
+              <Route path="/docente/proyecto/:idProyecto" element={<ProyectoRevisionPage />} />
+              <Route path="/calificar-proyectos" element={<CalificarProyectosPage />} />
             </Route>
           </Route>
 

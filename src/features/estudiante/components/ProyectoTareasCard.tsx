@@ -3,6 +3,7 @@ import api from "../../../services/api";
 import { useAuth } from "../../../context/AuthContext";
 import Button from "../../../components/ui/button/Button";
 import { actualizarRevision, obtenerRevisionesPorProyecto, Revision } from "../../../services/revisionService";
+import { ProyectoDetalle } from "../../../services/proyectoService";
 import { ROLES } from "../../../constants/roles";
 import toast from "react-hot-toast";
 
@@ -23,6 +24,7 @@ interface TareasOrganizadas {
 
 interface ProyectoTareasCardProps {
   idProyecto: string;
+  proyecto?: ProyectoDetalle;
 }
 
 
@@ -35,7 +37,7 @@ interface Integrante {
   idUsuario?: string;
 }
 
-export default function ProyectoTareasCard({ idProyecto }: ProyectoTareasCardProps) {
+export default function ProyectoTareasCard({ idProyecto, proyecto }: ProyectoTareasCardProps) {
   const { user } = useAuth();
   const [tareas, setTareas] = useState<TareasOrganizadas>({
     enProceso: [],
@@ -48,7 +50,9 @@ export default function ProyectoTareasCard({ idProyecto }: ProyectoTareasCardPro
   const [enviandoRevision, setEnviandoRevision] = useState(false);
   const [errorRevision, setErrorRevision] = useState<string | null>(null);
   const [revisionesMap, setRevisionesMap] = useState<Record<string, Revision>>({});
-  const [revisionSeleccionada, setRevisionSeleccionada] = useState<{
+
+  // Verificar si el proyecto está bloqueado por falta de aprobaciones
+  const proyectoBloqueado = proyecto && (proyecto.estaAprobado !== true || proyecto.estaAprobadoTutor !== true);  const [revisionSeleccionada, setRevisionSeleccionada] = useState<{
     tarea: Tarea;
     revision: Revision;
     editable: boolean;
@@ -261,7 +265,7 @@ export default function ProyectoTareasCard({ idProyecto }: ProyectoTareasCardPro
           <Button
             size="sm"
             variant="primary"
-            disabled={!!revisionEnCurso || enviandoRevision}
+            disabled={!!revisionEnCurso || enviandoRevision || proyectoBloqueado}
             onClick={handleEnviarRevision}
           >
             {enviandoRevision ? "Enviando..." : "Enviar Revisión"}
@@ -271,6 +275,12 @@ export default function ProyectoTareasCard({ idProyecto }: ProyectoTareasCardPro
               <div className="mb-3 text-sm text-red-600 dark:text-red-400">{errorRevision}</div>
             )}
       </div>
+
+      {proyectoBloqueado && (
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-200">
+          El proyecto debe estar aprobado por el Administrador y el Tutor antes de poder enviar tareas para revisión.
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* En Proceso */}

@@ -102,3 +102,25 @@ export const obtenerJuradosPorProyecto = async (idProyecto: string): Promise<Jur
     esTutor: dp.esTutor,
   }));
 };
+
+// Interfaces para proyectos como jurado
+export interface ProyectoJurado {
+  idProyecto: string;
+  nombre: string;
+  descripcion: string;
+}
+
+interface MisProyectosJuradoResponse {
+  success: boolean;
+  message: string;
+  data: {
+    count: number;
+    items: ProyectoJurado[];
+  };
+}
+
+// Obtener proyectos donde soy jurado de la feria activa
+export const obtenerMisProyectosComoJurado = async (): Promise<ProyectoJurado[]> => {
+  const response = await api.get<MisProyectosJuradoResponse>('/docente-proyectos/mis-proyectos-jurado');
+  return response.data.data.items;
+};

@@ -70,11 +70,20 @@ export default function DocumentoEditorPage() {
         return true;
       }
 
+      // Docente tutor: acceso de solo lectura siempre
+      if (user?.rol === ROLES.DOCENTE) {
+        setForceReadOnly(true);
+        setPuedeVer(true);
+        return true;
+      }
+
       if (user?.idUsuario) {
         const esIntegrante = await esUsuarioIntegrante();
         if (esIntegrante) {
+          // Si el proyecto no está aprobado por admin y tutor, forzar modo solo lectura
+          const proyectoBloqueado = detalle.estaAprobado !== true || detalle.estaAprobadoTutor !== true;
           // Si el proyecto es final, forzar modo solo lectura
-          setForceReadOnly(detalle.esFinal === true);
+          setForceReadOnly(detalle.esFinal === true || proyectoBloqueado);
           setPuedeVer(true);
           return true;
         }

@@ -5,14 +5,17 @@ export interface Proyecto {
   idProyecto: string;
   nombre: string;
   descripcion: string;
-  materia: string;
-  grupo: string;
-  nombreDocente: string;
-  urlLogo: string | null;
-  estaAprobado: boolean;
-  esFinal: boolean | null;
-  esPublico: boolean;
+  materia?: string;
+  grupo?: string;
+  nombreDocente?: string;
+  urlLogo?: string | null;
+  estaAprobado?: boolean;
+  estaAprobadoTutor?: boolean | null;
+  esFinal?: boolean | null;
+  esPublico?: boolean;
   fechaCreacion: string;
+  grupoSigla?: string;
+  idGrupoMateria?: string;
 }
 
 export interface InvitacionProyecto {
@@ -36,6 +39,7 @@ export interface ProyectoDetalle {
   descripcion: string;
   contenido?: string | null;
   estaAprobado: boolean | null;
+  estaAprobadoTutor: boolean | null;
   esFinal: boolean | null;
   fechaCreacion: string;
   fechaActualizacion: string;
@@ -238,4 +242,18 @@ export const obtenerContenidoEditor = async (
     contenido: response.data.data.contenido,
     imagenes: response.data.data.imagenes,
   };
+};
+
+// Obtener proyectos de una materia específica
+export const obtenerProyectosPorMateria = async (idMateria: string): Promise<Proyecto[]> => {
+  const response = await api.get(`/proyectos/materia/${idMateria}`);
+  return response.data.data.items;
+};
+
+// Actualizar estado de aprobación del tutor
+export const actualizarProyectoAprobadoTutor = async (
+  idProyecto: string,
+  estaAprobado: boolean
+): Promise<void> => {
+  await api.put(`/proyectos/${idProyecto}/aprobar-tutor`, { estaAprobado });
 };
