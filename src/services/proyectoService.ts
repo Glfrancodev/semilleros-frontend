@@ -174,6 +174,18 @@ export const actualizarVisibilidadProyecto = async (
   return response.data.data;
 };
 
+// Actualizar el campo esFinal del proyecto
+export const actualizarProyectoEsFinal = async (
+  idProyecto: string,
+  esFinal: boolean
+): Promise<ProyectoDetalle> => {
+  const response = await api.put<ProyectoDetalleResponse>(
+    `/proyectos/${idProyecto}`,
+    { esFinal }
+  );
+  return response.data.data;
+};
+
 // Subir imagen del editor al S3
 export const subirImagenEditor = async (
   idProyecto: string,

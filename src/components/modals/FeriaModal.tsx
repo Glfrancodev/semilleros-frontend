@@ -15,7 +15,7 @@ export interface FeriaFormData {
   semestre: number;
   año: number;
   estaActivo: boolean;
-  tareas: Omit<Tarea, 'idTarea' | 'idFeria' | 'fechaCreacion' | 'fechaActualizacion'>[];
+  tareas: (Omit<Tarea, 'idTarea' | 'idFeria' | 'fechaCreacion' | 'fechaActualizacion'> & { esFinal?: boolean })[];
 }
 
 export default function FeriaModal({
@@ -38,6 +38,7 @@ export default function FeriaModal({
         descripcion: "Tarea de inscripción al proyecto",
         fechaLimite: "",
         orden: 0,
+        esFinal: false,
       }
     ],
   });
@@ -58,13 +59,15 @@ export default function FeriaModal({
           nombre: t.nombre,
           descripcion: t.descripcion || "",
           fechaLimite: t.fechaLimite ? t.fechaLimite.slice(0, 16) : "", // Format for datetime-local
-          orden: t.orden
+          orden: t.orden,
+          esFinal: t.esFinal || false,
         })) : [
           {
             nombre: "Inscripción",
             descripcion: "Tarea de inscripción al proyecto",
             fechaLimite: "",
             orden: 0,
+            esFinal: false,
           }
         ],
       });
@@ -80,6 +83,7 @@ export default function FeriaModal({
             descripcion: "Tarea de inscripción al proyecto",
             fechaLimite: "",
             orden: 0,
+            esFinal: false,
           }
         ],
       });
@@ -105,12 +109,21 @@ export default function FeriaModal({
     }
   };
 
-  const handleTareaChange = (index: number, field: keyof Tarea, value: string) => {
+  const handleTareaChange = (index: number, field: keyof Tarea, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
-      tareas: prev.tareas.map((tarea, i) =>
-        i === index ? { ...tarea, [field]: value } : tarea
-      ),
+      tareas: prev.tareas.map((tarea, i) => {
+        // Si estamos marcando esFinal en una tarea, desmarcar todas las demás
+        if (field === 'esFinal' && value === true) {
+          if (i === index) {
+            return { ...tarea, esFinal: true };
+          } else {
+            return { ...tarea, esFinal: false };
+          }
+        }
+        // Para otros campos o cuando se desmarca esFinal
+        return i === index ? { ...tarea, [field]: value } : tarea;
+      }),
     }));
 
     if (errors[`tarea${index}_${field}`]) {
@@ -132,6 +145,7 @@ export default function FeriaModal({
           descripcion: "",
           fechaLimite: "",
           orden: nuevoOrden,
+          esFinal: false,
         }
       ],
     }));
@@ -195,6 +209,7 @@ export default function FeriaModal({
             descripcion: "Tarea de inscripción al proyecto",
             fechaLimite: "",
             orden: 0,
+            esFinal: false,
           }
         ],
       });
@@ -399,7 +414,9 @@ export default function FeriaModal({
               </div>
 
               <div className="space-y-4">
-                {formData.tareas.map((tarea, index) => (
+                {[...formData.tareas].reverse().map((tarea, reverseIndex) => {
+                  const index = formData.tareas.length - 1 - reverseIndex;
+                  return (
                   <div
                     key={index}
                     className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50"
@@ -472,9 +489,29 @@ export default function FeriaModal({
                           <p className="mt-1 text-xs text-red-500">{errors[`tarea${index}_fechaLimite`]}</p>
                         )}
                       </div>
+
+                      {/* Checkbox de Tarea Final - Solo en la última tarea */}
+                      {index === formData.tareas.length - 1 && (
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            id={`esFinal${index}`}
+                            checked={tarea.esFinal || false}
+                            onChange={(e) => handleTareaChange(index, 'esFinal', e.target.checked)}
+                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                          />
+                          <label
+                            htmlFor={`esFinal${index}`}
+                            className="ml-2 text-xs font-medium text-gray-700 dark:text-gray-300"
+                          >
+                            Tarea Final de la Feria
+                          </label>
+                        </div>
+                      )}
                     </div>
                   </div>
-                ))}
+                );
+                })}
               </div>
             </div>
           </div>

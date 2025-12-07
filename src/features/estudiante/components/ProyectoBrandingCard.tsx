@@ -90,6 +90,9 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
     (integrante) => integrante.idUsuario && user?.idUsuario && integrante.idUsuario === user.idUsuario
   );
 
+  // Bloquear branding si el proyecto es final
+  const brandingBloqueadoPorEsFinal = proyecto.esFinal === true;
+
   const handleFileUpload = async (file: File, tipo: "logo" | "banner" | "triptico") => {
     try {
       // Validar tipo de archivo
@@ -138,7 +141,12 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
       <h3 className="mb-5 text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-7">
         Branding
       </h3>
-      {puedeGestionarBranding && brandingBloqueado && (
+      {puedeGestionarBranding && brandingBloqueadoPorEsFinal && (
+        <p className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-200">
+          El proyecto ha sido marcado como final. No se pueden realizar modificaciones al branding.
+        </p>
+      )}
+      {puedeGestionarBranding && brandingBloqueado && !brandingBloqueadoPorEsFinal && (
         <p className="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-2 text-sm text-yellow-800 dark:border-yellow-900/40 dark:bg-yellow-900/20 dark:text-yellow-200">
           Hay una tarea en revisión, por lo que la actualización de branding está temporalmente
           deshabilitada.
@@ -177,7 +185,7 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
                   const file = e.target.files?.[0];
                   if (file) handleFileUpload(file, "logo");
                 }}
-                disabled={uploading === "logo" || brandingBloqueado}
+                disabled={uploading === "logo" || brandingBloqueado || brandingBloqueadoPorEsFinal}
               />
               <Button
                 size="sm"
@@ -186,7 +194,7 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
                   e.preventDefault();
                   (e.currentTarget.previousElementSibling as HTMLInputElement)?.click();
                 }}
-                disabled={uploading === "logo" || brandingBloqueado}
+                disabled={uploading === "logo" || brandingBloqueado || brandingBloqueadoPorEsFinal}
               >
                 {uploading === "logo" ? "Subiendo..." : "Subir Logo"}
               </Button>
@@ -225,7 +233,7 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
                   const file = e.target.files?.[0];
                   if (file) handleFileUpload(file, "banner");
                 }}
-                disabled={uploading === "banner" || brandingBloqueado}
+                disabled={uploading === "banner" || brandingBloqueado || brandingBloqueadoPorEsFinal}
               />
               <Button
                 size="sm"
@@ -234,7 +242,7 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
                   e.preventDefault();
                   (e.currentTarget.previousElementSibling as HTMLInputElement)?.click();
                 }}
-                disabled={uploading === "banner" || brandingBloqueado}
+                disabled={uploading === "banner" || brandingBloqueado || brandingBloqueadoPorEsFinal}
               >
                 {uploading === "banner" ? "Subiendo..." : "Subir Banner"}
               </Button>
@@ -277,7 +285,7 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
                   const file = e.target.files?.[0];
                   if (file) handleFileUpload(file, "triptico");
                 }}
-                disabled={uploading === "triptico" || brandingBloqueado}
+                disabled={uploading === "triptico" || brandingBloqueado || brandingBloqueadoPorEsFinal}
               />
               <Button
                 size="sm"
@@ -286,7 +294,7 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
                   e.preventDefault();
                   (e.currentTarget.previousElementSibling as HTMLInputElement)?.click();
                 }}
-                disabled={uploading === "triptico" || brandingBloqueado}
+                disabled={uploading === "triptico" || brandingBloqueado || brandingBloqueadoPorEsFinal}
               >
                 {uploading === "triptico" ? "Subiendo..." : "Subir Tríptico (PDF)"}
               </Button>

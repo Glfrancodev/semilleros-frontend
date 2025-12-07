@@ -129,16 +129,25 @@ export default function ProyectoIntegrantesCard({ proyecto }: ProyectoIntegrante
     (i) => i.esLider && i.idUsuario && user && i.idUsuario === user.idUsuario
   );
 
+  // Bloquear invitaciones si el proyecto es final
+  const invitacionesBloqueadasPorEsFinal = proyecto.esFinal === true;
+
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
       <div className="mb-5 flex items-center justify-between lg:mb-7">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Integrantes</h3>
-        {esLiderActual && (
+        {esLiderActual && !invitacionesBloqueadasPorEsFinal && (
           <Button size="sm" variant="primary" onClick={() => setShowInviteModal(true)}>
             Enviar invitación
           </Button>
         )}
       </div>
+
+      {invitacionesBloqueadasPorEsFinal && (
+        <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-200">
+          El proyecto ha sido marcado como final. No se pueden enviar más invitaciones.
+        </p>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-8">

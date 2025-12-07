@@ -14,6 +14,7 @@ import EstudiantesPage from "./features/admin/pages/EstudiantesPage";
 import DocentesPage from "./features/admin/pages/DocentesPage";
 import ProyectoPage from "./features/admin/pages/ProyectoPage";
 import TareasDetallePage from "./features/admin/pages/TareasDetallePage";
+import AsignarJuradosPage from "./features/admin/pages/AsignarJuradosPage";
 import CategoriasPage from "./features/admin/pages/CategoriasPage";
 import AreasPage from "./features/admin/pages/AreasPage";
 import EventosPage from "./features/admin/pages/EventosPage";
@@ -112,6 +113,7 @@ export default function App() {
               <Route path="/tareas-revisiones" element={<ProyectoPage />} />
               <Route path="/admin/proyectos/:idProyecto" element={<ProyectoDetallePage />} />
               <Route path="/proyectos/tareas/:idTarea" element={<TareasDetallePage />} />
+              <Route path="/asignar-jurados" element={<AsignarJuradosPage />} />
               <Route path="/categorias" element={<CategoriasPage />} />
               <Route path="/areas" element={<AreasPage />} />
               <Route path="/eventos" element={<EventosPage />} />

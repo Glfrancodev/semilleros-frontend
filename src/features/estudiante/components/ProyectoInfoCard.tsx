@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ProyectoDetalle, actualizarVisibilidadProyecto } from "../../../services/proyectoService";
+import { ProyectoDetalle, actualizarVisibilidadProyecto, actualizarProyectoEsFinal } from "../../../services/proyectoService";
 import api from "../../../services/api";
 import Button from "../../../components/ui/button/Button";
 import toast from "react-hot-toast";
 import { useAuth } from "../../../context/AuthContext";
+import { ROLES } from "../../../constants/roles";
 
 interface ProyectoInfoCardProps {
   proyecto: ProyectoDetalle;
@@ -29,6 +30,8 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
   const [esLiderActual, setEsLiderActual] = useState(false);
   const [esIntegrante, setEsIntegrante] = useState(false);
   const [cambiandoVisibilidad, setCambiandoVisibilidad] = useState(false);
+  const [tareaFinalCalificada, setTareaFinalCalificada] = useState(false);
+  const [procesandoFeria, setProcesandoFeria] = useState(false);
 
   useEffect(() => {
     cargarDatosProgreso();
@@ -54,6 +57,18 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
         totalTareas,
         progreso,
       });
+
+      // Verificar si la tarea final fue calificada
+      const todasLasTareas = [...(tareasData.completado || []), ...(tareasData.enProceso || []), ...(tareasData.pendiente || [])];
+      const tareaFinal = todasLasTareas.find((t: any) => t.esFinal === true);
+      
+      if (tareaFinal) {
+        // Verificar si esta tarea final está en completado
+        const estaCalificada = tareasData.completado?.some((t: any) => t.idTarea === tareaFinal.idTarea);
+        setTareaFinalCalificada(estaCalificada || false);
+      } else {
+        setTareaFinalCalificada(false);
+      }
     } catch (error) {
       console.error("Error al cargar datos de progreso:", error);
     }
@@ -130,6 +145,34 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
       toast.error(error?.response?.data?.message || "No se pudo cambiar la visibilidad.");
     } finally {
       setCambiandoVisibilidad(false);
+    }
+  };
+
+  const handleAprobarParaFeria = async () => {
+    try {
+      setProcesandoFeria(true);
+      await actualizarProyectoEsFinal(proyecto.idProyecto, true);
+      toast.success("Proyecto aprobado para exponer en la feria");
+      onUpdate?.();
+    } catch (error: any) {
+      console.error("Error al aprobar proyecto para feria:", error);
+      toast.error(error?.response?.data?.message || "No se pudo aprobar el proyecto para la feria");
+    } finally {
+      setProcesandoFeria(false);
+    }
+  };
+
+  const handleRechazarParaFeria = async () => {
+    try {
+      setProcesandoFeria(true);
+      await actualizarProyectoEsFinal(proyecto.idProyecto, false);
+      toast.success("Proyecto rechazado para exposición en feria");
+      onUpdate?.();
+    } catch (error: any) {
+      console.error("Error al rechazar proyecto para feria:", error);
+      toast.error(error?.response?.data?.message || "No se pudo rechazar el proyecto para la feria");
+    } finally {
+      setProcesandoFeria(false);
     }
   };
 
@@ -230,6 +273,26 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
       >
         Ir al documento
       </Button>
+
+      {/* Botones de Aprobación/Rechazo para Feria - Solo para admin cuando tarea final está calificada */}
+      {user?.rol === ROLES.ADMIN && tareaFinalCalificada && proyecto.esFinal === null && (
+        <div className="mt-3 flex gap-2">
+          <Button
+            onClick={handleAprobarParaFeria}
+            disabled={procesandoFeria}
+            className="flex-1"
+          >
+            {procesandoFeria ? "Procesando..." : "Aprobar para exponer en feria"}
+          </Button>
+          <Button
+            onClick={handleRechazarParaFeria}
+            disabled={procesandoFeria}
+            className="flex-1"
+          >
+            {procesandoFeria ? "Procesando..." : "Rechazar para exponer en feria"}
+          </Button>
+        </div>
+      )}
       
       {/* Botón Unirse a la reunión - solo para integrantes */}
       {esIntegrante && (

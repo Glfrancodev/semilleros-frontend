@@ -47,6 +47,7 @@ export interface Tarea {
   descripcion?: string;
   fechaLimite: string;
   orden: number;
+  esFinal?: boolean;
   idFeria?: string;
   fechaCreacion?: string;
   fechaActualizacion?: string;

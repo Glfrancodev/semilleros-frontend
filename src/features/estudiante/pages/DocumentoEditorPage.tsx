@@ -73,7 +73,8 @@ export default function DocumentoEditorPage() {
       if (user?.idUsuario) {
         const esIntegrante = await esUsuarioIntegrante();
         if (esIntegrante) {
-          setForceReadOnly(false);
+          // Si el proyecto es final, forzar modo solo lectura
+          setForceReadOnly(detalle.esFinal === true);
           setPuedeVer(true);
           return true;
         }

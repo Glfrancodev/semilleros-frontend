@@ -14,6 +14,7 @@ export interface Tarea {
   descripcion: string;
   fechaLimite: string;
   idFeria: string;
+  esFinal?: boolean;
   feria?: FeriaTarea;
 }
 
