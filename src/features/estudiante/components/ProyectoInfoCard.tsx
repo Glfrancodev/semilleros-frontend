@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ProyectoDetalle, actualizarVisibilidadProyecto, actualizarProyectoEsFinal, actualizarProyectoAprobadoTutor } from "../../../services/proyectoService";
+import { ProyectoDetalle, actualizarVisibilidadProyecto, actualizarProyectoEsFinal, actualizarProyectoAprobadoTutor, obtenerNotaPromedioProyecto } from "../../../services/proyectoService";
 import api from "../../../services/api";
 import Button from "../../../components/ui/button/Button";
 import toast from "react-hot-toast";
@@ -33,9 +33,12 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
   const [tareaFinalCalificada, setTareaFinalCalificada] = useState(false);
   const [procesandoFeria, setProcesandoFeria] = useState(false);
   const [procesandoTutor, setProcesandoTutor] = useState(false);
+  const [notaPromedio, setNotaPromedio] = useState<number | null>(null);
+  const [feriaFinalizada, setFeriaFinalizada] = useState(false);
 
   useEffect(() => {
     cargarDatosProgreso();
+    cargarNotaPromedio();
   }, [proyecto.idProyecto]);
 
   useEffect(() => {
@@ -75,6 +78,16 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
     }
   };
 
+  const cargarNotaPromedio = async () => {
+    try {
+      const resultado = await obtenerNotaPromedioProyecto(proyecto.idProyecto);
+      setNotaPromedio(resultado.notaPromedio);
+      setFeriaFinalizada(resultado.feriaFinalizada);
+    } catch (error) {
+      console.error("Error al cargar nota promedio:", error);
+    }
+  };
+
   useEffect(() => {
     const verificarLiderazgo = async () => {
       try {
@@ -103,6 +116,9 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
       setEsLiderActual(false);
       setEsIntegrante(false);
     }
+
+    // Cargar nota promedio del proyecto
+    void cargarNotaPromedio();
   }, [proyecto.idProyecto, user?.idUsuario]);
 
   // Determinar el estado del proyecto (null = Pendiente, true = Aprobado, false = Rechazado)
@@ -289,12 +305,23 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
             {proyecto.nombreDocente || "Sin docente"}
           </p>
         </div>
+        
         <div>
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de creación:</span>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             {new Date(proyecto.fechaCreacion).toLocaleDateString()}
           </p>
         </div>
+        
+        {/* Nota Promedio - Solo si la feria está finalizada */}
+        {feriaFinalizada && notaPromedio !== null && (
+          <div>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Nota Promedio:</span>
+            <p className="text-sm font-bold text-blue-600 dark:text-blue-400">
+              {notaPromedio.toFixed(2)} / 100
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Barra de progreso */}

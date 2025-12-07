@@ -35,6 +35,7 @@ import DocumentoEditorPage from "./features/estudiante/pages/DocumentoEditorPage
 
 // Páginas de Docente
 import CalificarProyectosPage from "./features/docente/pages/CalificarProyectosPage";
+import ProyectoCalificacionPage from "./features/docente/pages/ProyectoCalificacionPage";
 import MisMateriasPage from "./features/docente/pages/MisMateriasPage";
 import MateriaProyectos from "./pages/MateriaProyectos";
 import ProyectoRevisionPage from "./features/docente/pages/ProyectoRevisionPage";
@@ -63,7 +64,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
       case ROLES.ADMIN:
         return <Navigate to="/dashboard" replace />;
       case ROLES.DOCENTE:
-        return <Navigate to="/docente/dashboard" replace />;
+        return <Navigate to="/mis-materias" replace />;
       case ROLES.ESTUDIANTE:
         return <Navigate to="/estudiante/convocatorias" replace />;
       default:
@@ -140,6 +141,7 @@ export default function App() {
               <Route path="/mis-materias/:idMateria/proyectos" element={<MateriaProyectos />} />
               <Route path="/docente/proyecto/:idProyecto" element={<ProyectoRevisionPage />} />
               <Route path="/calificar-proyectos" element={<CalificarProyectosPage />} />
+              <Route path="/calificar-proyecto/:idProyecto" element={<ProyectoCalificacionPage />} />
             </Route>
           </Route>
 

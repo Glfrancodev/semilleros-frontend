@@ -17,7 +17,7 @@ export default function RoleBasedRedirect() {
     case ROLES.ADMIN:
       return <Navigate to="/" replace />;
     case ROLES.DOCENTE:
-      return <Navigate to="/docente/dashboard" replace />;
+      return <Navigate to="/mis-materias" replace />;
     case ROLES.ESTUDIANTE:
       return <Navigate to="/estudiante/estadisticas" replace />;
     default:

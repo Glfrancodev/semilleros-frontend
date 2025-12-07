@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import CalificarProyectosTableSimple from "./CalificarProyectosTableSimple";
 import CustomSelect from "../common/CustomSelect";
 import { ProyectoJurado, obtenerMisProyectosComoJurado } from "../../services/docenteProyectoService";
 
 export default function CalificarProyectosTableWithFilters() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [estadoFiltro, setEstadoFiltro] = useState<string>("todos");
   const [proyectos, setProyectos] = useState<ProyectoJurado[]>([]);
   const [totalProyectos, setTotalProyectos] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -34,14 +37,19 @@ export default function CalificarProyectosTableWithFilters() {
     }
   };
 
-  // Filtrar proyectos según el término de búsqueda
+  // Filtrar proyectos según el término de búsqueda y estado
   const filteredData = proyectos.filter(proyecto => {
     const matchesSearch = 
       proyecto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       proyecto.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
       proyecto.idProyecto.toLowerCase().includes(searchTerm.toLowerCase());
     
-    return matchesSearch;
+    const matchesEstado = 
+      estadoFiltro === "todos" ||
+      (estadoFiltro === "calificados" && proyecto.estaCalificado) ||
+      (estadoFiltro === "pendientes" && !proyecto.estaCalificado);
+    
+    return matchesSearch && matchesEstado;
   });
 
   // Paginación
@@ -52,8 +60,8 @@ export default function CalificarProyectosTableWithFilters() {
   const paginatedData = filteredData.slice(startIndex, endIndex);
 
   const handleCalificar = (idProyecto: string) => {
-    console.log('Calificar proyecto:', idProyecto);
-    // TODO: Implementar navegación a la página de calificación
+    // Navegar a la página de calificación del proyecto
+    navigate(`/calificar-proyecto/${idProyecto}`);
   };
 
   if (loading) {
@@ -80,7 +88,7 @@ export default function CalificarProyectosTableWithFilters() {
 
   return (
     <div className="space-y-4">
-      {/* Barra de búsqueda */}
+      {/* Barra de búsqueda y filtros */}
       <div className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-white/[0.05] dark:bg-white/[0.03] sm:flex-row sm:items-center">
         {/* Buscador */}
         <div className="flex-1">
@@ -90,6 +98,22 @@ export default function CalificarProyectosTableWithFilters() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:focus:border-blue-500"
+          />
+        </div>
+
+        {/* Filtro por estado */}
+        <div className="sm:w-48">
+          <CustomSelect
+            options={[
+              { value: "todos", label: "Todos los estados" },
+              { value: "pendientes", label: "Pendientes" },
+              { value: "calificados", label: "Calificados" },
+            ]}
+            value={estadoFiltro}
+            onChange={(value) => {
+              setEstadoFiltro(value);
+              setCurrentPage(1);
+            }}
           />
         </div>
       </div>

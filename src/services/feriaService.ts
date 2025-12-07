@@ -41,6 +41,18 @@ export const obtenerResumenFeriaActiva = async (): Promise<ResumenFeriaActiva> =
 };
 
 // Interfaces para las tareas y ferias CRUD
+export interface SubCalificacion {
+  idSubCalificacion?: string;
+  nombre: string;
+  maximoPuntaje: number;
+}
+
+export interface TipoCalificacion {
+  idTipoCalificacion?: string;
+  nombre: string;
+  subCalificaciones: SubCalificacion[];
+}
+
 export interface Tarea {
   idTarea?: string;
   nombre: string;
@@ -61,6 +73,7 @@ export interface Feria {
   estaActivo: boolean;
   fechaCreacion: string;
   fechaActualizacion: string;
+  tipoCalificacion?: TipoCalificacion;
   tareas?: Tarea[];
 }
 
@@ -83,6 +96,10 @@ export interface FeriaCreacion {
   semestre: number;
   año: number;
   estaActivo?: boolean;
+  tipoCalificacion: {
+    nombre: string;
+    subCalificaciones: SubCalificacion[];
+  };
   tareas?: Omit<Tarea, 'idTarea' | 'idFeria' | 'fechaCreacion' | 'fechaActualizacion'>[];
 }
 
@@ -91,6 +108,10 @@ export interface FeriaActualizacion {
   semestre?: number;
   año?: number;
   estaActivo?: boolean;
+  tipoCalificacion?: {
+    nombre: string;
+    subCalificaciones: SubCalificacion[];
+  };
   tareas?: Omit<Tarea, 'idFeria' | 'fechaCreacion' | 'fechaActualizacion'>[];
 }
 

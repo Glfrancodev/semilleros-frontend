@@ -48,6 +48,9 @@ export default function CalificarProyectosTableSimple({
               <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                 DESCRIPCIÓN
               </TableCell>
+              <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-center text-theme-xs dark:text-gray-400">
+                ESTADO
+              </TableCell>
               <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                 ACCIONES
               </TableCell>
@@ -58,7 +61,7 @@ export default function CalificarProyectosTableSimple({
           <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
             {proyectos.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
+                <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
                   No hay proyectos para calificar
                 </TableCell>
               </TableRow>
@@ -86,6 +89,19 @@ export default function CalificarProyectosTableSimple({
                     </span>
                   </TableCell>
 
+                  {/* ESTADO */}
+                  <TableCell className="px-5 py-4 text-center align-top">
+                    {proyecto.estaCalificado ? (
+                      <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                        Calificado
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+                        Pendiente
+                      </span>
+                    )}
+                  </TableCell>
+
                   {/* ACCIONES */}
                   <TableCell className="px-5 py-4 text-start align-top">
                     <Button
@@ -93,7 +109,7 @@ export default function CalificarProyectosTableSimple({
                       size="xs" 
                       onClick={() => onCalificar(proyecto.idProyecto)}
                     >
-                      Calificar
+                      {proyecto.estaCalificado ? 'Ver' : 'Calificar'}
                     </Button>
                   </TableCell>
                 </TableRow>

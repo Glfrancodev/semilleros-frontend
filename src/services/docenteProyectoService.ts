@@ -106,8 +106,10 @@ export const obtenerJuradosPorProyecto = async (idProyecto: string): Promise<Jur
 // Interfaces para proyectos como jurado
 export interface ProyectoJurado {
   idProyecto: string;
+  idDocenteProyecto: string;
   nombre: string;
   descripcion: string;
+  estaCalificado: boolean;
 }
 
 interface MisProyectosJuradoResponse {
@@ -122,5 +124,13 @@ interface MisProyectosJuradoResponse {
 // Obtener proyectos donde soy jurado de la feria activa
 export const obtenerMisProyectosComoJurado = async (): Promise<ProyectoJurado[]> => {
   const response = await api.get<MisProyectosJuradoResponse>('/docente-proyectos/mis-proyectos-jurado');
-  return response.data.data.items;
+  const items = response.data.data.items || [];
+  
+  return items.map((item: any) => ({
+    idProyecto: item.idProyecto,
+    idDocenteProyecto: item.idDocenteProyecto,
+    nombre: item.nombre,
+    descripcion: item.descripcion,
+    estaCalificado: item.estaCalificado || false,
+  }));
 };

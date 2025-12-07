@@ -3,7 +3,6 @@ import { Link, useLocation } from "react-router-dom";
 import {
   GridIcon,
   CalenderIcon,
-  UserCircleIcon,
   ChevronDownIcon,
   HorizontaLDots,
 } from "../../assets/icons";
@@ -19,11 +18,6 @@ type NavItem = {
 const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
-    name: "Dashboard",
-    path: "/",
-  },
-  {
-    icon: <GridIcon />,
     name: "Mis Materias",
     path: "/mis-materias",
   },
@@ -31,11 +25,6 @@ const navItems: NavItem[] = [
     icon: <CalenderIcon />,
     name: "Calificar Proyectos",
     path: "/calificar-proyectos",
-  },
-  {
-    icon: <UserCircleIcon />,
-    name: "Mi Perfil",
-    path: "/profile",
   },
 ];
 

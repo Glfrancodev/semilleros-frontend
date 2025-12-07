@@ -92,6 +92,7 @@ export default function FeriasTableWithFilters() {
           semestre: data.semestre,
           año: data.año,
           estaActivo: data.estaActivo,
+          tipoCalificacion: data.tipoCalificacion,
           tareas: data.tareas
         });
       } else {
@@ -101,6 +102,7 @@ export default function FeriasTableWithFilters() {
           semestre: data.semestre,
           año: data.año,
           estaActivo: data.estaActivo,
+          tipoCalificacion: data.tipoCalificacion,
           tareas: data.tareas
         });
       }

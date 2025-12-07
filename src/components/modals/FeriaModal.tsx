@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Feria, Tarea } from "../../services/feriaService";
+import { Feria, Tarea, TipoCalificacion, SubCalificacion } from "../../services/feriaService";
 import Button from "../ui/button/Button";
 
 interface FeriaModalProps {
@@ -15,6 +15,10 @@ export interface FeriaFormData {
   semestre: number;
   año: number;
   estaActivo: boolean;
+  tipoCalificacion: {
+    nombre: string;
+    subCalificaciones: SubCalificacion[];
+  };
   tareas: (Omit<Tarea, 'idTarea' | 'idFeria' | 'fechaCreacion' | 'fechaActualizacion'> & { esFinal?: boolean })[];
 }
 
@@ -32,6 +36,15 @@ export default function FeriaModal({
     semestre: 1,
     año: currentYear,
     estaActivo: true,
+    tipoCalificacion: {
+      nombre: "Criterios de Evaluación",
+      subCalificaciones: [
+        { nombre: "Metodología", maximoPuntaje: 30 },
+        { nombre: "Originalidad", maximoPuntaje: 25 },
+        { nombre: "Presentación", maximoPuntaje: 20 },
+        { nombre: "Sustentación", maximoPuntaje: 25 },
+      ],
+    },
     tareas: [
       {
         nombre: "Inscripción",
@@ -55,6 +68,15 @@ export default function FeriaModal({
         semestre: feria.semestre,
         año: feria.año,
         estaActivo: feria.estaActivo,
+        tipoCalificacion: feria.tipoCalificacion || {
+          nombre: "Criterios de Evaluación",
+          subCalificaciones: [
+            { nombre: "Metodología", maximoPuntaje: 30 },
+            { nombre: "Originalidad", maximoPuntaje: 25 },
+            { nombre: "Presentación", maximoPuntaje: 20 },
+            { nombre: "Sustentación", maximoPuntaje: 25 },
+          ],
+        },
         tareas: feria.tareas && feria.tareas.length > 0 ? feria.tareas.map(t => ({
           nombre: t.nombre,
           descripcion: t.descripcion || "",
@@ -77,6 +99,15 @@ export default function FeriaModal({
         semestre: 1,
         año: currentYear,
         estaActivo: true,
+        tipoCalificacion: {
+          nombre: "Criterios de Evaluación",
+          subCalificaciones: [
+            { nombre: "Metodología", maximoPuntaje: 30 },
+            { nombre: "Originalidad", maximoPuntaje: 25 },
+            { nombre: "Presentación", maximoPuntaje: 20 },
+            { nombre: "Sustentación", maximoPuntaje: 25 },
+          ],
+        },
         tareas: [
           {
             nombre: "Inscripción",
@@ -166,12 +197,92 @@ export default function FeriaModal({
     }));
   };
 
+  // Funciones para manejar subcalificaciones
+  const handleSubCalificacionChange = (index: number, field: 'nombre' | 'maximoPuntaje', value: string | number) => {
+    setFormData(prev => ({
+      ...prev,
+      tipoCalificacion: {
+        ...prev.tipoCalificacion,
+        subCalificaciones: prev.tipoCalificacion.subCalificaciones.map((sub, i) =>
+          i === index ? { ...sub, [field]: field === 'maximoPuntaje' ? Number(value) : value } : sub
+        ),
+      },
+    }));
+
+    if (errors[`subCalificacion${index}_${field}`]) {
+      setErrors((prev) => ({
+        ...prev,
+        [`subCalificacion${index}_${field}`]: undefined,
+      }));
+    }
+  };
+
+  const agregarSubCalificacion = () => {
+    setFormData(prev => ({
+      ...prev,
+      tipoCalificacion: {
+        ...prev.tipoCalificacion,
+        subCalificaciones: [
+          ...prev.tipoCalificacion.subCalificaciones,
+          { nombre: "", maximoPuntaje: 0 },
+        ],
+      },
+    }));
+  };
+
+  const eliminarSubCalificacion = (index: number) => {
+    if (formData.tipoCalificacion.subCalificaciones.length <= 1) {
+      alert("Debe haber al menos una subcalificación");
+      return;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      tipoCalificacion: {
+        ...prev.tipoCalificacion,
+        subCalificaciones: prev.tipoCalificacion.subCalificaciones.filter((_, i) => i !== index),
+      },
+    }));
+  };
+
+  const calcularSumaTotal = (): number => {
+    return formData.tipoCalificacion.subCalificaciones.reduce(
+      (sum, sub) => sum + (Number(sub.maximoPuntaje) || 0),
+      0
+    );
+  };
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.nombre.trim()) newErrors.nombre = "Nombre es requerido";
     if (formData.semestre < 1 || formData.semestre > 2) newErrors.semestre = "Semestre debe ser 1 o 2";
     if (formData.año < 2000) newErrors.año = "Año inválido";
+
+    // Validar TipoCalificacion
+    if (!formData.tipoCalificacion.nombre.trim()) {
+      newErrors.tipoCalificacionNombre = "Nombre del tipo de calificación es requerido";
+    }
+
+    // Validar subcalificaciones
+    if (formData.tipoCalificacion.subCalificaciones.length === 0) {
+      newErrors.subCalificaciones = "Debe haber al menos una subcalificación";
+    }
+
+    formData.tipoCalificacion.subCalificaciones.forEach((sub, index) => {
+      if (!sub.nombre.trim()) {
+        newErrors[`subCalificacion${index}_nombre`] = "Nombre requerido";
+      }
+      if (!sub.maximoPuntaje || sub.maximoPuntaje <= 0) {
+        newErrors[`subCalificacion${index}_maximoPuntaje`] = "Puntaje debe ser mayor a 0";
+      }
+    });
+
+    // Validar suma total = 100
+    const sumaTotal = calcularSumaTotal();
+    if (sumaTotal !== 100) {
+      newErrors.sumaTotal = `La suma debe ser 100. Suma actual: ${sumaTotal}`;
+    }
 
     // Validar tareas siempre
     formData.tareas.forEach((tarea, index) => {
@@ -203,6 +314,15 @@ export default function FeriaModal({
         semestre: 1,
         año: currentYear,
         estaActivo: true,
+        tipoCalificacion: {
+          nombre: "Criterios de Evaluación",
+          subCalificaciones: [
+            { nombre: "Metodología", maximoPuntaje: 30 },
+            { nombre: "Originalidad", maximoPuntaje: 25 },
+            { nombre: "Presentación", maximoPuntaje: 20 },
+            { nombre: "Sustentación", maximoPuntaje: 25 },
+          ],
+        },
         tareas: [
           {
             nombre: "Inscripción",
@@ -315,10 +435,11 @@ export default function FeriaModal({
                   name="nombre"
                   value={formData.nombre}
                   onChange={handleChange}
+                  disabled={!!feria}
                   className={`w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${errors.nombre
                     ? "border-red-500 focus:ring-red-500"
                     : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                    }`}
+                    } ${!!feria ? 'bg-gray-100 cursor-not-allowed dark:bg-gray-800' : ''}`}
                   placeholder="Ej: Feria de Proyectos 2025"
                 />
                 {errors.nombre && (
@@ -339,10 +460,11 @@ export default function FeriaModal({
                   name="semestre"
                   value={formData.semestre}
                   onChange={handleChange}
+                  disabled={!!feria}
                   className={`w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${errors.semestre
                     ? "border-red-500 focus:ring-red-500"
                     : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                    }`}
+                    } ${!!feria ? 'bg-gray-100 cursor-not-allowed dark:bg-gray-800' : ''}`}
                 >
                   <option value={1}>1</option>
                   <option value={2}>2</option>
@@ -366,12 +488,13 @@ export default function FeriaModal({
                   name="año"
                   value={formData.año}
                   onChange={handleChange}
+                  disabled={!!feria}
                   min={2000}
                   max={2100}
                   className={`w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${errors.año
                     ? "border-red-500 focus:ring-red-500"
                     : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                    }`}
+                    } ${!!feria ? 'bg-gray-100 cursor-not-allowed dark:bg-gray-800' : ''}`}
                 />
                 {errors.año && (
                   <p className="mt-1 text-sm text-red-500">{errors.año}</p>
@@ -387,14 +510,185 @@ export default function FeriaModal({
                 name="estaActivo"
                 checked={formData.estaActivo}
                 onChange={handleChange}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                disabled={!!feria}
+                className={`h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 ${!!feria ? 'cursor-not-allowed opacity-50' : ''}`}
               />
               <label
                 htmlFor="estaActivo"
-                className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+                className={`ml-2 text-sm font-medium text-gray-700 dark:text-gray-300 ${!!feria ? 'opacity-50' : ''}`}
               >
                 Feria Activa
               </label>
+            </div>
+
+            {/* Tipo de Calificación */}
+            <div className="border-t border-gray-200 pt-6 dark:border-gray-700">
+              <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+                Criterios de Evaluación <span className="text-red-500">*</span>
+              </h3>
+
+              {/* Nombre del Tipo de Calificación */}
+              <div className="mb-4">
+                <label
+                  htmlFor="tipoCalificacionNombre"
+                  className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Nombre
+                </label>
+                <input
+                  type="text"
+                  id="tipoCalificacionNombre"
+                  value={formData.tipoCalificacion.nombre}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      tipoCalificacion: {
+                        ...prev.tipoCalificacion,
+                        nombre: e.target.value,
+                      },
+                    }))
+                  }
+                  disabled={!!feria}
+                  className={`w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${
+                    errors.tipoCalificacionNombre
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  } ${!!feria ? 'bg-gray-100 cursor-not-allowed dark:bg-gray-800' : ''}`}
+                  placeholder="Ej: Criterios de Evaluación"
+                />
+                {errors.tipoCalificacionNombre && (
+                  <p className="mt-1 text-sm text-red-500">{errors.tipoCalificacionNombre}</p>
+                )}
+              </div>
+
+              {/* SubCalificaciones */}
+              <div className="mb-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Subcalificaciones (mínimo 1, suma debe ser 100)
+                  </label>
+                  {!feria && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="xs"
+                      onClick={agregarSubCalificacion}
+                    >
+                      + Agregar
+                    </Button>
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  {formData.tipoCalificacion.subCalificaciones.map((sub, index) => (
+                    <div
+                      key={index}
+                      className="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-600 dark:bg-gray-700"
+                    >
+                      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {/* Nombre */}
+                        <div>
+                          <input
+                            type="text"
+                            value={sub.nombre}
+                            onChange={(e) =>
+                              handleSubCalificacionChange(index, "nombre", e.target.value)
+                            }
+                            disabled={!!feria}
+                            className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                              errors[`subCalificacion${index}_nombre`]
+                                ? "border-red-500 focus:ring-red-500"
+                                : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                            } ${!!feria ? 'bg-gray-100 cursor-not-allowed dark:bg-gray-800' : ''}`}
+                            placeholder="Nombre del criterio"
+                          />
+                          {errors[`subCalificacion${index}_nombre`] && (
+                            <p className="mt-1 text-xs text-red-500">
+                              {errors[`subCalificacion${index}_nombre`]}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Máximo Puntaje */}
+                        <div>
+                          <input
+                            type="number"
+                            value={sub.maximoPuntaje}
+                            onChange={(e) =>
+                              handleSubCalificacionChange(
+                                index,
+                                "maximoPuntaje",
+                                e.target.value
+                              )
+                            }
+                            disabled={!!feria}
+                            min="0"
+                            max="100"
+                            className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                              errors[`subCalificacion${index}_maximoPuntaje`]
+                                ? "border-red-500 focus:ring-red-500"
+                                : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                            } ${!!feria ? 'bg-gray-100 cursor-not-allowed dark:bg-gray-800' : ''}`}
+                            placeholder="Puntaje máximo"
+                          />
+                          {errors[`subCalificacion${index}_maximoPuntaje`] && (
+                            <p className="mt-1 text-xs text-red-500">
+                              {errors[`subCalificacion${index}_maximoPuntaje`]}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Botón Eliminar */}
+                      {!feria && formData.tipoCalificacion.subCalificaciones.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => eliminarSubCalificacion(index)}
+                          className="flex-shrink-0 rounded-lg p-2 text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                          title="Eliminar subcalificación"
+                        >
+                          <svg
+                            className="h-5 w-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Mostrar suma total */}
+                <div className="mt-3 flex items-center justify-between rounded-lg bg-gray-100 px-4 py-2 dark:bg-gray-700">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Suma Total:
+                  </span>
+                  <span
+                    className={`text-sm font-semibold ${
+                      calcularSumaTotal() === 100
+                        ? "text-green-600 dark:text-green-400"
+                        : "text-red-600 dark:text-red-400"
+                    }`}
+                  >
+                    {calcularSumaTotal()} / 100
+                  </span>
+                </div>
+
+                {errors.sumaTotal && (
+                  <p className="mt-2 text-sm text-red-500">{errors.sumaTotal}</p>
+                )}
+                {errors.subCalificaciones && (
+                  <p className="mt-2 text-sm text-red-500">{errors.subCalificaciones}</p>
+                )}
+              </div>
             </div>
 
             {/* Tareas */}
@@ -403,14 +697,16 @@ export default function FeriaModal({
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Tareas de la Feria
                 </h3>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="xs"
-                  onClick={agregarTarea}
-                >
-                  + Agregar Tarea
-                </Button>
+                {!feria && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="xs"
+                    onClick={agregarTarea}
+                  >
+                    + Agregar Tarea
+                  </Button>
+                )}
               </div>
 
               <div className="space-y-4">
@@ -425,7 +721,7 @@ export default function FeriaModal({
                       <h4 className="text-sm font-medium text-gray-900 dark:text-white">
                         Tarea {index} {index === 0 && "(Inscripción - Obligatoria)"}
                       </h4>
-                      {index > 0 && (
+                      {!feria && index > 0 && (
                         <button
                           type="button"
                           onClick={() => eliminarTarea(index)}
@@ -447,11 +743,11 @@ export default function FeriaModal({
                           type="text"
                           value={tarea.nombre}
                           onChange={(e) => handleTareaChange(index, 'nombre', e.target.value)}
-                          disabled={index === 0}
+                          disabled={!!feria}
                           className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${errors[`tarea${index}_nombre`]
                             ? "border-red-500 focus:ring-red-500"
-                            : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white disabled:opacity-50"
-                            }`}
+                            : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                            } ${!!feria ? 'bg-gray-100 cursor-not-allowed dark:bg-gray-800' : ''}`}
                           placeholder="Nombre de la tarea"
                         />
                         {errors[`tarea${index}_nombre`] && (
@@ -466,8 +762,9 @@ export default function FeriaModal({
                         <textarea
                           value={tarea.descripcion}
                           onChange={(e) => handleTareaChange(index, 'descripcion', e.target.value)}
+                          disabled={!!feria}
                           rows={2}
-                          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                          className={`w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white ${!!feria ? 'bg-gray-100 cursor-not-allowed dark:bg-gray-800' : 'border-gray-300'}`}
                           placeholder="Descripción de la tarea"
                         />
                       </div>
@@ -498,11 +795,12 @@ export default function FeriaModal({
                             id={`esFinal${index}`}
                             checked={tarea.esFinal || false}
                             onChange={(e) => handleTareaChange(index, 'esFinal', e.target.checked)}
-                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                            disabled={!!feria}
+                            className={`h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 ${!!feria ? 'cursor-not-allowed opacity-50' : ''}`}
                           />
                           <label
                             htmlFor={`esFinal${index}`}
-                            className="ml-2 text-xs font-medium text-gray-700 dark:text-gray-300"
+                            className={`ml-2 text-xs font-medium text-gray-700 dark:text-gray-300 ${!!feria ? 'opacity-50' : ''}`}
                           >
                             Tarea Final de la Feria
                           </label>

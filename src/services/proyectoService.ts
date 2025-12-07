@@ -257,3 +257,11 @@ export const actualizarProyectoAprobadoTutor = async (
 ): Promise<void> => {
   await api.put(`/proyectos/${idProyecto}/aprobar-tutor`, { estaAprobado });
 };
+
+// Obtener nota promedio del proyecto
+export const obtenerNotaPromedioProyecto = async (
+  idProyecto: string
+): Promise<{ notaPromedio: number | null; feriaFinalizada: boolean }> => {
+  const response = await api.get(`/proyectos/${idProyecto}/nota-promedio`);
+  return response.data.data;
+};
