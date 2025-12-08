@@ -121,6 +121,15 @@ export const obtenerMaterias = async (
   };
 };
 
+// Obtener materias por semestre
+export const obtenerMateriasPorSemestre = async (idSemestre: string): Promise<MateriasResponse> => {
+  const response = await api.get<ApiResponse<Materia>>(`/materias/semestre/${idSemestre}`);
+  return {
+    items: response.data?.data?.items || [],
+    count: response.data?.data?.count || 0
+  };
+};
+
 // Obtener una materia por ID
 export const obtenerMateriaPorId = async (id: string): Promise<Materia> => {
   const response = await api.get<{ success: boolean; data: Materia }>(`/materias/${id}`);

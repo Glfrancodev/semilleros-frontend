@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import MateriasTableSimple from "./MateriasTableSimple";
 import MateriaModal, { MateriaFormData } from "../modals/MateriaModal";
 import CustomSelect from "../common/CustomSelect";
-import { Materia, obtenerMaterias, eliminarMateria, crearMateria, actualizarMateria } from "../../services/materiaService";
+import { Materia, obtenerMateriasPorSemestre, eliminarMateria, crearMateria, actualizarMateria } from "../../services/materiaService";
 
 export default function MateriasTableWithFilters() {
   const { idSemestre } = useParams<{ idSemestre: string }>();
@@ -35,7 +35,7 @@ export default function MateriasTableWithFilters() {
     if (!idSemestre) return;
     try {
       setIsLoading(true);
-      const data = await obtenerMaterias(1, 1000, "", idSemestre);
+      const data = await obtenerMateriasPorSemestre(idSemestre);
       setMaterias(data.items);
       setTotalMaterias(data.count);
       setError(null);
