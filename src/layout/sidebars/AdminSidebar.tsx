@@ -57,7 +57,7 @@ const navItems: NavItem[] = [
   },
   {
     icon: <FolderIcon />,
-    name: "Feria",
+    name: "Feria Actual",
     subItems: [
       { name: "Tareas y Revisiones", path: "/tareas-revisiones", icon: <FolderIcon /> },
       { name: "Asignar Jurados", path: "/asignar-jurados", icon: <UserIcon /> },

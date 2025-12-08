@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import ProyectosJuradosTableSimple from "./ProyectosJuradosTableSimple";
 import AsignarJuradosModal from "../modals/AsignarJuradosModal";
 import CustomSelect from "../common/CustomSelect";
+import Button from "../ui/button/Button";
 import {
   obtenerProyectosAprobadosFeria,
   type ProyectoAprobadoFeria,
@@ -34,7 +35,12 @@ export default function ProyectosJuradosTableWithFilters() {
       setTotalProyectos(data.length);
       setError(null);
     } catch (err) {
-      setError("Error al cargar proyectos aprobados");
+      // Si el error es "No hay feria activa", mostrar mensaje específico
+      if (err instanceof Error && err.message.includes("No hay feria activa")) {
+        setError("No hay feria activa actualmente");
+      } else {
+        setError("Error al cargar proyectos aprobados");
+      }
       console.error(err);
     } finally {
       setLoading(false);
@@ -76,24 +82,19 @@ export default function ProyectosJuradosTableWithFilters() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-gray-600 dark:text-gray-400">
-          Cargando proyectos...
-        </div>
+      <div className="rounded-xl border border-gray-200 bg-white p-6 text-center text-gray-600 dark:border-white/[0.05] dark:bg-white/[0.03] dark:text-gray-300">
+        Cargando proyectos...
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-600 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-400">
-        {error}
-        <button
-          onClick={cargarProyectos}
-          className="ml-4 underline hover:no-underline"
-        >
+      <div className="flex flex-col items-center gap-4 rounded-xl border border-gray-200 bg-white p-6 text-center dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <p className="text-gray-700 dark:text-gray-300">{error}</p>
+        <Button onClick={cargarProyectos}>
           Reintentar
-        </button>
+        </Button>
       </div>
     );
   }

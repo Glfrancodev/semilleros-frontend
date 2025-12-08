@@ -8,6 +8,7 @@ import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./legacy/pages/Dashboard/Home";
 import SignInPage from "./features/auth/pages/SignInPage";
 import ProfilePage from "./features/profile/pages/ProfilePage";
+import PublicProfilePage from "./features/profile/pages/PublicProfilePage";
 import UsuariosPage from "./features/admin/pages/UsuariosPage";
 import AdministrativosPage from "./features/admin/pages/AdministrativosPage";
 import EstudiantesPage from "./features/admin/pages/EstudiantesPage";
@@ -19,6 +20,8 @@ import CategoriasPage from "./features/admin/pages/CategoriasPage";
 import AreasPage from "./features/admin/pages/AreasPage";
 import EventosPage from "./features/admin/pages/EventosPage";
 import FeriasPage from "./features/admin/pages/FeriasPage";
+import FeriaDetallePage from "./features/admin/pages/FeriaDetallePage";
+import GanadoresPage from "./features/admin/pages/GanadoresPage";
 import SemestresPage from "./features/admin/pages/SemestresPage";
 import MateriasPage from "./features/admin/pages/MateriasPage";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -102,8 +105,13 @@ export default function App() {
           {/* Rutas públicas adicionales */}
           <Route path="/reunion/:proyectoId" element={<ReunionPage />} />
           <Route path="/estudiante/proyectos/:idProyecto/documento" element={<DocumentoEditorPage />} />
+          
+          {/* Rutas públicas con layout (ferias y proyectos) */}
           <Route element={<AppLayout />}>
             <Route path="/estudiante/proyectos/:idProyecto" element={<ProyectoDetallePage />} />
+            <Route path="/ferias/:idFeria" element={<FeriaDetallePage />} />
+            <Route path="/ferias/:idFeria/ganadores" element={<GanadoresPage />} />
+            <Route path="/estudiantes/:idEstudiante/perfil" element={<PublicProfilePage />} />
           </Route>
 
           {/* Rutas privadas */}

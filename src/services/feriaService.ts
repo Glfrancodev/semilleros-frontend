@@ -32,12 +32,20 @@ interface ResumenFeriaResponse {
 }
 
 export const obtenerResumenFeriaActiva = async (): Promise<ResumenFeriaActiva> => {
-  const response = await api.get<ResumenFeriaResponse>("/ferias/resumen-activa");
-  const { ["año"]: rawYear, ...rest } = response.data.data;
-  return {
-    ...rest,
-    anio: rawYear,
-  };
+  try {
+    const response = await api.get<ResumenFeriaResponse>("/ferias/resumen-activa");
+    const { ["año"]: rawYear, ...rest } = response.data.data;
+    return {
+      ...rest,
+      anio: rawYear,
+    };
+  } catch (error: any) {
+    // Si es un error 404, lanzar un error específico
+    if (error.response?.status === 404) {
+      throw new Error("No hay feria activa");
+    }
+    throw error;
+  }
 };
 
 // Interfaces para las tareas y ferias CRUD
@@ -70,8 +78,8 @@ export interface Feria {
   nombre: string;
   semestre: number;
   año: number;
-  estaActivo: boolean;
-  estaFinalizado: boolean;
+  estado: 'Borrador' | 'Activo' | 'Finalizado';
+  ganadores?: any;
   fechaCreacion: string;
   fechaActualizacion: string;
   tipoCalificacion?: TipoCalificacion;
@@ -96,7 +104,7 @@ export interface FeriaCreacion {
   nombre: string;
   semestre: number;
   año: number;
-  estaActivo?: boolean;
+  estado?: 'Borrador' | 'Activo' | 'Finalizado';
   tipoCalificacion: {
     nombre: string;
     subCalificaciones: SubCalificacion[];
@@ -108,7 +116,7 @@ export interface FeriaActualizacion {
   nombre?: string;
   semestre?: number;
   año?: number;
-  estaActivo?: boolean;
+  estado?: 'Borrador' | 'Activo' | 'Finalizado';
   tipoCalificacion?: {
     nombre: string;
     subCalificaciones: SubCalificacion[];
@@ -160,7 +168,7 @@ export interface FeriaActiva {
   nombre: string;
   semestre: number;
   año: number;
-  estaActivo: boolean;
+  estado: 'Borrador' | 'Activo' | 'Finalizado';
   fechaCreacion: string;
   fechaActualizacion: string;
   cantidadProyectosInscritos: number;
@@ -182,5 +190,36 @@ export const obtenerFeriaActiva = async (): Promise<FeriaActiva | null> => {
 export const obtenerFeriasPasadas = async (): Promise<Feria[]> => {
   const response = await api.get<ApiResponse<Feria>>('/ferias/pasadas');
   return response.data?.data?.items || [];
+};
+
+// Finalizar feria y calcular ganadores
+export const finalizarFeria = async (idFeria: string): Promise<{ message: string; ganadores: any[] }> => {
+  const response = await api.post<ApiSuccessResponse<{ message: string; ganadores: any[] }>>(`/ferias/${idFeria}/finalizar`);
+  return response.data.data;
+};
+
+// Interfaces para proyectos finales
+export interface IntegranteProyectoFinal {
+  idEstudiante: string;
+  nombreCompleto: string;
+}
+
+export interface ProyectoFinal {
+  idProyecto: string;
+  nombre: string;
+  descripcion: string;
+  notaPromedio: number;
+  integrantes: IntegranteProyectoFinal[];
+}
+
+export interface ProyectosFinalesResponse {
+  count: number;
+  proyectos: ProyectoFinal[];
+}
+
+// Obtener proyectos finales y calificados de una feria
+export const obtenerProyectosFinalesFeria = async (idFeria: string): Promise<ProyectosFinalesResponse> => {
+  const response = await api.get<ApiSuccessResponse<ProyectosFinalesResponse>>(`/ferias/${idFeria}/proyectos-finales`);
+  return response.data.data;
 };
 

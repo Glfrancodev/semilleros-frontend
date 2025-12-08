@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Feria, Tarea, TipoCalificacion, SubCalificacion } from "../../services/feriaService";
+import { Feria, Tarea, SubCalificacion } from "../../services/feriaService";
 import Button from "../ui/button/Button";
 
 interface FeriaModalProps {
@@ -14,7 +14,7 @@ export interface FeriaFormData {
   nombre: string;
   semestre: number;
   año: number;
-  estaActivo: boolean;
+  estado: 'Borrador' | 'Activo' | 'Finalizado';
   tipoCalificacion: {
     nombre: string;
     subCalificaciones: SubCalificacion[];
@@ -35,7 +35,7 @@ export default function FeriaModal({
     nombre: "",
     semestre: 1,
     año: currentYear,
-    estaActivo: true,
+    estado: 'Activo',
     tipoCalificacion: {
       nombre: "Criterios de Evaluación",
       subCalificaciones: [
@@ -67,7 +67,7 @@ export default function FeriaModal({
         nombre: feria.nombre,
         semestre: feria.semestre,
         año: feria.año,
-        estaActivo: feria.estaActivo,
+        estado: feria.estado,
         tipoCalificacion: feria.tipoCalificacion || {
           nombre: "Criterios de Evaluación",
           subCalificaciones: [
@@ -98,7 +98,7 @@ export default function FeriaModal({
         nombre: "",
         semestre: 1,
         año: currentYear,
-        estaActivo: true,
+        estado: 'Activo',
         tipoCalificacion: {
           nombre: "Criterios de Evaluación",
           subCalificaciones: [
@@ -313,7 +313,7 @@ export default function FeriaModal({
         nombre: "",
         semestre: 1,
         año: currentYear,
-        estaActivo: true,
+        estado: 'Activo',
         tipoCalificacion: {
           nombre: "Criterios de Evaluación",
           subCalificaciones: [
@@ -502,23 +502,26 @@ export default function FeriaModal({
               </div>
             </div>
 
-            {/* Estado Activo */}
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="estaActivo"
-                name="estaActivo"
-                checked={formData.estaActivo}
+            {/* Estado */}
+            <div>
+              <label
+                htmlFor="estado"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Estado <span className="text-red-500">*</span>
+              </label>
+              <select
+                id="estado"
+                name="estado"
+                value={formData.estado}
                 onChange={handleChange}
                 disabled={!!feria}
-                className={`h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 ${!!feria ? 'cursor-not-allowed opacity-50' : ''}`}
-              />
-              <label
-                htmlFor="estaActivo"
-                className={`ml-2 text-sm font-medium text-gray-700 dark:text-gray-300 ${!!feria ? 'opacity-50' : ''}`}
+                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm ${!!feria ? 'cursor-not-allowed opacity-50' : ''}`}
               >
-                Feria Activa
-              </label>
+                <option value="Borrador">Borrador</option>
+                <option value="Activo">Activo</option>
+                <option value="Finalizado">Finalizado</option>
+              </select>
             </div>
 
             {/* Tipo de Calificación */}

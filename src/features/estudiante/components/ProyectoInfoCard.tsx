@@ -399,7 +399,8 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
         </Button>
       )}
 
-      {esLiderActual && (
+      {/* Botón de visibilidad - solo para líder y si NO es proyecto final */}
+      {esLiderActual && !proyecto.esFinal && (
         <Button
           size="sm"
           className="w-full mt-3"

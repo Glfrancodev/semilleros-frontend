@@ -50,6 +50,14 @@ export async function getProfile(): Promise<UserProfile> {
 }
 
 /**
+ * Obtiene el perfil público de un estudiante (sin autenticación requerida)
+ */
+export async function getPublicProfile(idEstudiante: string): Promise<UserProfile> {
+  const { data } = await api.get<ProfileResponse>(`/estudiantes/${idEstudiante}/perfil-publico`);
+  return data.data;
+}
+
+/**
  * Actualiza el perfil del usuario
  */
 export async function updateProfile(idUsuario: string, updates: Partial<UserProfile>): Promise<UserProfile> {

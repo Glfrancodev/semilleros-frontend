@@ -106,7 +106,12 @@ export default function ProyectosTableWithFilters() {
       setResumen(data);
     } catch (err) {
       console.error(err);
-      setError("No pudimos cargar el resumen de la feria activa.");
+      // Si el error es "No hay feria activa", mostrar mensaje específico
+      if (err instanceof Error && err.message.includes("No hay feria activa")) {
+        setError("No hay feria activa actualmente");
+      } else {
+        setError("No pudimos cargar el resumen de la feria activa.");
+      }
       setResumen(null);
     } finally {
       setLoading(false);

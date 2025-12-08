@@ -17,8 +17,7 @@ interface FeriasTableProps {
     nombre: boolean;
     semestre: boolean;
     año: boolean;
-    estaActivo: boolean;
-    estaFinalizado: boolean;
+    estado: boolean;
     tareas: boolean;
     fechaCreacion: boolean;
     fechaActualizacion: boolean;
@@ -29,6 +28,7 @@ interface FeriasTableProps {
   onAddFeria: () => void;
   onEdit: (feria: Feria) => void;
   onDelete: (idFeria: string) => void;
+  onViewDetails: (idFeria: string) => void;
 }
 
 export default function FeriasTableSimple({
@@ -40,7 +40,8 @@ export default function FeriasTableSimple({
   onToggleColumn,
   onAddFeria,
   onEdit,
-  onDelete
+  onDelete,
+  onViewDetails
 }: FeriasTableProps) {
   const [openActionsDropdown, setOpenActionsDropdown] = useState<string | null>(null);
   const [openTareasDropdown, setOpenTareasDropdown] = useState<string | null>(null);
@@ -213,20 +214,11 @@ export default function FeriasTableSimple({
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={visibleColumns.estaActivo}
-                  onChange={() => onToggleColumn('estaActivo')}
+                  checked={visibleColumns.estado}
+                  onChange={() => onToggleColumn('estado')}
                   className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">Estado</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={visibleColumns.estaFinalizado}
-                  onChange={() => onToggleColumn('estaFinalizado')}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300">Finalizado</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -281,14 +273,9 @@ export default function FeriasTableSimple({
                   AÑO
                 </TableCell>
               )}
-              {visibleColumns.estaActivo && (
+              {visibleColumns.estado && (
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   ESTADO
-                </TableCell>
-              )}
-              {visibleColumns.estaFinalizado && (
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                  FINALIZADO
                 </TableCell>
               )}
               {visibleColumns.tareas && (
@@ -344,25 +331,16 @@ export default function FeriasTableSimple({
                 )}
 
                 {/* ESTADO */}
-                {visibleColumns.estaActivo && (
+                {visibleColumns.estado && (
                   <TableCell className="px-5 py-4 text-start">
-                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${feria.estaActivo
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                      feria.estado === 'Finalizado'
+                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                        : feria.estado === 'Activo'
                         ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                         : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
-                      }`}>
-                      {feria.estaActivo ? 'Activa' : 'Inactiva'}
-                    </span>
-                  </TableCell>
-                )}
-
-                {/* FINALIZADO */}
-                {visibleColumns.estaFinalizado && (
-                  <TableCell className="px-5 py-4 text-start">
-                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${feria.estaFinalizado
-                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-                        : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                      }`}>
-                      {feria.estaFinalizado ? 'Finalizado' : 'En Proceso'}
+                    }`}>
+                      {feria.estado}
                     </span>
                   </TableCell>
                 )}
@@ -488,6 +466,22 @@ export default function FeriasTableSimple({
                             Acciones
                           </div>
                           <div className="space-y-1">
+                            <button
+                              onClick={() => {
+                                onViewDetails(feria.idFeria);
+                                setOpenActionsDropdown(null);
+                              }}
+                              className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                            >
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-white text-gray-700 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                              </div>
+                              <span>Ver detalles</span>
+                            </button>
+
                             <button
                               onClick={() => {
                                 onEdit(feria);

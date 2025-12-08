@@ -54,8 +54,16 @@ interface DocenteProyectoResponse {
 
 // Obtener proyectos aprobados para feria
 export const obtenerProyectosAprobadosFeria = async (): Promise<ProyectoAprobadoFeria[]> => {
-  const response = await api.get<ProyectosAprobadosResponse>('/proyectos/aprobados-feria');
-  return response.data.data;
+  try {
+    const response = await api.get<ProyectosAprobadosResponse>('/proyectos/aprobados-feria');
+    return response.data.data;
+  } catch (error: any) {
+    // Si es un error 404, lanzar un error específico
+    if (error.response?.status === 404) {
+      throw new Error("No hay feria activa");
+    }
+    throw error;
+  }
 };
 
 // Obtener todos los docentes

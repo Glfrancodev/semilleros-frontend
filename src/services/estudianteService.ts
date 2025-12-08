@@ -44,6 +44,7 @@ export interface PerfilDestacado {
   codigoEstudiante: string;
   nombreCompleto: string;
   email: string;
+  fotoPerfil: string | null;
   redesSociales: {
     instagram: string | null;
     linkedin: string | null;
@@ -52,6 +53,7 @@ export interface PerfilDestacado {
   totalProyectos: number;
   promedioNotas: number;
   proyectosGanadores: number;
+  feriasGanadas?: number;
   posicion: number;
 }
 
@@ -66,13 +68,20 @@ interface ApiResponseLeaderboard {
 
 // Obtener el top de estudiantes destacados
 export const obtenerPerfilesDestacados = async (limite: number = 10): Promise<PerfilDestacado[]> => {
+  console.log('📊 [SERVICE] Obteniendo leaderboard con límite:', limite);
   const response = await api.get<ApiResponseLeaderboard>(`/estudiantes/leaderboard?limite=${limite}`);
+  console.log('📊 [SERVICE] Response completo:', response);
+  console.log('📊 [SERVICE] Response data:', response.data);
   const items = response.data?.data?.items || [];
+  console.log('📊 [SERVICE] Items recibidos:', items.length);
+  console.log('📊 [SERVICE] Items:', items);
   
   // Convertir promedioNotas de string a number si viene como string
-  return items.map(item => ({
+  const formattedItems = items.map(item => ({
     ...item,
     promedioNotas: typeof item.promedioNotas === 'string' ? parseFloat(item.promedioNotas) : item.promedioNotas
   }));
+  console.log('📊 [SERVICE] ✅ Leaderboard formateado:', formattedItems);
+  return formattedItems;
 };
 

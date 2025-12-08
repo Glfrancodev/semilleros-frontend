@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import FeriasTableSimple from "./FeriasTableSimple";
 import FeriaModal, { FeriaFormData } from "../modals/FeriaModal";
 import CustomSelect from "../common/CustomSelect";
 import { Feria, obtenerFerias, eliminarFeria, crearFeria, actualizarFeria } from "../../services/feriaService";
 
 export default function FeriasTableWithFilters() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [ferias, setFerias] = useState<Feria[]>([]);
   const [totalFerias, setTotalFerias] = useState(0);
@@ -22,8 +24,7 @@ export default function FeriasTableWithFilters() {
     nombre: true,
     semestre: true,
     año: true,
-    estaActivo: true,
-    estaFinalizado: true,
+    estado: true,
     tareas: true,
     fechaCreacion: false,
     fechaActualizacion: false,
@@ -79,6 +80,10 @@ export default function FeriasTableWithFilters() {
     }
   };
 
+  const handleViewDetails = (idFeria: string) => {
+    navigate(`/ferias/${idFeria}`);
+  };
+
   const handleAddFeria = () => {
     setSelectedFeria(null);
     setIsModalOpen(true);
@@ -92,7 +97,7 @@ export default function FeriasTableWithFilters() {
           nombre: data.nombre,
           semestre: data.semestre,
           año: data.año,
-          estaActivo: data.estaActivo,
+          estado: data.estado,
           tipoCalificacion: data.tipoCalificacion,
           tareas: data.tareas
         });
@@ -102,15 +107,22 @@ export default function FeriasTableWithFilters() {
           nombre: data.nombre,
           semestre: data.semestre,
           año: data.año,
-          estaActivo: data.estaActivo,
+          estado: data.estado,
           tipoCalificacion: data.tipoCalificacion,
           tareas: data.tareas
         });
       }
 
       await cargarFerias(); // Recargar la lista
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error al guardar feria:', err);
+      
+      // Si el error es por feria activa existente, mostrar mensaje específico
+      if (err.response?.status === 409 || err.response?.data?.code === 'ACTIVE_FERIA_EXISTS') {
+        const errorMessage = err.response?.data?.message || 'Ya existe una feria activa. No se puede crear otra feria activa.';
+        throw new Error(errorMessage);
+      }
+      
       throw err; // Re-throw para que el modal pueda manejarlo
     }
   };
@@ -163,6 +175,7 @@ export default function FeriasTableWithFilters() {
         onAddFeria={handleAddFeria}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onViewDetails={handleViewDetails}
       />
 
       {/* Paginación */}
