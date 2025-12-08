@@ -71,7 +71,7 @@ export default function EventoCard({ evento }: EventoCardProps) {
     }
 
     if (estaInscrito) {
-      toast.info("Ya estás inscrito en este evento");
+      toast.success("Ya estás inscrito en este evento");
       return;
     }
 
@@ -122,7 +122,7 @@ export default function EventoCard({ evento }: EventoCardProps) {
 
       {/* Botón */}
       <Button 
-        variant={estaInscrito ? "secondary" : "primary"}
+        variant={estaInscrito ? "outline" : "primary"}
         size="sm" 
         className="w-full"
         onClick={handleInscribir}
