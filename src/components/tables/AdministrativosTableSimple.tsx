@@ -40,7 +40,6 @@ export default function AdministrativosTableSimple({
   onToggleColumn,
   onAddUser,
   onEdit,
-  onDelete,
   onToggleStatus
 }: AdministrativosTableProps) {
   const [openSocialDropdown, setOpenSocialDropdown] = useState<string | null>(null);

@@ -41,7 +41,6 @@ export default function DocentesTableSimple({
   onToggleColumn,
   onAddUser,
   onEdit,
-  onDelete,
   onToggleStatus
 }: DocentesTableProps) {
   const [openSocialDropdown, setOpenSocialDropdown] = useState<string | null>(null);

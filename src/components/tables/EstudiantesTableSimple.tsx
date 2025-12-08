@@ -41,7 +41,6 @@ export default function EstudiantesTableSimple({
   onToggleColumn,
   onAddUser,
   onEdit,
-  onDelete,
   onToggleStatus
 }: EstudiantesTableProps) {
   const [openSocialDropdown, setOpenSocialDropdown] = useState<string | null>(null);
