@@ -12,13 +12,16 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
   // Generar iniciales localmente desde el profile
   const iniciales = (profile.nombre[0] || "") + (profile.apellido[0] || "");
   
+  // Extraer la URL de la foto de perfil si existe
+  const fotoPerfilUrl = profile.fotoPerfil?.url || null;
+  
   return (
     <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
       <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex flex-col items-center w-full gap-6 xl:flex-row">
           {/* Avatar */}
           <UserAvatar
-            fotoPerfil={null}
+            fotoPerfil={fotoPerfilUrl}
             iniciales={iniciales}
             nombre={fullName}
             size="xl"

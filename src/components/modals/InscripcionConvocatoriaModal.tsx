@@ -77,7 +77,7 @@ export default function InscripcionConvocatoriaModal({
   const cargarAreas = async () => {
     try {
       const data = await obtenerAreas();
-      setAreas(Array.isArray(data) ? data : []);
+      setAreas(data.areas || []);
     } catch (error) {
       console.error("Error al cargar áreas:", error);
       toast.error("Error al cargar las áreas");

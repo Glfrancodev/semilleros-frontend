@@ -8,6 +8,12 @@ export interface UserProfile {
   correo: string;
   estaActivo: boolean;
   idRol: number;
+  // Foto de perfil
+  fotoPerfil?: {
+    idArchivo: string;
+    url: string;
+    formato: string;
+  } | null;
   // Redes sociales (opcionales)
   instagram?: string | null;
   linkedin?: string | null;
