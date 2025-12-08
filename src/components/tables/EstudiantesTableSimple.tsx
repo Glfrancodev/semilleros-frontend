@@ -561,17 +561,29 @@ export default function EstudiantesTableSimple({
                               
                               <button
                                 onClick={() => {
-                                  onDelete(usuario.idUsuario);
+                                  onToggleStatus(usuario.idUsuario);
                                   setOpenActionsDropdown(null);
                                 }}
-                                className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                                className={`flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors ${
+                                  usuario.estaActivo 
+                                    ? 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20'
+                                    : 'text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20'
+                                }`}
                               >
-                                <div className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-white text-red-600 dark:border-gray-600 dark:bg-gray-700 dark:text-red-400">
-                                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                  </svg>
+                                <div className={`flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-700 ${
+                                  usuario.estaActivo ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
+                                }`}>
+                                  {usuario.estaActivo ? (
+                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                    </svg>
+                                  ) : (
+                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                  )}
                                 </div>
-                                <span>Eliminar</span>
+                                <span>{usuario.estaActivo ? 'Desactivar' : 'Activar'}</span>
                               </button>
                             </div>
                           </div>

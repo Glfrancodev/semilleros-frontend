@@ -125,7 +125,7 @@ export const crearProyecto = async (
     nombre: data.nombre,
     descripcion: data.descripcion,
     estaAprobado: null, // null = En revisión
-    esFinal: false,
+    esFinal: null, // null hasta que se defina si es final
     idGrupoMateria: data.idGrupoMateria,
     esPublico: data.esPublico ?? false,
   };
