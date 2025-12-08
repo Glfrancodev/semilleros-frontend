@@ -1,5 +1,4 @@
 import { UserProfile } from "../services/profileService";
-import { useAuth } from "../../../context/AuthContext";
 import UserAvatar from "../../../components/common/UserAvatar";
 
 interface ProfileHeaderProps {
@@ -7,15 +6,11 @@ interface ProfileHeaderProps {
 }
 
 export default function ProfileHeader({ profile }: ProfileHeaderProps) {
-  const { user } = useAuth();
   const fullName = `${profile.nombre} ${profile.apellido}`;
   const roleName = profile.Rol?.nombre || "Usuario";
   
   // Generar iniciales localmente desde el profile
   const iniciales = (profile.nombre[0] || "") + (profile.apellido[0] || "");
-  
-  // Extraer la URL de la foto de perfil si existe
-  const fotoPerfilUrl = profile.fotoPerfil?.url || null;
   
   return (
     <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
@@ -23,7 +18,7 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
         <div className="flex flex-col items-center w-full gap-6 xl:flex-row">
           {/* Avatar */}
           <UserAvatar
-            fotoPerfil={fotoPerfilUrl}
+            fotoPerfil={null}
             iniciales={iniciales}
             nombre={fullName}
             size="xl"

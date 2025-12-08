@@ -42,7 +42,7 @@ export default function GanadoresPage() {
   const [feria, setFeria] = useState<Feria | null>(null);
   const [ganadores, setGanadores] = useState<GanadoresPorArea>({});
 
-  const isAdmin = user?.rol === ROLES.ADMINISTRADOR;
+  const isAdmin = user?.rol === ROLES.ADMIN;
 
   useEffect(() => {
     cargarGanadores();
