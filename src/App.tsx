@@ -28,8 +28,6 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ROLES } from "./constants/roles";
 
 // Páginas de Estudiante
-import EstadisticasPage from "./features/estudiante/pages/EstadisticasPage";
-import CalendarioPage from "./features/estudiante/pages/CalendarioPage";
 import GuiasDescubrirPage from "./features/estudiante/pages/GuiasDescubrirPage";
 import MisProyectosPage from "./features/estudiante/pages/MisProyectosPage";
 import ConvocatoriasPage from "./features/estudiante/pages/ConvocatoriasPage";
@@ -65,17 +63,17 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   if (user) {
     switch (user.rol) {
       case ROLES.ADMIN:
-        return <Navigate to="/dashboard" replace />;
+        return <Navigate to="/tareas-revisiones" replace />;
       case ROLES.DOCENTE:
         return <Navigate to="/mis-materias" replace />;
       case ROLES.ESTUDIANTE:
         return <Navigate to="/estudiante/convocatorias" replace />;
       default:
-        return <Navigate to="/dashboard" replace />;
+        return <Navigate to="/tareas-revisiones" replace />;
     }
   }
 
-  return <Navigate to="/dashboard" replace />;
+  return <Navigate to="/tareas-revisiones" replace />;
 }
 
 export default function App() {
@@ -139,8 +137,6 @@ export default function App() {
               
               {/* Rutas de Estudiante */}
               <Route path="/estudiante/convocatorias" element={<ConvocatoriasPage />} />
-              <Route path="/estudiante/estadisticas" element={<EstadisticasPage />} />
-              <Route path="/estudiante/calendario" element={<CalendarioPage />} />
               <Route path="/estudiante/proyectos/guias" element={<GuiasDescubrirPage />} />
               <Route path="/estudiante/proyectos/mis-proyectos" element={<MisProyectosPage />} />
               

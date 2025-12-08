@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "./components/ui/button/Button";
+import { ThemeToggleButton } from "./components/common/ThemeToggleButton";
 import { 
   obtenerFeriaActiva, 
   obtenerFeriasPasadas, 
@@ -77,11 +78,14 @@ export default function NewLandingPage() {
                 <div className="text-gray-600 dark:text-gray-400 text-xs">FICCT - UAGRM</div>
               </div>
             </div>
-            <Link to="/login">
-              <Button variant="primary" size="sm">
-                Iniciar Sesión →
-              </Button>
-            </Link>
+            <div className="flex items-center gap-3">
+              <ThemeToggleButton />
+              <Link to="/login">
+                <Button variant="primary" size="sm">
+                  Iniciar Sesión →
+                </Button>
+              </Link>
+            </div>
           </nav>
         </div>
       </header>

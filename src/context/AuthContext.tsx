@@ -89,7 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Redirigir según el rol del usuario
         switch (decoded.rol) {
           case ROLES.ADMIN:
-            navigate("/dashboard");
+            navigate("/tareas-revisiones");
             break;
           case ROLES.DOCENTE:
             navigate("/mis-materias");
@@ -98,7 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             navigate("/estudiante/convocatorias");
             break;
           default:
-            navigate("/dashboard");
+            navigate("/tareas-revisiones");
         }
       } catch (decodeError) {
         console.error("Error al decodificar el token:", decodeError);

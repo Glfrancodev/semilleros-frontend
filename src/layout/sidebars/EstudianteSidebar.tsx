@@ -23,14 +23,6 @@ const navItems: NavItem[] = [
     path: "/estudiante/convocatorias",
   },
   {
-    icon: <UserCircleIcon />,
-    name: "Yo",
-    subItems: [
-      { name: "Mis estadísticas", path: "/estudiante/estadisticas" },
-      { name: "Calendario", path: "/estudiante/calendario" },
-    ],
-  },
-  {
     icon: <DocsIcon />,
     name: "Proyectos",
     subItems: [
