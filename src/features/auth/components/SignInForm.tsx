@@ -3,7 +3,6 @@ import { Link } from "react-router";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "../../../assets/icons";
 import Label from "../../../components/form/Label";
 import Input from "../../../components/form/input/InputField";
-import Checkbox from "../../../components/form/input/Checkbox";
 import Button from "../../../components/ui/button/Button";
 
 export interface SignInFormProps {
@@ -15,7 +14,6 @@ export default function SignInForm({ onSubmit, loading }: SignInFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isChecked, setIsChecked] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
