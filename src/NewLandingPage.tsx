@@ -70,11 +70,17 @@ export default function NewLandingPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-brand-500 to-brand-600 rounded-lg flex items-center justify-center font-bold text-white">
-                FS
-              </div>
+              <img 
+                src="/images/logo/logo.svg" 
+                alt="Semilleros" 
+                className="h-10 dark:hidden"
+              />
+              <img 
+                src="/images/logo/logo-dark.svg" 
+                alt="Semilleros" 
+                className="h-10 hidden dark:block"
+              />
               <div>
-                <div className="text-gray-900 dark:text-white font-bold text-sm">Feria de Semilleros</div>
                 <div className="text-gray-600 dark:text-gray-400 text-xs">FICCT - UAGRM</div>
               </div>
             </div>
