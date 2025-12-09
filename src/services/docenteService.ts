@@ -9,6 +9,7 @@ export interface Docente {
   usuario?: {
     idUsuario: string;
     nombre: string;
+    apellido: string;
     correo: string;
   };
 }
