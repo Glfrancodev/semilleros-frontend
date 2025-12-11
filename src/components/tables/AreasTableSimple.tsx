@@ -495,7 +495,7 @@ export default function AreasTableSimple({
                 {visibleColumns.creadoPor && (
                   <TableCell className="px-5 py-4 text-start">
                     <span className="text-sm text-gray-600 dark:text-gray-400">
-                      {area.creador?.codigoAdministrativo || "-"}
+                      {area.creador?.usuario ? `${area.creador.usuario.nombre} ${area.creador.usuario.apellido}` : area.creador?.codigoAdministrativo || "-"}
                     </span>
                   </TableCell>
                 )}
@@ -504,7 +504,7 @@ export default function AreasTableSimple({
                 {visibleColumns.actualizadoPor && (
                   <TableCell className="px-5 py-4 text-start">
                     <span className="text-sm text-gray-600 dark:text-gray-400">
-                      {area.actualizador?.codigoAdministrativo || "-"}
+                      {area.actualizador?.usuario ? `${area.actualizador.usuario.nombre} ${area.actualizador.usuario.apellido}` : area.actualizador?.codigoAdministrativo || "-"}
                     </span>
                   </TableCell>
                 )}

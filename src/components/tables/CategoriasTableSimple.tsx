@@ -401,7 +401,7 @@ export default function CategoriasTableSimple({
                   {visibleColumns.creadoPor && (
                     <TableCell className="px-5 py-4 text-start">
                       <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {categoria.creador?.codigoAdministrativo || "-"}
+                        {categoria.creador?.usuario ? `${categoria.creador.usuario.nombre} ${categoria.creador.usuario.apellido}` : categoria.creador?.codigoAdministrativo || "-"}
                       </span>
                     </TableCell>
                   )}
@@ -410,7 +410,7 @@ export default function CategoriasTableSimple({
                   {visibleColumns.actualizadoPor && (
                     <TableCell className="px-5 py-4 text-start">
                       <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {categoria.actualizador?.codigoAdministrativo || "-"}
+                        {categoria.actualizador?.usuario ? `${categoria.actualizador.usuario.nombre} ${categoria.actualizador.usuario.apellido}` : categoria.actualizador?.codigoAdministrativo || "-"}
                       </span>
                     </TableCell>
                   )}

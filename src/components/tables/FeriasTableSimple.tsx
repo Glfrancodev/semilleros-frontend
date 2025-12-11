@@ -103,7 +103,7 @@ export default function FeriasTableSimple({
       if (tareasDropdown && tareasDropdown.contains(e.target as Node)) {
         return;
       }
-      
+
       if (openActionsDropdown) setOpenActionsDropdown(null);
       if (openTareasDropdown) setOpenTareasDropdown(null);
       if (showColumnSettings) onToggleColumnSettings();
@@ -363,13 +363,12 @@ export default function FeriasTableSimple({
                 {/* ESTADO */}
                 {visibleColumns.estado && (
                   <TableCell className="px-5 py-4 text-start">
-                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      feria.estado === 'Finalizado'
-                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-                        : feria.estado === 'Activo'
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${feria.estado === 'Finalizado'
+                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                      : feria.estado === 'Activo'
                         ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                         : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
-                    }`}>
+                      }`}>
                       {feria.estado}
                     </span>
                   </TableCell>
@@ -405,8 +404,8 @@ export default function FeriasTableSimple({
                                     className="fixed inset-0 z-10"
                                     onClick={() => setOpenTareasDropdown(null)}
                                   />
-                                  
-                                  <div 
+
+                                  <div
                                     data-tareas-dropdown
                                     className="fixed z-50 w-64 rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-800"
                                     style={{
@@ -469,36 +468,18 @@ export default function FeriasTableSimple({
                 {/* CREADO POR */}
                 {visibleColumns.creadoPor && (
                   <TableCell className="px-5 py-4 text-start">
-                    {feria.creador ? (
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium text-gray-800 dark:text-white/90">
-                          {feria.creador.Usuario?.nombre} {feria.creador.Usuario?.apellido}
-                        </span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {feria.creador.codigoAdministrativo}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-sm text-gray-400 dark:text-gray-500">-</span>
-                    )}
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {feria.creador?.usuario ? `${feria.creador.usuario.nombre} ${feria.creador.usuario.apellido}` : feria.creador?.codigoAdministrativo || "-"}
+                    </span>
                   </TableCell>
                 )}
 
                 {/* ACTUALIZADO POR */}
                 {visibleColumns.actualizadoPor && (
                   <TableCell className="px-5 py-4 text-start">
-                    {feria.actualizador ? (
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium text-gray-800 dark:text-white/90">
-                          {feria.actualizador.Usuario?.nombre} {feria.actualizador.Usuario?.apellido}
-                        </span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {feria.actualizador.codigoAdministrativo}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-sm text-gray-400 dark:text-gray-500">-</span>
-                    )}
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {feria.actualizador?.usuario ? `${feria.actualizador.usuario.nombre} ${feria.actualizador.usuario.apellido}` : feria.actualizador?.codigoAdministrativo || "-"}
+                    </span>
                   </TableCell>
                 )}
 

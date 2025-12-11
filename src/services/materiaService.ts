@@ -1,5 +1,15 @@
 import api from "./api";
 
+export interface AdministrativoAudit {
+  idAdministrativo: string;
+  codigoAdministrativo: string;
+  usuario?: {
+    nombre: string;
+    apellido: string;
+    correo: string;
+  };
+}
+
 export interface Materia {
   idMateria: string;
   sigla: string;
@@ -34,6 +44,10 @@ export interface Materia {
       };
     };
   }>;
+  creadoPor?: string;
+  actualizadoPor?: string;
+  creador?: AdministrativoAudit;
+  actualizador?: AdministrativoAudit;
 }
 
 export interface Grupo {

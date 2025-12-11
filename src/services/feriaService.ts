@@ -76,7 +76,7 @@ export interface Tarea {
 export interface AdministrativoFeria {
   idAdministrativo: string;
   codigoAdministrativo: string;
-  Usuario?: {
+  usuario?: {
     nombre: string;
     apellido: string;
     correo: string;

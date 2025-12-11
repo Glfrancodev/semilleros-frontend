@@ -14,6 +14,8 @@ interface MateriasTableProps {
     grupos: boolean;
     fechaCreacion: boolean;
     fechaActualizacion: boolean;
+    creadoPor: boolean;
+    actualizadoPor: boolean;
   };
   showColumnSettings: boolean;
   onToggleColumnSettings: () => void;
@@ -23,7 +25,7 @@ interface MateriasTableProps {
   onDelete: (idMateria: string) => void;
 }
 
-export default function MateriasTableSimple({ 
+export default function MateriasTableSimple({
   materias,
   totalMaterias,
   visibleColumns,
@@ -117,14 +119,14 @@ export default function MateriasTableSimple({
           </Button>
         </div>
       </div>
-      
+
       {showColumnSettings && settingsDropdownPosition && (
         <><div className="fixed inset-0 z-10" onClick={onToggleColumnSettings} />
           <div className="fixed z-50 w-64 rounded-lg border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-700 dark:bg-gray-800"
             style={{ top: `${settingsDropdownPosition.top}px`, right: `${settingsDropdownPosition.right}px` }}>
             <div className="mb-3 text-sm font-medium text-gray-900 dark:text-white">Columnas Visibles</div>
             <div className="space-y-2">
-              {Object.entries({ sigla: 'Sigla', nombre: 'Nombre', areaCategoria: 'Área-Categoría', grupos: 'Grupos', fechaCreacion: 'Fecha Creación', fechaActualizacion: 'Fecha Actualización' }).map(([key, label]) => (
+              {Object.entries({ sigla: 'Sigla', nombre: 'Nombre', areaCategoria: 'Área-Categoría', grupos: 'Grupos', fechaCreacion: 'Fecha Creación', fechaActualizacion: 'Fecha Actualización', creadoPor: 'Creado Por', actualizadoPor: 'Actualizado Por' }).map(([key, label]) => (
                 <label key={key} className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" checked={visibleColumns[key as keyof typeof visibleColumns]} onChange={() => onToggleColumn(key as keyof typeof visibleColumns)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
                   <span className="text-sm text-gray-700 dark:text-gray-300">{label}</span>
@@ -134,7 +136,7 @@ export default function MateriasTableSimple({
           </div>
         </>
       )}
-      
+
       <div className="max-w-full overflow-x-auto">
         <Table>
           <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
@@ -145,6 +147,8 @@ export default function MateriasTableSimple({
               {visibleColumns.grupos && <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">GRUPOS</TableCell>}
               {visibleColumns.fechaCreacion && <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">FECHA CREACIÓN</TableCell>}
               {visibleColumns.fechaActualizacion && <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">FECHA ACTUALIZACIÓN</TableCell>}
+              {visibleColumns.creadoPor && <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">CREADO POR</TableCell>}
+              {visibleColumns.actualizadoPor && <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">ACTUALIZADO POR</TableCell>}
               <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">ACCIONES</TableCell>
             </TableRow>
           </TableHeader>
@@ -223,6 +227,20 @@ export default function MateriasTableSimple({
                 )}
                 {visibleColumns.fechaCreacion && <TableCell className="px-5 py-4 text-start"><span className="text-sm text-gray-600 dark:text-gray-400">{formatDate(materia.fechaCreacion)}</span></TableCell>}
                 {visibleColumns.fechaActualizacion && <TableCell className="px-5 py-4 text-start"><span className="text-sm text-gray-600 dark:text-gray-400">{formatDate(materia.fechaActualizacion)}</span></TableCell>}
+                {visibleColumns.creadoPor && (
+                  <TableCell className="px-5 py-4 text-start">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {materia.creador?.usuario ? `${materia.creador.usuario.nombre} ${materia.creador.usuario.apellido}` : materia.creador?.codigoAdministrativo || "-"}
+                    </span>
+                  </TableCell>
+                )}
+                {visibleColumns.actualizadoPor && (
+                  <TableCell className="px-5 py-4 text-start">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {materia.actualizador?.usuario ? `${materia.actualizador.usuario.nombre} ${materia.actualizador.usuario.apellido}` : materia.actualizador?.codigoAdministrativo || "-"}
+                    </span>
+                  </TableCell>
+                )}
                 <TableCell className="px-5 py-4 text-start">
                   <div className="relative">
                     <button ref={openActionsDropdown === materia.idMateria ? actionsButtonRef : null} onClick={() => toggleActionsDropdown(materia.idMateria)}
