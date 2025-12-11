@@ -24,6 +24,14 @@ export interface Docente {
   idUsuario: string;
 }
 
+export interface Administrativo {
+  idAdministrativo: string;
+  codigoAdministrativo: string;
+  fechaCreacion: string;
+  fechaActualizacion: string;
+  idUsuario: string;
+}
+
 export interface FotoPerfil {
   idArchivo: string;
   url: string;
@@ -47,6 +55,7 @@ export interface Usuario {
   Rol: Rol;
   Estudiante: Estudiante | null;
   Docente: Docente | null;
+  Administrativo: Administrativo | null;
   fotoPerfil: FotoPerfil | null;
 }
 

@@ -17,6 +17,7 @@ interface AdministrativosTableProps {
     usuario: boolean;
     ci: boolean;
     correo: boolean;
+    codigoAdministrativo: boolean;
     redesSociales: boolean;
     bio: boolean;
     estaActivo: boolean;
@@ -247,6 +248,15 @@ export default function AdministrativosTableSimple({
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
+                  checked={visibleColumns.codigoAdministrativo}
+                  onChange={() => onToggleColumn('codigoAdministrativo')}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Código Administrativo</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
                   checked={visibleColumns.redesSociales}
                   onChange={() => onToggleColumn('redesSociales')}
                   className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -303,6 +313,11 @@ export default function AdministrativosTableSimple({
               {visibleColumns.correo && (
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   CORREO
+                </TableCell>
+              )}
+              {visibleColumns.codigoAdministrativo && (
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  CÓDIGO ADMINISTRATIVO
                 </TableCell>
               )}
               {visibleColumns.redesSociales && (
@@ -379,6 +394,14 @@ export default function AdministrativosTableSimple({
                     <TableCell className="px-5 py-4 text-start">
                       <span className="text-sm text-gray-600 dark:text-gray-400 break-words">
                         {usuario.correo}
+                      </span>
+                    </TableCell>
+                  )}
+
+                  {visibleColumns.codigoAdministrativo && (
+                    <TableCell className="px-5 py-4 text-start">
+                      <span className="text-sm text-gray-600 dark:text-gray-400 break-words">
+                        {usuario.Administrativo?.codigoAdministrativo || '-'}
                       </span>
                     </TableCell>
                   )}

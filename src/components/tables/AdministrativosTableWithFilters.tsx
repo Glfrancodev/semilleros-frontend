@@ -3,6 +3,7 @@ import AdministrativosTableSimple from "./AdministrativosTableSimple";
 import AdministrativoModal, { AdministrativoFormData } from "../modals/AdministrativoModal";
 import CustomSelect from "../common/CustomSelect";
 import { Usuario, obtenerUsuarios, toggleEstadoUsuario as toggleEstadoUsuarioService, crearUsuario, actualizarUsuario } from "../../services/usuarioService";
+import { crearAdministrativo, actualizarAdministrativo } from "../../services/administrativoService";
 
 export default function AdministrativosTableWithFilters() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -14,7 +15,7 @@ export default function AdministrativosTableWithFilters() {
   const [showColumnSettings, setShowColumnSettings] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [selectedUsuario, setSelectedUsuario] = useState<Usuario | null>(null);
-  
+
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState<string>("10");
@@ -24,6 +25,7 @@ export default function AdministrativosTableWithFilters() {
     usuario: true,           // Foto + Nombre + Apellido
     ci: false,
     correo: true,
+    codigoAdministrativo: true,
     redesSociales: false,     // Instagram + LinkedIn + GitHub
     bio: false,
     estaActivo: true,
@@ -55,16 +57,18 @@ export default function AdministrativosTableWithFilters() {
   // Filtrar usuarios según los criterios
   const filteredData = usuarios.filter(usuario => {
     const nombreCompleto = `${usuario.nombre} ${usuario.apellido}`.toLowerCase();
-    const matchesSearch = 
+    const codigoAdmin = usuario.Administrativo?.codigoAdministrativo || '';
+    const matchesSearch =
       nombreCompleto.includes(searchTerm.toLowerCase()) ||
       usuario.correo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      usuario.ci.includes(searchTerm);
-    
-    const matchesStatus = 
-      statusFilter === "all" || 
+      usuario.ci.includes(searchTerm) ||
+      codigoAdmin.includes(searchTerm);
+
+    const matchesStatus =
+      statusFilter === "all" ||
       (statusFilter === "active" && usuario.estaActivo) ||
       (statusFilter === "inactive" && !usuario.estaActivo);
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -108,7 +112,7 @@ export default function AdministrativosTableWithFilters() {
       // Obtener el rol de administrador
       const roles = await import("../../services/rolService").then(m => m.obtenerRoles());
       const rolAdmin = roles.find(r => r.nombre.toLowerCase() === "administrador");
-      
+
       if (!rolAdmin) {
         throw new Error('No se encontró el rol de administrador');
       }
@@ -122,9 +126,22 @@ export default function AdministrativosTableWithFilters() {
           correo: data.correo,
           idRol: rolAdmin.idRol
         });
+
+        // Actualizar código de administrativo
+        if (selectedUsuario.Administrativo) {
+          await actualizarAdministrativo(selectedUsuario.Administrativo.idAdministrativo, {
+            codigoAdministrativo: data.codigoAdministrativo
+          });
+        } else {
+          // Crear registro de administrativo si no existe
+          await crearAdministrativo({
+            codigoAdministrativo: data.codigoAdministrativo,
+            idUsuario: selectedUsuario.idUsuario
+          });
+        }
       } else {
         // Crear nuevo administrativo
-        await crearUsuario({
+        const responseUsuario = await crearUsuario({
           ci: data.ci,
           nombre: data.nombre,
           apellido: data.apellido,
@@ -132,8 +149,20 @@ export default function AdministrativosTableWithFilters() {
           contrasena: data.contrasena!,
           idRol: rolAdmin.idRol
         });
+
+        const idUsuario = responseUsuario.idUsuario;
+
+        if (!idUsuario) {
+          throw new Error('No se recibió el ID del usuario creado');
+        }
+
+        // Crear registro de administrativo
+        await crearAdministrativo({
+          codigoAdministrativo: data.codigoAdministrativo,
+          idUsuario: idUsuario
+        });
       }
-      
+
       await cargarUsuarios(); // Recargar la lista
     } catch (err) {
       console.error('Error al guardar administrativo:', err);
@@ -166,7 +195,7 @@ export default function AdministrativosTableWithFilters() {
     return (
       <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-600 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-400">
         {error}
-        <button 
+        <button
           onClick={cargarUsuarios}
           className="ml-4 underline hover:no-underline"
         >
@@ -184,7 +213,7 @@ export default function AdministrativosTableWithFilters() {
         <div className="flex-1">
           <input
             type="text"
-            placeholder="Buscar por nombre, correo o CI..."
+            placeholder="Buscar por nombre, correo, CI o código..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:focus:border-blue-500"
@@ -201,7 +230,7 @@ export default function AdministrativosTableWithFilters() {
       </div>
 
       {/* Tabla */}
-      <AdministrativosTableSimple 
+      <AdministrativosTableSimple
         usuarios={paginatedData}
         totalUsuarios={totalUsuarios}
         visibleColumns={visibleColumns}
@@ -239,30 +268,29 @@ export default function AdministrativosTableWithFilters() {
         </div>
 
         <div className="flex items-center gap-1">
-          <button 
+          <button
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
             className="px-3 py-1 text-sm text-gray-600 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]"
           >
             &lt;
           </button>
-          
+
           {/* Números de página con lógica de elipsis */}
           {(() => {
             const pageNumbers = [];
             const maxVisiblePages = 5;
-            
+
             if (totalPages <= maxVisiblePages) {
               for (let i = 1; i <= totalPages; i++) {
                 pageNumbers.push(
                   <button
                     key={i}
                     onClick={() => setCurrentPage(i)}
-                    className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
-                      currentPage === i
+                    className={`px-3 py-1 text-sm rounded-lg border transition-colors ${currentPage === i
                         ? 'text-white bg-blue-600 border-blue-600'
                         : 'text-gray-600 border-gray-300 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]'
-                    }`}
+                      }`}
                   >
                     {i}
                   </button>
@@ -273,11 +301,10 @@ export default function AdministrativosTableWithFilters() {
                 <button
                   key={1}
                   onClick={() => setCurrentPage(1)}
-                  className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
-                    currentPage === 1
+                  className={`px-3 py-1 text-sm rounded-lg border transition-colors ${currentPage === 1
                       ? 'text-white bg-blue-600 border-blue-600'
                       : 'text-gray-600 border-gray-300 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]'
-                  }`}
+                    }`}
                 >
                   1
                 </button>
@@ -299,11 +326,10 @@ export default function AdministrativosTableWithFilters() {
                   <button
                     key={i}
                     onClick={() => setCurrentPage(i)}
-                    className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
-                      currentPage === i
+                    className={`px-3 py-1 text-sm rounded-lg border transition-colors ${currentPage === i
                         ? 'text-white bg-blue-600 border-blue-600'
                         : 'text-gray-600 border-gray-300 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]'
-                    }`}
+                      }`}
                   >
                     {i}
                   </button>
@@ -322,21 +348,20 @@ export default function AdministrativosTableWithFilters() {
                 <button
                   key={totalPages}
                   onClick={() => setCurrentPage(totalPages)}
-                  className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
-                    currentPage === totalPages
+                  className={`px-3 py-1 text-sm rounded-lg border transition-colors ${currentPage === totalPages
                       ? 'text-white bg-blue-600 border-blue-600'
                       : 'text-gray-600 border-gray-300 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]'
-                  }`}
+                    }`}
                 >
                   {totalPages}
                 </button>
               );
             }
-            
+
             return pageNumbers;
           })()}
-          
-          <button 
+
+          <button
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
             className="px-3 py-1 text-sm text-gray-600 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]"

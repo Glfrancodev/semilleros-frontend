@@ -16,6 +16,7 @@ export interface AdministrativoFormData {
   apellido: string;
   correo: string;
   contrasena?: string;
+  codigoAdministrativo: string;
 }
 
 export default function AdministrativoModal({
@@ -31,6 +32,7 @@ export default function AdministrativoModal({
     apellido: "",
     correo: "",
     contrasena: "",
+    codigoAdministrativo: "",
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<AdministrativoFormData>>({});
@@ -43,6 +45,7 @@ export default function AdministrativoModal({
         nombre: usuario.nombre,
         apellido: usuario.apellido,
         correo: usuario.correo,
+        codigoAdministrativo: usuario.Administrativo?.codigoAdministrativo || "",
       });
     } else {
       setFormData({
@@ -51,6 +54,7 @@ export default function AdministrativoModal({
         apellido: "",
         correo: "",
         contrasena: "",
+        codigoAdministrativo: "",
       });
     }
     setErrors({});
@@ -71,6 +75,7 @@ export default function AdministrativoModal({
     if (!formData.nombre.trim()) newErrors.nombre = "Nombre es requerido";
     if (!formData.apellido.trim()) newErrors.apellido = "Apellido es requerido";
     if (!formData.correo.trim()) newErrors.correo = "Correo es requerido";
+    if (!formData.codigoAdministrativo.trim()) newErrors.codigoAdministrativo = "Código de administrativo es requerido";
     if (!usuario && !formData.contrasena?.trim()) newErrors.contrasena = "Contraseña es requerida";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -118,11 +123,10 @@ export default function AdministrativoModal({
                 name="ci"
                 value={formData.ci}
                 onChange={handleChange}
-                className={`w-full rounded-lg border px-4 py-2 text-sm focus:outline-none focus:ring-2 ${
-                  errors.ci
+                className={`w-full rounded-lg border px-4 py-2 text-sm focus:outline-none focus:ring-2 ${errors.ci
                     ? 'border-red-500 focus:ring-red-500'
                     : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white'
-                }`}
+                  }`}
               />
               {errors.ci && <p className="mt-1 text-xs text-red-600">{errors.ci}</p>}
             </div>
@@ -136,11 +140,10 @@ export default function AdministrativoModal({
                 name="correo"
                 value={formData.correo}
                 onChange={handleChange}
-                className={`w-full rounded-lg border px-4 py-2 text-sm focus:outline-none focus:ring-2 ${
-                  errors.correo
+                className={`w-full rounded-lg border px-4 py-2 text-sm focus:outline-none focus:ring-2 ${errors.correo
                     ? 'border-red-500 focus:ring-red-500'
                     : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white'
-                }`}
+                  }`}
               />
               {errors.correo && <p className="mt-1 text-xs text-red-600">{errors.correo}</p>}
             </div>
@@ -156,11 +159,10 @@ export default function AdministrativoModal({
                 name="nombre"
                 value={formData.nombre}
                 onChange={handleChange}
-                className={`w-full rounded-lg border px-4 py-2 text-sm focus:outline-none focus:ring-2 ${
-                  errors.nombre
+                className={`w-full rounded-lg border px-4 py-2 text-sm focus:outline-none focus:ring-2 ${errors.nombre
                     ? 'border-red-500 focus:ring-red-500'
                     : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white'
-                }`}
+                  }`}
               />
               {errors.nombre && <p className="mt-1 text-xs text-red-600">{errors.nombre}</p>}
             </div>
@@ -174,14 +176,30 @@ export default function AdministrativoModal({
                 name="apellido"
                 value={formData.apellido}
                 onChange={handleChange}
-                className={`w-full rounded-lg border px-4 py-2 text-sm focus:outline-none focus:ring-2 ${
-                  errors.apellido
+                className={`w-full rounded-lg border px-4 py-2 text-sm focus:outline-none focus:ring-2 ${errors.apellido
                     ? 'border-red-500 focus:ring-red-500'
                     : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white'
-                }`}
+                  }`}
               />
               {errors.apellido && <p className="mt-1 text-xs text-red-600">{errors.apellido}</p>}
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Código de Administrativo *
+            </label>
+            <input
+              type="text"
+              name="codigoAdministrativo"
+              value={formData.codigoAdministrativo}
+              onChange={handleChange}
+              className={`w-full rounded-lg border px-4 py-2 text-sm focus:outline-none focus:ring-2 ${errors.codigoAdministrativo
+                  ? 'border-red-500 focus:ring-red-500'
+                  : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white'
+                }`}
+            />
+            {errors.codigoAdministrativo && <p className="mt-1 text-xs text-red-600">{errors.codigoAdministrativo}</p>}
           </div>
 
           {!usuario && (
@@ -194,11 +212,10 @@ export default function AdministrativoModal({
                 name="contrasena"
                 value={formData.contrasena || ""}
                 onChange={handleChange}
-                className={`w-full rounded-lg border px-4 py-2 text-sm focus:outline-none focus:ring-2 ${
-                  errors.contrasena
+                className={`w-full rounded-lg border px-4 py-2 text-sm focus:outline-none focus:ring-2 ${errors.contrasena
                     ? 'border-red-500 focus:ring-red-500'
                     : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white'
-                }`}
+                  }`}
               />
               {errors.contrasena && <p className="mt-1 text-xs text-red-600">{errors.contrasena}</p>}
             </div>
