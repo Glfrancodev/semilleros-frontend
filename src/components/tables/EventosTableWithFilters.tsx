@@ -13,7 +13,7 @@ export default function EventosTableWithFilters() {
   const [showColumnSettings, setShowColumnSettings] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [selectedEvento, setSelectedEvento] = useState<Evento | null>(null);
-  
+
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState<string>("10");
@@ -27,6 +27,8 @@ export default function EventosTableWithFilters() {
     estaActivo: true,
     fechaCreacion: false,
     fechaActualizacion: false,
+    creadoPor: false,
+    actualizadoPor: false,
   });
 
   // Cargar eventos al montar el componente
@@ -51,10 +53,10 @@ export default function EventosTableWithFilters() {
 
   // Filtrar eventos según los criterios
   const filteredData = eventos.filter(evento => {
-    const matchesSearch = 
+    const matchesSearch =
       evento.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (evento.descripcion && evento.descripcion.toLowerCase().includes(searchTerm.toLowerCase()));
-    
+
     return matchesSearch;
   });
 
@@ -108,7 +110,7 @@ export default function EventosTableWithFilters() {
           estaActivo: data.estaActivo
         });
       }
-      
+
       await cargarEventos(); // Recargar la lista
     } catch (err) {
       console.error('Error al guardar evento:', err);
@@ -135,7 +137,7 @@ export default function EventosTableWithFilters() {
     return (
       <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-600 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-400">
         {error}
-        <button 
+        <button
           onClick={cargarEventos}
           className="ml-4 underline hover:no-underline"
         >
@@ -162,7 +164,7 @@ export default function EventosTableWithFilters() {
       </div>
 
       {/* Tabla */}
-      <EventosTableSimple 
+      <EventosTableSimple
         eventos={paginatedData}
         totalEventos={totalEventos}
         visibleColumns={visibleColumns}
@@ -199,19 +201,19 @@ export default function EventosTableWithFilters() {
         </div>
 
         <div className="flex items-center gap-1">
-          <button 
+          <button
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
             className="px-3 py-1 text-sm text-gray-600 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]"
           >
             &lt;
           </button>
-          
+
           {/* Números de página con lógica de elipsis */}
           {(() => {
             const pageNumbers = [];
             const maxVisiblePages = 5;
-            
+
             if (totalPages <= maxVisiblePages) {
               // Mostrar todas las páginas si son pocas
               for (let i = 1; i <= totalPages; i++) {
@@ -219,11 +221,10 @@ export default function EventosTableWithFilters() {
                   <button
                     key={i}
                     onClick={() => setCurrentPage(i)}
-                    className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
-                      currentPage === i
-                        ? 'text-white bg-blue-600 border-blue-600'
-                        : 'text-gray-600 border-gray-300 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]'
-                    }`}
+                    className={`px-3 py-1 text-sm rounded-lg border transition-colors ${currentPage === i
+                      ? 'text-white bg-blue-600 border-blue-600'
+                      : 'text-gray-600 border-gray-300 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]'
+                      }`}
                   >
                     {i}
                   </button>
@@ -235,11 +236,10 @@ export default function EventosTableWithFilters() {
                 <button
                   key={1}
                   onClick={() => setCurrentPage(1)}
-                  className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
-                    currentPage === 1
-                      ? 'text-white bg-blue-600 border-blue-600'
-                      : 'text-gray-600 border-gray-300 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]'
-                  }`}
+                  className={`px-3 py-1 text-sm rounded-lg border transition-colors ${currentPage === 1
+                    ? 'text-white bg-blue-600 border-blue-600'
+                    : 'text-gray-600 border-gray-300 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]'
+                    }`}
                 >
                   1
                 </button>
@@ -261,11 +261,10 @@ export default function EventosTableWithFilters() {
                   <button
                     key={i}
                     onClick={() => setCurrentPage(i)}
-                    className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
-                      currentPage === i
-                        ? 'text-white bg-blue-600 border-blue-600'
-                        : 'text-gray-600 border-gray-300 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]'
-                    }`}
+                    className={`px-3 py-1 text-sm rounded-lg border transition-colors ${currentPage === i
+                      ? 'text-white bg-blue-600 border-blue-600'
+                      : 'text-gray-600 border-gray-300 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]'
+                      }`}
                   >
                     {i}
                   </button>
@@ -284,21 +283,20 @@ export default function EventosTableWithFilters() {
                 <button
                   key={totalPages}
                   onClick={() => setCurrentPage(totalPages)}
-                  className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
-                    currentPage === totalPages
-                      ? 'text-white bg-blue-600 border-blue-600'
-                      : 'text-gray-600 border-gray-300 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]'
-                  }`}
+                  className={`px-3 py-1 text-sm rounded-lg border transition-colors ${currentPage === totalPages
+                    ? 'text-white bg-blue-600 border-blue-600'
+                    : 'text-gray-600 border-gray-300 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]'
+                    }`}
                 >
                   {totalPages}
                 </button>
               );
             }
-            
+
             return pageNumbers;
           })()}
-          
-          <button 
+
+          <button
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
             className="px-3 py-1 text-sm text-gray-600 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]"

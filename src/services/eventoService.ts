@@ -1,5 +1,15 @@
 import api from "./api";
 
+export interface AdministrativoAudit {
+  idAdministrativo: string;
+  codigoAdministrativo: string;
+  usuario?: {
+    nombre: string;
+    apellido: string;
+    correo: string;
+  };
+}
+
 // Interfaces basadas en la respuesta del backend
 export interface Evento {
   idEvento: string;
@@ -12,6 +22,10 @@ export interface Evento {
   estaActivo: boolean;
   fechaCreacion: string;
   fechaActualizacion: string;
+  creadoPor?: string;
+  actualizadoPor?: string;
+  creador?: AdministrativoAudit;
+  actualizador?: AdministrativoAudit;
 }
 
 interface ApiResponse<T> {

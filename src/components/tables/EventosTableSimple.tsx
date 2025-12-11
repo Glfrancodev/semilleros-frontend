@@ -21,6 +21,8 @@ interface EventosTableProps {
     estaActivo: boolean;
     fechaCreacion: boolean;
     fechaActualizacion: boolean;
+    creadoPor: boolean;
+    actualizadoPor: boolean;
   };
   showColumnSettings: boolean;
   onToggleColumnSettings: () => void;
@@ -30,7 +32,7 @@ interface EventosTableProps {
   onDelete: (idEvento: string) => void;
 }
 
-export default function EventosTableSimple({ 
+export default function EventosTableSimple({
   eventos,
   totalEventos,
   visibleColumns,
@@ -113,13 +115,13 @@ export default function EventosTableSimple({
             <span className="font-semibold text-gray-900 dark:text-white">{totalEventos.toLocaleString()}</span>
           </div>
         </div>
-        
+
         {/* Botones de acción */}
         <div className="flex items-center gap-2">
           {/* Botón Table Settings */}
           <div ref={settingsButtonRef}>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="xs"
               onClick={onToggleColumnSettings}
               startIcon={
@@ -132,10 +134,10 @@ export default function EventosTableSimple({
               Table settings
             </Button>
           </div>
-          
+
           {/* Botón Añadir Evento */}
-          <Button 
-            variant="primary" 
+          <Button
+            variant="primary"
             size="xs"
             onClick={onAddEvento}
             startIcon={
@@ -148,7 +150,7 @@ export default function EventosTableSimple({
           </Button>
         </div>
       </div>
-      
+
       {/* Panel de configuración de columnas - Posicionado con fixed */}
       {showColumnSettings && settingsDropdownPosition && (
         <>
@@ -156,7 +158,7 @@ export default function EventosTableSimple({
             className="fixed inset-0 z-10"
             onClick={onToggleColumnSettings}
           />
-          <div 
+          <div
             className="fixed z-50 w-64 rounded-lg border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-700 dark:bg-gray-800"
             style={{
               top: `${settingsDropdownPosition.top}px`,
@@ -203,6 +205,7 @@ export default function EventosTableSimple({
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">Inscritos</span>
               </label>
+
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -230,11 +233,30 @@ export default function EventosTableSimple({
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">Fecha Actualización</span>
               </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={visibleColumns.creadoPor}
+                  onChange={() => onToggleColumn('creadoPor')}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Creado Por</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={visibleColumns.actualizadoPor}
+                  onChange={() => onToggleColumn('actualizadoPor')}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Actualizado Por</span>
+              </label>
             </div>
           </div>
         </>
-      )}
-      
+      )
+      }
+
       {/* Tabla */}
       <div className="max-w-full overflow-x-auto">
         <Table>
@@ -274,6 +296,16 @@ export default function EventosTableSimple({
               {visibleColumns.fechaActualizacion && (
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   FECHA ACTUALIZACIÓN
+                </TableCell>
+              )}
+              {visibleColumns.creadoPor && (
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  CREADO POR
+                </TableCell>
+              )}
+              {visibleColumns.actualizadoPor && (
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  ACTUALIZADO POR
                 </TableCell>
               )}
               <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
@@ -317,7 +349,7 @@ export default function EventosTableSimple({
                 {visibleColumns.inscritos && (
                   <TableCell className="px-5 py-4 text-start">
                     <span className="text-sm font-medium text-gray-800 dark:text-gray-300">
-                      {evento.cantidadInscritos ?? 0}/{evento.totalEstudiantes ?? 0}
+                      {evento.cantidadInscritos ?? 0} / {evento.capacidadMaxima ?? 'Ꝏ'}
                     </span>
                   </TableCell>
                 )}
@@ -325,11 +357,10 @@ export default function EventosTableSimple({
                 {/* ESTADO */}
                 {visibleColumns.estaActivo && (
                   <TableCell className="px-5 py-4 text-start">
-                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      evento.estaActivo
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                        : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
-                    }`}>
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${evento.estaActivo
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                      : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
+                      }`}>
                       {evento.estaActivo ? 'Activo' : 'Inactivo'}
                     </span>
                   </TableCell>
@@ -353,10 +384,32 @@ export default function EventosTableSimple({
                   </TableCell>
                 )}
 
+                {/* CREADO POR */}
+                {visibleColumns.creadoPor && (
+                  <TableCell className="px-5 py-4 text-start">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {evento.creador?.usuario
+                        ? `${evento.creador.usuario.nombre} ${evento.creador.usuario.apellido}`
+                        : evento.creador?.codigoAdministrativo || "-"}
+                    </span>
+                  </TableCell>
+                )}
+
+                {/* ACTUALIZADO POR */}
+                {visibleColumns.actualizadoPor && (
+                  <TableCell className="px-5 py-4 text-start">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {evento.actualizador?.usuario
+                        ? `${evento.actualizador.usuario.nombre} ${evento.actualizador.usuario.apellido}`
+                        : evento.actualizador?.codigoAdministrativo || "-"}
+                    </span>
+                  </TableCell>
+                )}
+
                 {/* ACCIONES */}
                 <TableCell className="px-5 py-4 text-start">
                   <div className="relative">
-                    <button 
+                    <button
                       ref={openActionsDropdown === evento.idEvento ? actionsButtonRef : null}
                       onClick={() => toggleActionsDropdown(evento.idEvento)}
                       className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
@@ -371,8 +424,8 @@ export default function EventosTableSimple({
                           className="fixed inset-0 z-10"
                           onClick={() => setOpenActionsDropdown(null)}
                         />
-                        
-                        <div 
+
+                        <div
                           className="fixed z-50 w-48 rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-800"
                           style={{
                             bottom: `${window.innerHeight - actionsDropdownPosition.top}px`,
@@ -397,7 +450,7 @@ export default function EventosTableSimple({
                               </div>
                               <span>Editar</span>
                             </button>
-                            
+
                             <button
                               onClick={() => {
                                 onDelete(evento.idEvento);
@@ -423,6 +476,6 @@ export default function EventosTableSimple({
           </TableBody>
         </Table>
       </div>
-    </div>
+    </div >
   );
 }
