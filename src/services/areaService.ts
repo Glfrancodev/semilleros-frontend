@@ -5,12 +5,26 @@ export interface Materia {
   nombre: string;
 }
 
+export interface AdministrativoAudit {
+  idAdministrativo: string;
+  codigoAdministrativo: string;
+  usuario?: {
+    nombre: string;
+    apellido: string;
+    correo: string;
+  };
+}
+
 export interface AreaCategoria {
   idAreaCategoria: string;
   idArea: string;
   idCategoria: string;
   fechaCreacion: string;
   fechaActualizacion: string;
+  creadoPor?: string;
+  actualizadoPor?: string;
+  creador?: AdministrativoAudit;
+  actualizador?: AdministrativoAudit;
   Categoria?: {
     idCategoria: string;
     nombre: string;
@@ -31,6 +45,10 @@ export interface Area {
   nombre: string;
   fechaCreacion: string;
   fechaActualizacion: string;
+  creadoPor?: string;
+  actualizadoPor?: string;
+  creador?: AdministrativoAudit;
+  actualizador?: AdministrativoAudit;
   areaCategorias?: AreaCategoria[];
 }
 

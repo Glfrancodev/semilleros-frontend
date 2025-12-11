@@ -73,6 +73,16 @@ export interface Tarea {
   fechaActualizacion?: string;
 }
 
+export interface AdministrativoFeria {
+  idAdministrativo: string;
+  codigoAdministrativo: string;
+  Usuario?: {
+    nombre: string;
+    apellido: string;
+    correo: string;
+  };
+}
+
 export interface Feria {
   idFeria: string;
   nombre: string;
@@ -82,6 +92,10 @@ export interface Feria {
   ganadores?: any;
   fechaCreacion: string;
   fechaActualizacion: string;
+  creadoPor?: string;
+  actualizadoPor?: string;
+  creador?: AdministrativoFeria;
+  actualizador?: AdministrativoFeria;
   tipoCalificacion?: TipoCalificacion;
   tareas?: Tarea[];
 }

@@ -20,6 +20,8 @@ interface AreasTableProps {
     materias: boolean;
     fechaCreacion: boolean;
     fechaActualizacion: boolean;
+    creadoPor: boolean;
+    actualizadoPor: boolean;
   };
   showColumnSettings: boolean;
   onToggleColumnSettings: () => void;
@@ -29,7 +31,7 @@ interface AreasTableProps {
   onDelete: (idArea: string) => void;
 }
 
-export default function AreasTableSimple({ 
+export default function AreasTableSimple({
   areas,
   totalAreas,
   visibleColumns,
@@ -140,13 +142,13 @@ export default function AreasTableSimple({
             <span className="font-semibold text-gray-900 dark:text-white">{totalAreas.toLocaleString()}</span>
           </div>
         </div>
-        
+
         {/* Botones de acción */}
         <div className="flex items-center gap-2">
           {/* Botón Table Settings */}
           <div ref={settingsButtonRef}>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="xs"
               onClick={onToggleColumnSettings}
               startIcon={
@@ -159,10 +161,10 @@ export default function AreasTableSimple({
               Table settings
             </Button>
           </div>
-          
+
           {/* Botón Añadir Área */}
-          <Button 
-            variant="primary" 
+          <Button
+            variant="primary"
             size="xs"
             onClick={onAddArea}
             startIcon={
@@ -175,7 +177,7 @@ export default function AreasTableSimple({
           </Button>
         </div>
       </div>
-      
+
       {/* Panel de configuración de columnas - Posicionado con fixed */}
       {showColumnSettings && settingsDropdownPosition && (
         <>
@@ -183,7 +185,7 @@ export default function AreasTableSimple({
             className="fixed inset-0 z-10"
             onClick={onToggleColumnSettings}
           />
-          <div 
+          <div
             className="fixed z-50 w-64 rounded-lg border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-700 dark:bg-gray-800"
             style={{
               top: `${settingsDropdownPosition.top}px`,
@@ -239,11 +241,29 @@ export default function AreasTableSimple({
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">Fecha Actualización</span>
               </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={visibleColumns.creadoPor}
+                  onChange={() => onToggleColumn('creadoPor')}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Creado Por</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={visibleColumns.actualizadoPor}
+                  onChange={() => onToggleColumn('actualizadoPor')}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Actualizado Por</span>
+              </label>
             </div>
           </div>
         </>
       )}
-      
+
       {/* Tabla */}
       <div className="max-w-full overflow-x-auto">
         <Table>
@@ -273,6 +293,16 @@ export default function AreasTableSimple({
               {visibleColumns.fechaActualizacion && (
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   FECHA ACTUALIZACIÓN
+                </TableCell>
+              )}
+              {visibleColumns.creadoPor && (
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  CREADO POR
+                </TableCell>
+              )}
+              {visibleColumns.actualizadoPor && (
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  ACTUALIZADO POR
                 </TableCell>
               )}
               <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
@@ -327,8 +357,8 @@ export default function AreasTableSimple({
                                     className="fixed inset-0 z-10"
                                     onClick={() => setOpenCategoriasDropdown(null)}
                                   />
-                                  
-                                  <div 
+
+                                  <div
                                     className="fixed z-50 w-64 rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-800"
                                     style={{
                                       bottom: `${window.innerHeight - categoriasDropdownPosition.top}px`,
@@ -373,7 +403,7 @@ export default function AreasTableSimple({
                       {(() => {
                         // Recopilar todas las materias de todas las areaCategorias
                         const todasLasMaterias = area.areaCategorias?.flatMap(ac => ac.materias || []) || [];
-                        
+
                         return todasLasMaterias.length > 0 ? (
                           <>
                             {/* Mostrar solo la primera materia */}
@@ -403,8 +433,8 @@ export default function AreasTableSimple({
                                       className="fixed inset-0 z-10"
                                       onClick={() => setOpenMateriasDropdown(null)}
                                     />
-                                    
-                                    <div 
+
+                                    <div
                                       className="fixed z-50 w-64 rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-800"
                                       style={{
                                         bottom: `${window.innerHeight - materiasDropdownPosition.top}px`,
@@ -461,10 +491,28 @@ export default function AreasTableSimple({
                   </TableCell>
                 )}
 
+                {/* CREADO POR */}
+                {visibleColumns.creadoPor && (
+                  <TableCell className="px-5 py-4 text-start">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {area.creador?.codigoAdministrativo || "-"}
+                    </span>
+                  </TableCell>
+                )}
+
+                {/* ACTUALIZADO POR */}
+                {visibleColumns.actualizadoPor && (
+                  <TableCell className="px-5 py-4 text-start">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {area.actualizador?.codigoAdministrativo || "-"}
+                    </span>
+                  </TableCell>
+                )}
+
                 {/* ACCIONES */}
                 <TableCell className="px-5 py-4 text-start">
                   <div className="relative">
-                    <button 
+                    <button
                       ref={openActionsDropdown === area.idArea ? actionsButtonRef : null}
                       onClick={() => toggleActionsDropdown(area.idArea)}
                       className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
@@ -479,8 +527,8 @@ export default function AreasTableSimple({
                           className="fixed inset-0 z-10"
                           onClick={() => setOpenActionsDropdown(null)}
                         />
-                        
-                        <div 
+
+                        <div
                           className="fixed z-50 w-48 rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-800"
                           style={{
                             bottom: `${window.innerHeight - actionsDropdownPosition.top}px`,
@@ -505,7 +553,7 @@ export default function AreasTableSimple({
                               </div>
                               <span>Editar</span>
                             </button>
-                            
+
                             <button
                               onClick={() => {
                                 onDelete(area.idArea);

@@ -21,6 +21,8 @@ interface FeriasTableProps {
     tareas: boolean;
     fechaCreacion: boolean;
     fechaActualizacion: boolean;
+    creadoPor: boolean;
+    actualizadoPor: boolean;
   };
   showColumnSettings: boolean;
   onToggleColumnSettings: () => void;
@@ -247,6 +249,24 @@ export default function FeriasTableSimple({
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">Fecha Actualización</span>
               </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={visibleColumns.creadoPor}
+                  onChange={() => onToggleColumn('creadoPor')}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Creado Por</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={visibleColumns.actualizadoPor}
+                  onChange={() => onToggleColumn('actualizadoPor')}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Actualizado Por</span>
+              </label>
             </div>
           </div>
         </>
@@ -291,6 +311,16 @@ export default function FeriasTableSimple({
               {visibleColumns.fechaActualizacion && (
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   FECHA ACTUALIZACIÓN
+                </TableCell>
+              )}
+              {visibleColumns.creadoPor && (
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  CREADO POR
+                </TableCell>
+              )}
+              {visibleColumns.actualizadoPor && (
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  ACTUALIZADO POR
                 </TableCell>
               )}
               <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
@@ -433,6 +463,42 @@ export default function FeriasTableSimple({
                     <span className="text-sm text-gray-600 dark:text-gray-400">
                       {formatDate(feria.fechaActualizacion)}
                     </span>
+                  </TableCell>
+                )}
+
+                {/* CREADO POR */}
+                {visibleColumns.creadoPor && (
+                  <TableCell className="px-5 py-4 text-start">
+                    {feria.creador ? (
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-800 dark:text-white/90">
+                          {feria.creador.Usuario?.nombre} {feria.creador.Usuario?.apellido}
+                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {feria.creador.codigoAdministrativo}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-gray-400 dark:text-gray-500">-</span>
+                    )}
+                  </TableCell>
+                )}
+
+                {/* ACTUALIZADO POR */}
+                {visibleColumns.actualizadoPor && (
+                  <TableCell className="px-5 py-4 text-start">
+                    {feria.actualizador ? (
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-800 dark:text-white/90">
+                          {feria.actualizador.Usuario?.nombre} {feria.actualizador.Usuario?.apellido}
+                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {feria.actualizador.codigoAdministrativo}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-gray-400 dark:text-gray-500">-</span>
+                    )}
                   </TableCell>
                 )}
 

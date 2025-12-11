@@ -1,11 +1,25 @@
 import api from "./api";
 
 // Interfaces basadas en la respuesta del backend
+export interface AdministrativoAudit {
+  idAdministrativo: string;
+  codigoAdministrativo: string;
+  usuario?: {
+    nombre: string;
+    apellido: string;
+    correo: string;
+  };
+}
+
 export interface Categoria {
   idCategoria: string;
   nombre: string;
   fechaCreacion: string;
   fechaActualizacion: string;
+  creadoPor?: string;
+  actualizadoPor?: string;
+  creador?: AdministrativoAudit;
+  actualizador?: AdministrativoAudit;
   areaCategorias?: Array<{
     idAreaCategoria: string;
     materias?: Array<{

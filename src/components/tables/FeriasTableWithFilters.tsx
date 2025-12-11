@@ -28,6 +28,8 @@ export default function FeriasTableWithFilters() {
     tareas: true,
     fechaCreacion: false,
     fechaActualizacion: false,
+    creadoPor: false,
+    actualizadoPor: false,
   });
 
   // Cargar ferias al montar el componente
