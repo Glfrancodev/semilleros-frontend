@@ -76,6 +76,8 @@ export interface UsuariosResponse {
 // Obtener todos los usuarios
 export const obtenerUsuarios = async (): Promise<UsuariosResponse> => {
   const response = await api.get<ApiResponse<Usuario>>('/usuarios');
+  console.log('📊 Respuesta de usuarios:', response.data);
+  console.log('📋 Usuarios recibidos:', response.data?.data?.items);
   return {
     usuarios: response.data?.data?.items || [],
     count: response.data?.data?.count || 0
