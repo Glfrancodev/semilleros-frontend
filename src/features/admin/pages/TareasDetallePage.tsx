@@ -17,7 +17,10 @@ type ColumnKey =
   | "nombre"
   | "descripcion"
   | "revisado"
+  | "revisado"
   | "fechaEnvio"
+  | "enviadoPor"
+  | "revisadoPor"
   | "acciones";
 
 const statusFilterOptions = [
@@ -39,6 +42,8 @@ const columnLabels: Record<ColumnKey, string> = {
   descripcion: "Descripción",
   revisado: "Estado",
   fechaEnvio: "Fecha de envío",
+  enviadoPor: "Enviado por",
+  revisadoPor: "Revisado por",
   acciones: "Acciones",
 };
 
@@ -84,6 +89,8 @@ export default function TareasDetallePage() {
     descripcion: true,
     revisado: true,
     fechaEnvio: true,
+    enviadoPor: true,
+    revisadoPor: true,
     acciones: true,
   });
 
@@ -370,6 +377,22 @@ export default function TareasDetallePage() {
                       FECHA DE ENVÍO
                     </TableCell>
                   )}
+                  {visibleColumns.enviadoPor && (
+                    <TableCell
+                      isHeader
+                      className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+                    >
+                      ENVIADO POR
+                    </TableCell>
+                  )}
+                  {visibleColumns.revisadoPor && (
+                    <TableCell
+                      isHeader
+                      className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+                    >
+                      REVISADO POR
+                    </TableCell>
+                  )}
                   {visibleColumns.acciones && (
                     <TableCell
                       isHeader
@@ -417,21 +440,47 @@ export default function TareasDetallePage() {
                           {formatDate(proyecto.fechaEnvio)}
                         </TableCell>
                       )}
-                    {visibleColumns.acciones && (
-                      <TableCell className="px-5 py-4 text-end">
-                        {!proyecto.revisado ? (
-                          <Button
-                            variant="outline"
-                            size="xs"
-                            onClick={() => navigate(`/admin/proyectos/${proyecto.idProyecto}`)}
-                          >
-                            Revisar
-                          </Button>
-                        ) : (
-                          <span className="text-sm text-gray-400 dark:text-gray-500">—</span>
-                        )}
-                      </TableCell>
-                    )}
+                      {visibleColumns.enviadoPor && (
+                        <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-300">
+                          {proyecto.enviadoPor ? (
+                            <div className="flex flex-col">
+                              <span className="font-medium text-gray-900 dark:text-white">
+                                {proyecto.enviadoPor.nombre} {proyecto.enviadoPor.apellido}
+                              </span>
+                            </div>
+                          ) : (
+                            "—"
+                          )}
+                        </TableCell>
+                      )}
+                      {visibleColumns.revisadoPor && (
+                        <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-300">
+                          {proyecto.revisadoPor ? (
+                            <div className="flex flex-col">
+                              <span className="font-medium text-gray-900 dark:text-white">
+                                {proyecto.revisadoPor.nombre} {proyecto.revisadoPor.apellido}
+                              </span>
+                            </div>
+                          ) : (
+                            "—"
+                          )}
+                        </TableCell>
+                      )}
+                      {visibleColumns.acciones && (
+                        <TableCell className="px-5 py-4 text-end">
+                          {!proyecto.revisado ? (
+                            <Button
+                              variant="outline"
+                              size="xs"
+                              onClick={() => navigate(`/admin/proyectos/${proyecto.idProyecto}`)}
+                            >
+                              Revisar
+                            </Button>
+                          ) : (
+                            <span className="text-sm text-gray-400 dark:text-gray-500">—</span>
+                          )}
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))
                 )}
@@ -478,11 +527,10 @@ export default function TareasDetallePage() {
                       key={i}
                       type="button"
                       onClick={() => setCurrentPage(i)}
-                      className={`rounded-lg border px-3 py-1 text-sm transition-colors ${
-                        safeCurrentPage === i
-                          ? "border-blue-600 bg-blue-600 text-white"
-                          : "border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]"
-                      }`}
+                      className={`rounded-lg border px-3 py-1 text-sm transition-colors ${safeCurrentPage === i
+                        ? "border-blue-600 bg-blue-600 text-white"
+                        : "border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]"
+                        }`}
                     >
                       {i}
                     </button>
@@ -494,11 +542,10 @@ export default function TareasDetallePage() {
                     key={1}
                     type="button"
                     onClick={() => setCurrentPage(1)}
-                    className={`rounded-lg border px-3 py-1 text-sm transition-colors ${
-                      safeCurrentPage === 1
-                        ? "border-blue-600 bg-blue-600 text-white"
-                        : "border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]"
-                    }`}
+                    className={`rounded-lg border px-3 py-1 text-sm transition-colors ${safeCurrentPage === 1
+                      ? "border-blue-600 bg-blue-600 text-white"
+                      : "border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]"
+                      }`}
                   >
                     1
                   </button>
@@ -521,11 +568,10 @@ export default function TareasDetallePage() {
                       key={i}
                       type="button"
                       onClick={() => setCurrentPage(i)}
-                      className={`rounded-lg border px-3 py-1 text-sm transition-colors ${
-                        safeCurrentPage === i
-                          ? "border-blue-600 bg-blue-600 text-white"
-                          : "border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]"
-                      }`}
+                      className={`rounded-lg border px-3 py-1 text-sm transition-colors ${safeCurrentPage === i
+                        ? "border-blue-600 bg-blue-600 text-white"
+                        : "border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]"
+                        }`}
                     >
                       {i}
                     </button>
@@ -545,11 +591,10 @@ export default function TareasDetallePage() {
                     key={totalPages}
                     type="button"
                     onClick={() => setCurrentPage(totalPages)}
-                  className={`rounded-lg border px-3 py-1 text-sm transition-colors ${
-                    safeCurrentPage === totalPages
+                    className={`rounded-lg border px-3 py-1 text-sm transition-colors ${safeCurrentPage === totalPages
                       ? "border-blue-600 bg-blue-600 text-white"
                       : "border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]"
-                  }`}
+                      }`}
                   >
                     {totalPages}
                   </button>

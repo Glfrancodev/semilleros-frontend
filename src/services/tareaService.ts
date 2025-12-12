@@ -24,6 +24,16 @@ export interface ProyectoRevision {
   descripcion: string;
   fechaEnvio: string;
   revisado: boolean;
+  enviadoPor?: {
+    nombre: string;
+    apellido: string;
+    codigoEstudiante: string;
+  } | null;
+  revisadoPor?: {
+    nombre: string;
+    apellido: string;
+    codigoAdministrativo: string;
+  } | null;
 }
 
 export interface TareaDetalle {
