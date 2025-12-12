@@ -15,7 +15,7 @@ export default function EstudiantesTableWithFilters() {
   const [showColumnSettings, setShowColumnSettings] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [selectedUsuario, setSelectedUsuario] = useState<Usuario | null>(null);
-  
+
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState<string>("10");
@@ -30,6 +30,8 @@ export default function EstudiantesTableWithFilters() {
     bio: false,
     estaActivo: true,
     fechaCreacion: false,
+    creadoPor: false,
+    actualizadoPor: false,
   });
 
   // Cargar usuarios al montar el componente
@@ -58,17 +60,17 @@ export default function EstudiantesTableWithFilters() {
   const filteredData = usuarios.filter(usuario => {
     const nombreCompleto = `${usuario.nombre} ${usuario.apellido}`.toLowerCase();
     const codigoEst = usuario.Estudiante?.codigoEstudiante || '';
-    const matchesSearch = 
+    const matchesSearch =
       nombreCompleto.includes(searchTerm.toLowerCase()) ||
       usuario.correo.toLowerCase().includes(searchTerm.toLowerCase()) ||
       usuario.ci.includes(searchTerm) ||
       codigoEst.includes(searchTerm);
-    
-    const matchesStatus = 
-      statusFilter === "all" || 
+
+    const matchesStatus =
+      statusFilter === "all" ||
       (statusFilter === "active" && usuario.estaActivo) ||
       (statusFilter === "inactive" && !usuario.estaActivo);
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -112,7 +114,7 @@ export default function EstudiantesTableWithFilters() {
       // Obtener el rol de estudiante
       const roles = await import("../../services/rolService").then(m => m.obtenerRoles());
       const rolEstudiante = roles.find(r => r.nombre.toLowerCase() === "estudiante");
-      
+
       if (!rolEstudiante) {
         throw new Error('No se encontró el rol de estudiante');
       }
@@ -151,7 +153,7 @@ export default function EstudiantesTableWithFilters() {
         });
 
         const idUsuario = responseUsuario.idUsuario;
-        
+
         if (!idUsuario) {
           throw new Error('No se recibió el ID del usuario creado');
         }
@@ -162,7 +164,7 @@ export default function EstudiantesTableWithFilters() {
           idUsuario: idUsuario
         });
       }
-      
+
       await cargarUsuarios(); // Recargar la lista
     } catch (err) {
       console.error('Error al guardar estudiante:', err);
@@ -195,7 +197,7 @@ export default function EstudiantesTableWithFilters() {
     return (
       <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-600 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-400">
         {error}
-        <button 
+        <button
           onClick={cargarUsuarios}
           className="ml-4 underline hover:no-underline"
         >
@@ -230,7 +232,7 @@ export default function EstudiantesTableWithFilters() {
       </div>
 
       {/* Tabla */}
-      <EstudiantesTableSimple 
+      <EstudiantesTableSimple
         usuarios={paginatedData}
         totalUsuarios={totalUsuarios}
         visibleColumns={visibleColumns}
@@ -268,30 +270,29 @@ export default function EstudiantesTableWithFilters() {
         </div>
 
         <div className="flex items-center gap-1">
-          <button 
+          <button
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
             className="px-3 py-1 text-sm text-gray-600 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]"
           >
             &lt;
           </button>
-          
+
           {/* Números de página con lógica de elipsis */}
           {(() => {
             const pageNumbers = [];
             const maxVisiblePages = 5;
-            
+
             if (totalPages <= maxVisiblePages) {
               for (let i = 1; i <= totalPages; i++) {
                 pageNumbers.push(
                   <button
                     key={i}
                     onClick={() => setCurrentPage(i)}
-                    className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
-                      currentPage === i
+                    className={`px-3 py-1 text-sm rounded-lg border transition-colors ${currentPage === i
                         ? 'text-white bg-blue-600 border-blue-600'
                         : 'text-gray-600 border-gray-300 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]'
-                    }`}
+                      }`}
                   >
                     {i}
                   </button>
@@ -302,11 +303,10 @@ export default function EstudiantesTableWithFilters() {
                 <button
                   key={1}
                   onClick={() => setCurrentPage(1)}
-                  className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
-                    currentPage === 1
+                  className={`px-3 py-1 text-sm rounded-lg border transition-colors ${currentPage === 1
                       ? 'text-white bg-blue-600 border-blue-600'
                       : 'text-gray-600 border-gray-300 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]'
-                  }`}
+                    }`}
                 >
                   1
                 </button>
@@ -328,11 +328,10 @@ export default function EstudiantesTableWithFilters() {
                   <button
                     key={i}
                     onClick={() => setCurrentPage(i)}
-                    className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
-                      currentPage === i
+                    className={`px-3 py-1 text-sm rounded-lg border transition-colors ${currentPage === i
                         ? 'text-white bg-blue-600 border-blue-600'
                         : 'text-gray-600 border-gray-300 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]'
-                    }`}
+                      }`}
                   >
                     {i}
                   </button>
@@ -351,21 +350,20 @@ export default function EstudiantesTableWithFilters() {
                 <button
                   key={totalPages}
                   onClick={() => setCurrentPage(totalPages)}
-                  className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
-                    currentPage === totalPages
+                  className={`px-3 py-1 text-sm rounded-lg border transition-colors ${currentPage === totalPages
                       ? 'text-white bg-blue-600 border-blue-600'
                       : 'text-gray-600 border-gray-300 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]'
-                  }`}
+                    }`}
                 >
                   {totalPages}
                 </button>
               );
             }
-            
+
             return pageNumbers;
           })()}
-          
-          <button 
+
+          <button
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
             className="px-3 py-1 text-sm text-gray-600 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]"

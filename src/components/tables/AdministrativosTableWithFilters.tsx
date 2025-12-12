@@ -30,6 +30,8 @@ export default function AdministrativosTableWithFilters() {
     bio: false,
     estaActivo: true,
     fechaCreacion: false,
+    creadoPor: false,
+    actualizadoPor: false,
   });
 
   // Cargar usuarios al montar el componente
@@ -288,8 +290,8 @@ export default function AdministrativosTableWithFilters() {
                     key={i}
                     onClick={() => setCurrentPage(i)}
                     className={`px-3 py-1 text-sm rounded-lg border transition-colors ${currentPage === i
-                        ? 'text-white bg-blue-600 border-blue-600'
-                        : 'text-gray-600 border-gray-300 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]'
+                      ? 'text-white bg-blue-600 border-blue-600'
+                      : 'text-gray-600 border-gray-300 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]'
                       }`}
                   >
                     {i}
@@ -302,8 +304,8 @@ export default function AdministrativosTableWithFilters() {
                   key={1}
                   onClick={() => setCurrentPage(1)}
                   className={`px-3 py-1 text-sm rounded-lg border transition-colors ${currentPage === 1
-                      ? 'text-white bg-blue-600 border-blue-600'
-                      : 'text-gray-600 border-gray-300 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]'
+                    ? 'text-white bg-blue-600 border-blue-600'
+                    : 'text-gray-600 border-gray-300 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]'
                     }`}
                 >
                   1
@@ -327,8 +329,8 @@ export default function AdministrativosTableWithFilters() {
                     key={i}
                     onClick={() => setCurrentPage(i)}
                     className={`px-3 py-1 text-sm rounded-lg border transition-colors ${currentPage === i
-                        ? 'text-white bg-blue-600 border-blue-600'
-                        : 'text-gray-600 border-gray-300 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]'
+                      ? 'text-white bg-blue-600 border-blue-600'
+                      : 'text-gray-600 border-gray-300 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]'
                       }`}
                   >
                     {i}
@@ -349,8 +351,8 @@ export default function AdministrativosTableWithFilters() {
                   key={totalPages}
                   onClick={() => setCurrentPage(totalPages)}
                   className={`px-3 py-1 text-sm rounded-lg border transition-colors ${currentPage === totalPages
-                      ? 'text-white bg-blue-600 border-blue-600'
-                      : 'text-gray-600 border-gray-300 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]'
+                    ? 'text-white bg-blue-600 border-blue-600'
+                    : 'text-gray-600 border-gray-300 hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-400 dark:hover:bg-white/[0.05]'
                     }`}
                 >
                   {totalPages}

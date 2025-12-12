@@ -36,6 +36,24 @@ export interface FotoPerfil {
   idArchivo: string;
   url: string;
   formato: string;
+  creadoPor?: string;
+  actualizadoPor?: string;
+  creador?: {
+    idAdministrativo: string;
+    usuario: {
+      nombre: string;
+      apellido: string;
+      correo: string;
+    };
+  };
+  actualizador?: {
+    idAdministrativo: string;
+    usuario: {
+      nombre: string;
+      apellido: string;
+      correo: string;
+    };
+  };
 }
 
 export interface Usuario {
@@ -57,6 +75,24 @@ export interface Usuario {
   Docente: Docente | null;
   Administrativo: Administrativo | null;
   fotoPerfil: FotoPerfil | null;
+  creadoPor?: string;
+  actualizadoPor?: string;
+  creador?: {
+    idAdministrativo: string;
+    usuario: {
+      nombre: string;
+      apellido: string;
+      correo: string;
+    };
+  };
+  actualizador?: {
+    idAdministrativo: string;
+    usuario: {
+      nombre: string;
+      apellido: string;
+      correo: string;
+    };
+  };
 }
 
 interface ApiResponse<T> {

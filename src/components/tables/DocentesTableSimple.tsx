@@ -22,6 +22,8 @@ interface DocentesTableProps {
     bio: boolean;
     estaActivo: boolean;
     fechaCreacion: boolean;
+    creadoPor: boolean;
+    actualizadoPor: boolean;
   };
   showColumnSettings: boolean;
   onToggleColumnSettings: () => void;
@@ -32,7 +34,7 @@ interface DocentesTableProps {
   onToggleStatus: (idUsuario: string) => void;
 }
 
-export default function DocentesTableSimple({ 
+export default function DocentesTableSimple({
   usuarios,
   totalUsuarios,
   visibleColumns,
@@ -100,7 +102,7 @@ export default function DocentesTableSimple({
       const target = e.target as HTMLElement;
       const isSocialDropdown = target.closest('[data-social-dropdown]');
       const isActionsDropdown = target.closest('[data-actions-dropdown]');
-      
+
       if (!isSocialDropdown && openSocialDropdown) {
         setOpenSocialDropdown(null);
       }
@@ -137,7 +139,7 @@ export default function DocentesTableSimple({
       case "instagram":
         return (
           <svg className="fill-current" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
           </svg>
         );
       case "linkedin":
@@ -167,11 +169,11 @@ export default function DocentesTableSimple({
             <span className="font-semibold text-gray-900 dark:text-white">{totalUsuarios.toLocaleString()}</span>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <div ref={settingsButtonRef}>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="xs"
               onClick={onToggleColumnSettings}
               startIcon={
@@ -184,9 +186,9 @@ export default function DocentesTableSimple({
               Table settings
             </Button>
           </div>
-          
-          <Button 
-            variant="primary" 
+
+          <Button
+            variant="primary"
             size="xs"
             onClick={onAddUser}
             startIcon={
@@ -199,7 +201,7 @@ export default function DocentesTableSimple({
           </Button>
         </div>
       </div>
-      
+
       {/* Panel de configuración */}
       {showColumnSettings && settingsDropdownPosition && (
         <>
@@ -207,7 +209,7 @@ export default function DocentesTableSimple({
             className="fixed inset-0 z-10"
             onClick={onToggleColumnSettings}
           />
-          <div 
+          <div
             className="fixed z-50 w-64 rounded-lg border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-700 dark:bg-gray-800"
             style={{
               top: `${settingsDropdownPosition.top}px`,
@@ -290,11 +292,29 @@ export default function DocentesTableSimple({
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">Fecha Creación</span>
               </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={visibleColumns.creadoPor}
+                  onChange={() => onToggleColumn('creadoPor')}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Creado Por</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={visibleColumns.actualizadoPor}
+                  onChange={() => onToggleColumn('actualizadoPor')}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Actualizado Por</span>
+              </label>
             </div>
           </div>
         </>
       )}
-      
+
       {/* Tabla */}
       <div className="max-w-full overflow-x-auto">
         <Table>
@@ -340,6 +360,16 @@ export default function DocentesTableSimple({
                   FECHA CREACIÓN
                 </TableCell>
               )}
+              {visibleColumns.creadoPor && (
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  CREADO POR
+                </TableCell>
+              )}
+              {visibleColumns.actualizadoPor && (
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                  ACTUALIZADO POR
+                </TableCell>
+              )}
               <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                 ACCIONES
               </TableCell>
@@ -349,7 +379,7 @@ export default function DocentesTableSimple({
           <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
             {usuarios.map((usuario) => {
               const socialProfiles = getSocialProfiles(usuario);
-              
+
               return (
                 <TableRow key={usuario.idUsuario}>
                   {visibleColumns.usuario && (
@@ -438,8 +468,8 @@ export default function DocentesTableSimple({
                                       className="fixed inset-0 z-10"
                                       onClick={() => setOpenSocialDropdown(null)}
                                     />
-                                    
-                                    <div 
+
+                                    <div
                                       className="fixed z-50 w-48 rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-800"
                                       style={{
                                         bottom: `${window.innerHeight - socialDropdownPosition.top}px`,
@@ -495,11 +525,10 @@ export default function DocentesTableSimple({
                     <TableCell className="px-5 py-4 text-start">
                       <button
                         onClick={() => onToggleStatus(usuario.idUsuario)}
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium cursor-pointer ${
-                          usuario.estaActivo
-                            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                            : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                        }`}
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium cursor-pointer ${usuario.estaActivo
+                          ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                          : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                          }`}
                       >
                         {usuario.estaActivo ? "Activo" : "Inactivo"}
                       </button>
@@ -514,9 +543,25 @@ export default function DocentesTableSimple({
                     </TableCell>
                   )}
 
+                  {visibleColumns.creadoPor && (
+                    <TableCell className="px-5 py-4 text-start">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {usuario.creador?.usuario ? `${usuario.creador.usuario.nombre} ${usuario.creador.usuario.apellido}` : '-'}
+                      </span>
+                    </TableCell>
+                  )}
+
+                  {visibleColumns.actualizadoPor && (
+                    <TableCell className="px-5 py-4 text-start">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {usuario.actualizador?.usuario ? `${usuario.actualizador.usuario.nombre} ${usuario.actualizador.usuario.apellido}` : '-'}
+                      </span>
+                    </TableCell>
+                  )}
+
                   <TableCell className="px-5 py-4 text-start">
                     <div className="relative" data-actions-dropdown>
-                      <button 
+                      <button
                         ref={openActionsDropdown === usuario.idUsuario ? actionsButtonRef : null}
                         onClick={() => toggleActionsDropdown(usuario.idUsuario)}
                         className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
@@ -530,8 +575,8 @@ export default function DocentesTableSimple({
                             className="fixed inset-0 z-10"
                             onClick={() => setOpenActionsDropdown(null)}
                           />
-                          
-                          <div 
+
+                          <div
                             className="fixed z-50 w-48 rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-800"
                             style={{
                               bottom: `${window.innerHeight - actionsDropdownPosition.top}px`,
@@ -557,21 +602,19 @@ export default function DocentesTableSimple({
                                 </div>
                                 <span>Editar</span>
                               </button>
-                              
+
                               <button
                                 onClick={() => {
                                   onToggleStatus(usuario.idUsuario);
                                   setOpenActionsDropdown(null);
                                 }}
-                                className={`flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors ${
-                                  usuario.estaActivo 
-                                    ? 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20'
-                                    : 'text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20'
-                                }`}
+                                className={`flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors ${usuario.estaActivo
+                                  ? 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20'
+                                  : 'text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20'
+                                  }`}
                               >
-                                <div className={`flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-700 ${
-                                  usuario.estaActivo ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
-                                }`}>
+                                <div className={`flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-700 ${usuario.estaActivo ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
+                                  }`}>
                                   {usuario.estaActivo ? (
                                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
