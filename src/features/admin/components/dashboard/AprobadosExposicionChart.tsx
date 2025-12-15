@@ -113,7 +113,7 @@ export default function AprobadosExposicionChart({ filtros }: AprobadosExposicio
     return (
         <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden dark:border-gray-800 dark:bg-white/[0.03] hover:shadow-xl transition-shadow duration-300">
             {/* Color Bar */}
-            <div className="h-1.5 w-full bg-yellow-500/80 dark:bg-transparent dark:border-t-2 dark:border-yellow-400"></div>
+            <div className="h-1.5 w-full bg-yellow-500 dark:bg-yellow-400 opacity-80"></div>
 
             <div className="p-6">
                 {/* Title with Icon */}

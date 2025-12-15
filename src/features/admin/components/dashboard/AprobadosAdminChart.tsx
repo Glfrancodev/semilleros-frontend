@@ -113,7 +113,7 @@ export default function AprobadosAdminChart({ filtros }: AprobadosAdminChartProp
     return (
         <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden dark:border-gray-800 dark:bg-white/[0.03] hover:shadow-xl transition-shadow duration-300">
             {/* Color Bar */}
-            <div className="h-1.5 w-full bg-indigo-500/80 dark:bg-transparent dark:border-t-2 dark:border-indigo-400"></div>
+            <div className="h-1.5 w-full bg-indigo-500 dark:bg-indigo-400 opacity-80"></div>
 
             <div className="p-6">
                 {/* Title with Icon */}

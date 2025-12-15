@@ -67,8 +67,8 @@ export default function KPICard({
                 {/* Trend */}
                 {trend && (
                     <div className={`flex items-center gap-1.5 text-sm font-semibold ${trend.isPositive
-                            ? 'text-green-600 dark:text-green-400'
-                            : 'text-red-600 dark:text-red-400'
+                        ? 'text-green-600 dark:text-green-400'
+                        : 'text-red-600 dark:text-red-400'
                         }`}>
                         <span className="text-lg">{trend.isPositive ? '↑' : '↓'}</span>
                         <span>{Math.abs(trend.value)}%</span>
