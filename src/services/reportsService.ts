@@ -176,4 +176,19 @@ export const reportsService = {
         });
         return response.data;
     },
+
+    // Rendimiento Académico Globales
+    getPromediosPorFeriaGlobal: async (filtros?: any): Promise<any> => {
+        const response = await axios.get(`${API_URL}/reports/global/rendimiento/promedio-por-feria`, {
+            params: filtros
+        });
+        return response.data;
+    },
+
+    getRankingAreasRendimientoGlobal: async (filtros?: any): Promise<any> => {
+        const response = await axios.get(`${API_URL}/reports/global/rendimiento/ranking-areas`, {
+            params: filtros
+        });
+        return response.data;
+    },
 };

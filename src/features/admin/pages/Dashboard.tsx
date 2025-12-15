@@ -27,6 +27,11 @@ import TutoresGlobalKPI from "../components/global-reports/kpis/TutoresGlobalKPI
 // Global Tendencias Components
 import AreasFrequentesChart from "../components/global-reports/tendencias/AreasFrequentesChart";
 import CategoriasDistribucionChart from "../components/global-reports/tendencias/CategoriasDistribucionChart";
+import ComparacionFeriasChart from "../components/global-reports/tendencias/ComparacionFeriasChart";
+
+// Global Rendimiento Components
+import PromedioPorFeriaChart from "../components/global-reports/rendimiento/PromedioPorFeriaChart";
+import RankingAreasRendimientoChart from "../components/global-reports/rendimiento/RankingAreasRendimientoChart";
 
 type TabType = "feriaActual" | "global";
 
@@ -84,16 +89,18 @@ export default function Dashboard() {
                         </div>
 
                         {/* Charts Section */}
-                        <div className="space-y-6">
-                            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                        <div>
+                            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
                                 Gráficos y Análisis
                             </h3>
 
-                            <ProyectosPorEstadoChart />
-                            <ParticipacionAreaCategoriaChart />
-                            <CalificacionesFeriaChart />
-                            <CargaJuradosChart />
-                            <ParticipacionEventosChart />
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <ProyectosPorEstadoChart />
+                                <ParticipacionAreaCategoriaChart />
+                                <CalificacionesFeriaChart />
+                                <CargaJuradosChart />
+                                <ParticipacionEventosChart />
+                            </div>
                         </div>
                     </div>
                 )}
@@ -125,6 +132,19 @@ export default function Dashboard() {
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                 <AreasFrequentesChart />
                                 <CategoriasDistribucionChart />
+                            </div>
+
+                            <ComparacionFeriasChart />
+                        </div>
+
+                        {/* Rendimiento Académico Section */}
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                Rendimiento Académico
+                            </h3>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <PromedioPorFeriaChart />
+                                <RankingAreasRendimientoChart />
                             </div>
                         </div>
 
