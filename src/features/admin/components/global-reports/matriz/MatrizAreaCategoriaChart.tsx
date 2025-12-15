@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Chart from 'react-apexcharts';
 import { ApexOptions } from 'apexcharts';
 import { reportsService } from '../../../../../services/reportsService';
@@ -93,35 +93,31 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
         };
     });
 
-    // Detectar Dark Mode
-    const [isDark, setIsDark] = useState(false);
+    // Detectar Dark Mode de forma segura
+    const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
 
     useEffect(() => {
-        // Verificar estado inicial
-        if (document.documentElement.classList.contains('dark')) {
-            setIsDark(true);
-        }
-
-        // Observer para cambios en la clase 'dark' del html
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.attributeName === 'class') {
-                    setIsDark(document.documentElement.classList.contains('dark'));
+                    const newIsDark = document.documentElement.classList.contains('dark');
+                    setIsDark(newIsDark);
                 }
             });
         });
 
         observer.observe(document.documentElement, { attributes: true });
-
         return () => observer.disconnect();
     }, []);
 
-    const heatmapOptions: ApexOptions = {
+    // Memoizar opciones para evitar re-renderizados innecesarios
+    const heatmapOptions = useMemo<ApexOptions>(() => ({
         chart: {
             type: 'heatmap',
             fontFamily: 'Outfit, sans-serif',
             toolbar: { show: false },
             background: 'transparent',
+            animations: { enabled: false } // Desactivar animaciones al cambiar tema para evitar saltos
         },
         theme: {
             mode: isDark ? 'dark' : 'light',
@@ -134,17 +130,17 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
                 colorScale: {
                     ranges: metrica === 'cantidad'
                         ? [
-                            { from: 0, to: 0, color: isDark ? '#1e293b' : '#f1f5f9', name: '0' }, // Slate 800 (Dark) / Slate 100 (Light)
-                            { from: 1, to: 2, color: isDark ? '#3730a3' : '#c7d2fe', name: '1-2' }, // Indigo 900 / Indigo 200
-                            { from: 3, to: 5, color: isDark ? '#4f46e5' : '#818cf8', name: '3-5' }, // Indigo 600 / Indigo 400
-                            { from: 6, to: 10, color: isDark ? '#6366f1' : '#6366f1', name: '6-10' }, // Indigo 500 (Both)
-                            { from: 11, to: 999, color: isDark ? '#818cf8' : '#4f46e5', name: '11+' }, // Indigo 400 / Indigo 600
+                            { from: 0, to: 0, color: isDark ? '#1e293b' : '#f1f5f9', name: '0' },
+                            { from: 1, to: 2, color: isDark ? '#3730a3' : '#c7d2fe', name: '1-2' },
+                            { from: 3, to: 5, color: isDark ? '#4f46e5' : '#818cf8', name: '3-5' },
+                            { from: 6, to: 10, color: isDark ? '#6366f1' : '#6366f1', name: '6-10' },
+                            { from: 11, to: 999, color: isDark ? '#818cf8' : '#4f46e5', name: '11+' },
                         ]
                         : [
                             { from: 0, to: 0, color: isDark ? '#1e293b' : '#f1f5f9', name: 'Sin datos' },
-                            { from: 1, to: 60, color: '#ef4444', name: '0-60' }, // Red 500
-                            { from: 61, to: 80, color: '#f59e0b', name: '61-80' }, // Amber 500
-                            { from: 81, to: 100, color: '#10b981', name: '81-100' }, // Emerald 500
+                            { from: 1, to: 60, color: '#ef4444', name: '0-60' },
+                            { from: 61, to: 80, color: '#f59e0b', name: '61-80' },
+                            { from: 81, to: 100, color: '#10b981', name: '81-100' },
                         ],
                 },
             },
@@ -179,6 +175,7 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
             },
         },
         tooltip: {
+            theme: isDark ? 'dark' : 'light',
             y: {
                 formatter: (val: number, opts: any) => {
                     if (val === 0) return 'Sin datos';
@@ -186,7 +183,7 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
                     const area = areas[opts.dataPointIndex];
 
                     const areaData = data.matriz.find((a: any) => a.area.nombre === area);
-                    const catData = areaData?.categorias.find((c: any) => c.categoria.nombre === categoria);
+                    const catData = areaData?.categorias?.find((c: any) => c.categoria.nombre === categoria);
 
                     if (!catData) return 'Sin datos';
 
@@ -201,8 +198,12 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
         legend: {
             show: true,
             position: 'bottom',
+            labels: {
+                colors: isDark ? '#cbd5e1' : '#475569',
+            },
         },
-    };
+    }), [isDark, metrica, areas, categorias, data]);
+
 
     return (
         <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden dark:border-gray-800 dark:bg-white/[0.03]">
@@ -259,7 +260,8 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
                 </div>
 
                 {/* Heatmap */}
-                <Chart key={metrica} options={heatmapOptions} series={series} type="heatmap" height={350} />
+                {/* Heatmap */}
+                <Chart key={`${metrica}-${isDark ? 'dark' : 'light'}`} options={heatmapOptions} series={series} type="heatmap" height={350} />
 
                 {/* Totales por Categoría */}
                 <div className="mt-6">
