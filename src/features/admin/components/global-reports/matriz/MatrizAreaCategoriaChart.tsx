@@ -59,27 +59,32 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
         if (valoresUnicos.length === 1) {
             return [
                 { from: 0, to: 0 },
-                { from: min, to: min }
+                { from: min - 0.5, to: min + 0.5 }
             ];
         }
 
         // Si el máximo es menor o igual a 5, usar valores individuales
+        // Usar rangos que cubran cada valor específico
         if (max <= 5) {
             const rangos = [{ from: 0, to: 0 }];
             valoresUnicos.forEach(val => {
-                rangos.push({ from: val, to: val });
+                rangos.push({ from: val - 0.5, to: val + 0.5 });
             });
             return rangos;
         }
 
         // Para valores entre 6 y 10, agrupar proporcionalmente en 4 rangos
         if (max <= 10) {
+            const r1 = Math.floor(max * 0.3);
+            const r2 = Math.floor(max * 0.6);
+            const r3 = Math.floor(max * 0.8);
+
             return [
                 { from: 0, to: 0 },
-                { from: 1, to: Math.floor(max * 0.3) },
-                { from: Math.floor(max * 0.3) + 1, to: Math.floor(max * 0.6) },
-                { from: Math.floor(max * 0.6) + 1, to: Math.floor(max * 0.8) },
-                { from: Math.floor(max * 0.8) + 1, to: max }
+                { from: 0.5, to: r1 + 0.5 },
+                { from: r1 + 0.5, to: r2 + 0.5 },
+                { from: r2 + 0.5, to: r3 + 0.5 },
+                { from: r3 + 0.5, to: max + 0.5 }
             ];
         }
 
@@ -91,10 +96,10 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
 
         return [
             { from: 0, to: 0 },
-            { from: min, to: q1 },
-            { from: q1 + 1, to: q2 },
-            { from: q2 + 1, to: q3 },
-            { from: q3 + 1, to: max }
+            { from: 0.5, to: q1 + 0.5 },
+            { from: q1 + 0.5, to: q2 + 0.5 },
+            { from: q2 + 0.5, to: q3 + 0.5 },
+            { from: q3 + 0.5, to: max + 0.5 }
         ];
     };
 
@@ -173,11 +178,11 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
                 from: rango.from,
                 to: rango.to,
                 color: colores[index],
-                name: rango.from === 0
+                name: rango.from === 0 && rango.to === 0
                     ? '0'
-                    : rango.from === rango.to
-                        ? `${rango.from}`
-                        : `${rango.from}-${rango.to}`
+                    : Math.round(rango.from + 0.5) === Math.round(rango.to - 0.5)
+                        ? `${Math.round(rango.from + 0.5)}`
+                        : `${Math.round(rango.from + 0.5)}-${Math.round(rango.to - 0.5)}`
             }));
         };
 
