@@ -30,6 +30,11 @@ const navItems: NavItem[] = [
     path: "/dashboard",
   },
   {
+    icon: <DocsIcon />,
+    name: "Reportes",
+    path: "/reportes",
+  },
+  {
     icon: <UserCircleIcon />,
     name: "Cuentas",
     subItems: [
@@ -159,8 +164,8 @@ const AdminSidebar: React.FC = () => {
       <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
         <h2
           className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${!isExpanded && !isHovered
-              ? "lg:justify-center"
-              : "justify-start"
+            ? "lg:justify-center"
+            : "justify-start"
             }`}
         >
           {isExpanded || isHovered || isMobileOpen ? "Menú Admin" : <HorizontaLDots />}
@@ -173,8 +178,8 @@ const AdminSidebar: React.FC = () => {
                 <button
                   onClick={() => handleSubmenuToggle(index)}
                   className={`menu-item group ${openSubmenu === index
-                      ? "menu-item-active"
-                      : "menu-item-inactive"
+                    ? "menu-item-active"
+                    : "menu-item-inactive"
                     } cursor-pointer ${!isExpanded && !isHovered
                       ? "lg:justify-center"
                       : "lg:justify-start"
@@ -182,8 +187,8 @@ const AdminSidebar: React.FC = () => {
                 >
                   <span
                     className={`menu-item-icon-size ${openSubmenu === index
-                        ? "menu-item-icon-active"
-                        : "menu-item-icon-inactive"
+                      ? "menu-item-icon-active"
+                      : "menu-item-icon-inactive"
                       }`}
                   >
                     {nav.icon}
@@ -194,8 +199,8 @@ const AdminSidebar: React.FC = () => {
                   {(isExpanded || isHovered || isMobileOpen) && (
                     <ChevronDownIcon
                       className={`ml-auto w-5 h-5 transition-transform duration-200 ${openSubmenu === index
-                          ? "rotate-180 text-brand-500"
-                          : ""
+                        ? "rotate-180 text-brand-500"
+                        : ""
                         }`}
                     />
                   )}
@@ -204,14 +209,14 @@ const AdminSidebar: React.FC = () => {
                 <Link
                   to={nav.path!}
                   className={`menu-item group ${isActive(nav.path!)
-                      ? "menu-item-active"
-                      : "menu-item-inactive"
+                    ? "menu-item-active"
+                    : "menu-item-inactive"
                     }`}
                 >
                   <span
                     className={`menu-item-icon-size ${isActive(nav.path!)
-                        ? "menu-item-icon-active"
-                        : "menu-item-icon-inactive"
+                      ? "menu-item-icon-active"
+                      : "menu-item-icon-inactive"
                       }`}
                   >
                     {nav.icon}
@@ -242,8 +247,8 @@ const AdminSidebar: React.FC = () => {
                         <Link
                           to={subItem.path}
                           className={`menu-dropdown-item ${isActive(subItem.path)
-                              ? "menu-dropdown-item-active"
-                              : "menu-dropdown-item-inactive"
+                            ? "menu-dropdown-item-active"
+                            : "menu-dropdown-item-inactive"
                             }`}
                         >
                           {subItem.icon && (

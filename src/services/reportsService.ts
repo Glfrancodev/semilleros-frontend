@@ -199,4 +199,13 @@ export const reportsService = {
         });
         return response.data;
     },
+
+    // ========== Reportes Descargables - Feria Actual ==========
+
+    getControlNotas: async (filtros?: any): Promise<any> => {
+        const response = await axios.get(`${API_URL}/reports/feria-actual/control-notas`, {
+            params: filtros
+        });
+        return response.data.data;
+    },
 };

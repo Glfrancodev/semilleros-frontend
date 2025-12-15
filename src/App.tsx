@@ -6,6 +6,7 @@ import Calendar from "./legacy/pages/Calendar";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Dashboard from "./features/admin/pages/Dashboard";
+import ReportesPage from "./features/admin/pages/ReportesPage";
 import SignInPage from "./features/auth/pages/SignInPage";
 import ProfilePage from "./features/profile/pages/ProfilePage";
 import PublicProfilePage from "./features/profile/pages/PublicProfilePage";
@@ -116,6 +117,7 @@ export default function App() {
           <Route element={<PrivateRoute />}>
             <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/reportes" element={<ReportesPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/calendar" element={<Calendar />} />
 
