@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import Chart from 'react-apexcharts';
+import { ApexOptions } from 'apexcharts';
 import { reportsService } from '../../../../../services/reportsService';
+import MultiViewChart from '../../dashboard/MultiViewChart';
 
 interface AreasFrequentesChartProps {
     filtros?: any;
@@ -9,7 +11,6 @@ interface AreasFrequentesChartProps {
 export default function AreasFrequentesChart({ filtros }: AreasFrequentesChartProps) {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -17,10 +18,8 @@ export default function AreasFrequentesChart({ filtros }: AreasFrequentesChartPr
                 setLoading(true);
                 const response = await reportsService.getAreasFrecuentesGlobal(filtros);
                 setData(response.data);
-                setError(null);
             } catch (err) {
                 console.error('Error fetching areas frecuentes:', err);
-                setError('Error al cargar datos');
             } finally {
                 setLoading(false);
             }
@@ -31,131 +30,196 @@ export default function AreasFrequentesChart({ filtros }: AreasFrequentesChartPr
 
     if (loading) {
         return (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 animate-pulse">
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-4"></div>
-                <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded"></div>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
-                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">
-                    Áreas Más Frecuentes
-                </h3>
-                <p className="text-red-500 dark:text-red-400">{error}</p>
+            <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden p-6 dark:border-gray-800 dark:bg-white/[0.03] animate-pulse">
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-4"></div>
+                <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
             </div>
         );
     }
 
     if (!data || !data.ranking || data.ranking.length === 0) {
         return (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
-                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">
-                    Áreas Más Frecuentes
-                </h3>
-                <p className="text-gray-500 dark:text-gray-400">No hay datos disponibles</p>
-            </div>
+            <MultiViewChart title="Áreas Más Frecuentes" colorClass="bg-blue-500 dark:border-blue-400">
+                {() => (
+                    <div className="flex items-center justify-center h-64 text-gray-500 dark:text-gray-400">
+                        <p>No hay datos disponibles</p>
+                    </div>
+                )}
+            </MultiViewChart>
         );
     }
 
-    // Preparar datos para el chart
-    const chartData = data.ranking.map((item: any) => ({
-        nombre: item.area.nombre,
-        total: item.totalProyectos,
-        porcentaje: item.porcentajeTotal,
-        tendencia: item.tendencia.direccion
-    }));
+    const renderChart = (chartType: "pie" | "bar" | "line") => {
+        const labels = data.ranking.map((item: any) => item.area.nombre);
+        const values = data.ranking.map((item: any) => item.totalProyectos);
 
-    // Colores por tendencia
-    const getColor = (tendencia: string) => {
-        switch (tendencia) {
-            case 'creciente': return '#10b981'; // green-500
-            case 'decreciente': return '#ef4444'; // red-500
-            default: return '#6b7280'; // gray-500
+        // Colores por tendencia
+        const colors = data.ranking.map((item: any) => {
+            switch (item.tendencia.direccion) {
+                case 'creciente': return '#10b981'; // green-500
+                case 'decreciente': return '#ef4444'; // red-500
+                default: return '#6b7280'; // gray-500
+            }
+        });
+
+        if (chartType === "pie") {
+            const pieOptions: ApexOptions = {
+                chart: {
+                    type: 'donut',
+                    fontFamily: 'Outfit, sans-serif',
+                },
+                colors: colors,
+                labels: labels,
+                legend: {
+                    position: 'bottom',
+                    fontSize: '14px',
+                },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '70%',
+                            labels: {
+                                show: true,
+                                total: {
+                                    show: true,
+                                    label: 'Total',
+                                    fontSize: '16px',
+                                    fontWeight: 600,
+                                    formatter: () => `${data.estadisticas.totalProyectos}`,
+                                },
+                            },
+                        },
+                    },
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: (val: number) => `${val.toFixed(1)}%`,
+                },
+                tooltip: {
+                    y: {
+                        formatter: (val: number) => `${val} proyectos`,
+                    },
+                },
+            };
+
+            return <Chart key="pie-areas" options={pieOptions} series={values} type="donut" height={300} />;
         }
+
+        if (chartType === "bar") {
+            const barOptions: ApexOptions = {
+                chart: {
+                    type: 'bar',
+                    fontFamily: 'Outfit, sans-serif',
+                    toolbar: { show: false },
+                },
+                colors: colors,
+                plotOptions: {
+                    bar: {
+                        horizontal: true,
+                        borderRadius: 4,
+                        distributed: true,
+                    },
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: (val: number) => `${val}`,
+                },
+                xaxis: {
+                    categories: labels,
+                },
+                yaxis: {
+                    labels: {
+                        style: {
+                            fontSize: '12px',
+                        },
+                    },
+                },
+                legend: {
+                    show: false,
+                },
+                tooltip: {
+                    y: {
+                        formatter: (val: number) => `${val} proyectos`,
+                    },
+                },
+            };
+
+            return <Chart key="bar-areas" options={barOptions} series={[{ name: 'Proyectos', data: values }]} type="bar" height={300} />;
+        }
+
+        // Line chart
+        const lineOptions: ApexOptions = {
+            chart: {
+                type: 'line',
+                fontFamily: 'Outfit, sans-serif',
+                toolbar: { show: false },
+            },
+            colors: ['#3b82f6'],
+            stroke: {
+                curve: 'smooth',
+                width: 3,
+            },
+            markers: {
+                size: 5,
+            },
+            xaxis: {
+                categories: labels,
+            },
+            yaxis: {
+                title: {
+                    text: 'Proyectos',
+                },
+            },
+            tooltip: {
+                y: {
+                    formatter: (val: number) => `${val} proyectos`,
+                },
+            },
+        };
+
+        return <Chart key="line-areas" options={lineOptions} series={[{ name: 'Proyectos', data: values }]} type="line" height={300} />;
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-3">
-                <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                    Áreas Más Frecuentes
-                </h3>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {data.estadisticas.totalProyectos} proyectos
-                </span>
-            </div>
+        <MultiViewChart title="Áreas Más Frecuentes" colorClass="bg-blue-500 dark:border-blue-400">
+            {(chartType) => (
+                <>
+                    {/* Stats */}
+                    <div className="mb-4">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-sm text-gray-500 dark:text-gray-400">
+                                Total: {data.estadisticas.totalProyectos} proyectos
+                            </span>
+                        </div>
+                        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                Área dominante: <span className="font-semibold text-blue-600 dark:text-blue-400">
+                                    {data.estadisticas.areaDominante.nombre}
+                                </span> ({data.estadisticas.areaDominante.porcentaje.toFixed(1)}%)
+                            </p>
+                        </div>
+                    </div>
 
-            {/* Stats */}
-            <div className="mb-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                    Área dominante: <span className="font-semibold text-blue-600 dark:text-blue-400">
-                        {data.estadisticas.areaDominante.nombre}
-                    </span> ({data.estadisticas.areaDominante.porcentaje.toFixed(1)}%)
-                </p>
-            </div>
+                    {/* Chart */}
+                    {renderChart(chartType)}
 
-            {/* Bar Chart */}
-            <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                        data={chartData}
-                        layout="vertical"
-                        margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
-                    >
-                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
-                        <XAxis
-                            type="number"
-                            stroke="#6B7280"
-                            style={{ fontSize: '10px' }}
-                        />
-                        <YAxis
-                            type="category"
-                            dataKey="nombre"
-                            stroke="#6B7280"
-                            style={{ fontSize: '10px' }}
-                            width={90}
-                        />
-                        <Tooltip
-                            contentStyle={{
-                                backgroundColor: '#1F2937',
-                                border: 'none',
-                                borderRadius: '8px',
-                                color: '#fff',
-                                fontSize: '12px'
-                            }}
-                            formatter={(value: any, name?: string) => {
-                                if (name === 'total') return [value + ' proyectos', 'Total'];
-                                return [value, name || ''];
-                            }}
-                        />
-                        <Bar dataKey="total" radius={[0, 4, 4, 0]}>
-                            {chartData.map((entry: any, index: number) => (
-                                <Cell key={`cell-${index}`} fill={getColor(entry.tendencia)} />
-                            ))}
-                        </Bar>
-                    </BarChart>
-                </ResponsiveContainer>
-            </div>
-
-            {/* Legend */}
-            <div className="flex items-center justify-center gap-4 mt-2 text-xs">
-                <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 rounded bg-green-500"></div>
-                    <span className="text-gray-600 dark:text-gray-400">Creciente</span>
-                </div>
-                <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 rounded bg-red-500"></div>
-                    <span className="text-gray-600 dark:text-gray-400">Decreciente</span>
-                </div>
-                <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 rounded bg-gray-500"></div>
-                    <span className="text-gray-600 dark:text-gray-400">Estable</span>
-                </div>
-            </div>
-        </div>
+                    {/* Leyenda de tendencias */}
+                    <div className="flex items-center justify-center gap-4 mt-4 text-xs">
+                        <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 rounded bg-green-500"></div>
+                            <span className="text-gray-600 dark:text-gray-400">Creciente</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 rounded bg-red-500"></div>
+                            <span className="text-gray-600 dark:text-gray-400">Decreciente</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 rounded bg-gray-500"></div>
+                            <span className="text-gray-600 dark:text-gray-400">Estable</span>
+                        </div>
+                    </div>
+                </>
+            )}
+        </MultiViewChart>
     );
 }
