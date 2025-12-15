@@ -93,11 +93,38 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
         };
     });
 
+    // Detectar Dark Mode
+    const [isDark, setIsDark] = useState(false);
+
+    useEffect(() => {
+        // Verificar estado inicial
+        if (document.documentElement.classList.contains('dark')) {
+            setIsDark(true);
+        }
+
+        // Observer para cambios en la clase 'dark' del html
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                    setIsDark(document.documentElement.classList.contains('dark'));
+                }
+            });
+        });
+
+        observer.observe(document.documentElement, { attributes: true });
+
+        return () => observer.disconnect();
+    }, []);
+
     const heatmapOptions: ApexOptions = {
         chart: {
             type: 'heatmap',
             fontFamily: 'Outfit, sans-serif',
             toolbar: { show: false },
+            background: 'transparent',
+        },
+        theme: {
+            mode: isDark ? 'dark' : 'light',
         },
         plotOptions: {
             heatmap: {
@@ -107,17 +134,17 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
                 colorScale: {
                     ranges: metrica === 'cantidad'
                         ? [
-                            { from: 0, to: 0, color: '#E2E8F0', name: '0' }, // Slate 200
-                            { from: 1, to: 2, color: '#C7D2FE', name: '1-2' }, // Indigo 200
-                            { from: 3, to: 5, color: '#818CF8', name: '3-5' }, // Indigo 400
-                            { from: 6, to: 10, color: '#6366F1', name: '6-10' }, // Indigo 500
-                            { from: 11, to: 999, color: '#4F46E5', name: '11+' }, // Indigo 600
+                            { from: 0, to: 0, color: isDark ? '#1e293b' : '#f1f5f9', name: '0' }, // Slate 800 (Dark) / Slate 100 (Light)
+                            { from: 1, to: 2, color: isDark ? '#3730a3' : '#c7d2fe', name: '1-2' }, // Indigo 900 / Indigo 200
+                            { from: 3, to: 5, color: isDark ? '#4f46e5' : '#818cf8', name: '3-5' }, // Indigo 600 / Indigo 400
+                            { from: 6, to: 10, color: isDark ? '#6366f1' : '#6366f1', name: '6-10' }, // Indigo 500 (Both)
+                            { from: 11, to: 999, color: isDark ? '#818cf8' : '#4f46e5', name: '11+' }, // Indigo 400 / Indigo 600
                         ]
                         : [
-                            { from: 0, to: 0, color: '#E2E8F0', name: 'Sin datos' }, // Slate 200
-                            { from: 1, to: 60, color: '#F87171', name: '0-60' }, // Red 400
-                            { from: 61, to: 80, color: '#FBBF24', name: '61-80' }, // Amber 400
-                            { from: 81, to: 100, color: '#34D399', name: '81-100' }, // Emerald 400
+                            { from: 0, to: 0, color: isDark ? '#1e293b' : '#f1f5f9', name: 'Sin datos' },
+                            { from: 1, to: 60, color: '#ef4444', name: '0-60' }, // Red 500
+                            { from: 61, to: 80, color: '#f59e0b', name: '61-80' }, // Amber 500
+                            { from: 81, to: 100, color: '#10b981', name: '81-100' }, // Emerald 500
                         ],
                 },
             },
@@ -127,6 +154,7 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
             style: {
                 fontSize: '12px',
                 fontWeight: 600,
+                colors: [isDark ? '#e2e8f0' : '#1e293b'],
             },
             formatter: (val: number) => {
                 if (val === 0) return '-';
@@ -138,6 +166,7 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
             labels: {
                 style: {
                     fontSize: '11px',
+                    colors: isDark ? '#94a3b8' : '#64748b',
                 },
             },
         },
@@ -145,6 +174,7 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
             labels: {
                 style: {
                     fontSize: '11px',
+                    colors: isDark ? '#94a3b8' : '#64748b',
                 },
             },
         },
