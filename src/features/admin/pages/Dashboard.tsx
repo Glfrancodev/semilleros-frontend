@@ -18,6 +18,12 @@ import CalificacionesFeriaChart from "../components/dashboard/CalificacionesFeri
 import CargaJuradosChart from "../components/dashboard/CargaJuradosChart";
 import ParticipacionEventosChart from "../components/dashboard/ParticipacionEventosChart";
 
+// Global KPI Components
+import ProyectosGlobalKPI from "../components/global-reports/kpis/ProyectosGlobalKPI";
+import EstudiantesGlobalKPI from "../components/global-reports/kpis/EstudiantesGlobalKPI";
+import JuradosGlobalKPI from "../components/global-reports/kpis/JuradosGlobalKPI";
+import TutoresGlobalKPI from "../components/global-reports/kpis/TutoresGlobalKPI";
+
 type TabType = "feriaActual" | "global";
 
 export default function Dashboard() {
@@ -99,10 +105,18 @@ export default function Dashboard() {
                             </p>
                         </div>
 
-                        {/* Aquí irán los KPIs y gráficos globales */}
+                        {/* KPIs Grid - 2 per row */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <ProyectosGlobalKPI />
+                            <EstudiantesGlobalKPI />
+                            <JuradosGlobalKPI />
+                            <TutoresGlobalKPI />
+                        </div>
+
+                        {/* Placeholder for future phases */}
                         <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
                             <p className="text-gray-500 dark:text-gray-400 text-center">
-                                Los gráficos y estadísticas globales se agregarán próximamente
+                                Más gráficos y estadísticas globales próximamente (Tendencias, Rendimiento, Matriz)
                             </p>
                         </div>
                     </div>

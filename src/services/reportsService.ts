@@ -123,4 +123,35 @@ export const reportsService = {
         });
         return response.data;
     },
+
+    // ========== Reportes Globales ==========
+
+    // KPIs Globales
+    getProyectosPorFeriaGlobal: async (filtros?: any): Promise<any> => {
+        const response = await axios.get(`${API_URL}/reports/global/kpi/proyectos-por-feria`, {
+            params: filtros
+        });
+        return response.data;
+    },
+
+    getEstudiantesPorFeriaGlobal: async (filtros?: any): Promise<any> => {
+        const response = await axios.get(`${API_URL}/reports/global/kpi/estudiantes-por-feria`, {
+            params: filtros
+        });
+        return response.data;
+    },
+
+    getJuradosPorFeriaGlobal: async (filtros?: any): Promise<any> => {
+        const response = await axios.get(`${API_URL}/reports/global/kpi/jurados-por-feria`, {
+            params: filtros
+        });
+        return response.data;
+    },
+
+    getTutoresPorFeriaGlobal: async (filtros?: any): Promise<any> => {
+        const response = await axios.get(`${API_URL}/reports/global/kpi/tutores-por-feria`, {
+            params: filtros
+        });
+        return response.data;
+    },
 };
