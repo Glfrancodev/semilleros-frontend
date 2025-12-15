@@ -2,6 +2,17 @@ import { useState } from "react";
 import PageMeta from "../../../components/common/PageMeta";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 
+// KPI Components
+import ProyectosKPI from "../components/dashboard/ProyectosKPI";
+import EstudiantesKPI from "../components/dashboard/EstudiantesKPI";
+import TutoresKPI from "../components/dashboard/TutoresKPI";
+import JuradosKPI from "../components/dashboard/JuradosKPI";
+
+// Chart Components
+import AprobadosTutorChart from "../components/dashboard/AprobadosTutorChart";
+import AprobadosAdminChart from "../components/dashboard/AprobadosAdminChart";
+import AprobadosExposicionChart from "../components/dashboard/AprobadosExposicionChart";
+
 type TabType = "feriaActual" | "global";
 
 export default function Dashboard() {
@@ -41,21 +52,32 @@ export default function Dashboard() {
 
                 {/* Tab Content */}
                 {activeTab === "feriaActual" && (
-                    <div className="space-y-4">
-                        <div className="border-b border-gray-200 dark:border-gray-700 pb-3">
-                            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-                                Feria Actual
-                            </h2>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                Estadísticas y métricas de la feria en curso
-                            </p>
+                    <div className="space-y-6">
+                        {/* KPIs Grid - 4 columns on large screens */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <ProyectosKPI />
+                            <EstudiantesKPI />
+                            <TutoresKPI />
+                            <JuradosKPI />
                         </div>
 
-                        {/* Aquí irán los gráficos y KPIs de la feria actual */}
-                        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
-                            <p className="text-gray-500 dark:text-gray-400 text-center">
-                                Los gráficos y estadísticas se agregarán próximamente
-                            </p>
+                        {/* Percentage KPIs - 3 columns */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <AprobadosTutorChart />
+                            <AprobadosAdminChart />
+                            <AprobadosExposicionChart />
+                        </div>
+
+                        {/* Charts Section - Placeholder */}
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                                Gráficos y Análisis
+                            </h3>
+                            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
+                                <p className="text-gray-500 dark:text-gray-400 text-center">
+                                    Los gráficos se agregarán próximamente
+                                </p>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -71,10 +93,10 @@ export default function Dashboard() {
                             </p>
                         </div>
 
-                        {/* Aquí irán los gráficos y KPIs globales */}
+                        {/* Aquí irán los KPIs y gráficos globales */}
                         <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
                             <p className="text-gray-500 dark:text-gray-400 text-center">
-                                Los gráficos y estadísticas se agregarán próximamente
+                                Los gráficos y estadísticas globales se agregarán próximamente
                             </p>
                         </div>
                     </div>

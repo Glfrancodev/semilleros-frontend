@@ -1,0 +1,55 @@
+import { useEffect, useState } from "react";
+import KPICard from "./KPICard";
+import { reportsService, KPIResponse } from "../../../../services/reportsService";
+import { FolderIcon } from "../../../../assets/icons";
+
+interface ProyectosKPIProps {
+    filtros?: any;
+}
+
+export default function ProyectosKPI({ filtros }: ProyectosKPIProps) {
+    const [data, setData] = useState<KPIResponse | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                const response = await reportsService.getProyectosInscritos(filtros);
+                setData(response);
+                setError(null);
+            } catch (err) {
+                console.error('Error fetching proyectos:', err);
+                setError('Error al cargar datos');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [filtros]);
+
+    if (error) {
+        return (
+            <KPICard
+                title="Proyectos Inscritos"
+                value="Error"
+                subtitle={error}
+                icon={<FolderIcon />}
+                colorClass="text-red-500 dark:text-red-400"
+            />
+        );
+    }
+
+    return (
+        <KPICard
+            title="Proyectos Inscritos"
+            value={data?.valor ?? 0}
+            subtitle="Total de proyectos registrados"
+            icon={<FolderIcon />}
+            loading={loading}
+            colorClass="text-blue-500 dark:text-blue-400"
+        />
+    );
+}
