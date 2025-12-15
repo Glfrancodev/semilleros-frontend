@@ -1,5 +1,4 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { ArrowUpIcon, ArrowDownIcon } from '../../../../../assets/icons';
 
 interface FeriaData {
     feria: {
