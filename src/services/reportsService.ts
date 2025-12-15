@@ -191,4 +191,12 @@ export const reportsService = {
         });
         return response.data;
     },
+
+    // Matriz Área vs Categoría
+    getMatrizAreaCategoriaGlobal: async (filtros?: any): Promise<any> => {
+        const response = await axios.get(`${API_URL}/reports/global/matriz/area-categoria`, {
+            params: filtros
+        });
+        return response.data;
+    },
 };

@@ -33,6 +33,9 @@ import ComparacionFeriasChart from "../components/global-reports/tendencias/Comp
 import PromedioPorFeriaChart from "../components/global-reports/rendimiento/PromedioPorFeriaChart";
 import RankingAreasRendimientoChart from "../components/global-reports/rendimiento/RankingAreasRendimientoChart";
 
+// Global Matriz Component
+import MatrizAreaCategoriaChart from "../components/global-reports/matriz/MatrizAreaCategoriaChart";
+
 type TabType = "feriaActual" | "global";
 
 export default function Dashboard() {
@@ -148,10 +151,18 @@ export default function Dashboard() {
                             </div>
                         </div>
 
+                        {/* Matriz Área vs Categoría Section */}
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                Matriz Área vs Categoría
+                            </h3>
+                            <MatrizAreaCategoriaChart />
+                        </div>
+
                         {/* Placeholder for future phases */}
                         <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
                             <p className="text-gray-500 dark:text-gray-400 text-center">
-                                Más gráficos próximamente (Rendimiento, Matriz)
+                                Más gráficos próximamente (Matriz)
                             </p>
                         </div>
                     </div>
