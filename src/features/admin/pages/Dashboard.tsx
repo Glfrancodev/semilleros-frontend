@@ -12,6 +12,11 @@ import JuradosKPI from "../components/dashboard/JuradosKPI";
 import AprobadosTutorChart from "../components/dashboard/AprobadosTutorChart";
 import AprobadosAdminChart from "../components/dashboard/AprobadosAdminChart";
 import AprobadosExposicionChart from "../components/dashboard/AprobadosExposicionChart";
+import ProyectosPorEstadoChart from "../components/dashboard/ProyectosPorEstadoChart";
+import ParticipacionAreaCategoriaChart from "../components/dashboard/ParticipacionAreaCategoriaChart";
+import CalificacionesFeriaChart from "../components/dashboard/CalificacionesFeriaChart";
+import CargaJuradosChart from "../components/dashboard/CargaJuradosChart";
+import ParticipacionEventosChart from "../components/dashboard/ParticipacionEventosChart";
 
 type TabType = "feriaActual" | "global";
 
@@ -68,16 +73,17 @@ export default function Dashboard() {
                             <AprobadosExposicionChart />
                         </div>
 
-                        {/* Charts Section - Placeholder */}
-                        <div className="space-y-4">
+                        {/* Charts Section */}
+                        <div className="space-y-6">
                             <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
                                 Gráficos y Análisis
                             </h3>
-                            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
-                                <p className="text-gray-500 dark:text-gray-400 text-center">
-                                    Los gráficos se agregarán próximamente
-                                </p>
-                            </div>
+
+                            <ProyectosPorEstadoChart />
+                            <ParticipacionAreaCategoriaChart />
+                            <CalificacionesFeriaChart />
+                            <CargaJuradosChart />
+                            <ParticipacionEventosChart />
                         </div>
                     </div>
                 )}

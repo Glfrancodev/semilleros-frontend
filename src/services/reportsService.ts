@@ -96,5 +96,31 @@ export const reportsService = {
         return response.data;
     },
 
-    // ... más métodos para otros gráficos se agregarán después
+    getParticipacionAreaCategoria: async (filtros?: FiltrosReportes): Promise<any> => {
+        const response = await axios.get(`${API_URL}/reports/feria-actual/graficos/participacion-area-categoria`, {
+            params: filtros
+        });
+        return response.data;
+    },
+
+    getCalificacionesFeria: async (filtros?: FiltrosReportes): Promise<any> => {
+        const response = await axios.get(`${API_URL}/reports/feria-actual/graficos/calificaciones-feria`, {
+            params: filtros
+        });
+        return response.data;
+    },
+
+    getCargaJurados: async (filtros?: FiltrosReportes): Promise<any> => {
+        const response = await axios.get(`${API_URL}/reports/feria-actual/graficos/carga-desempeno-jurados`, {
+            params: filtros
+        });
+        return response.data;
+    },
+
+    getParticipacionEventos: async (filtros?: any): Promise<any> => {
+        const response = await axios.get(`${API_URL}/reports/feria-actual/graficos/participacion-eventos`, {
+            params: filtros
+        });
+        return response.data;
+    },
 };
