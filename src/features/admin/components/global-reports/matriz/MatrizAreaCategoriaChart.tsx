@@ -107,17 +107,17 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
                 colorScale: {
                     ranges: metrica === 'cantidad'
                         ? [
-                            { from: 0, to: 0, color: '#f3f4f6', name: '0' },
-                            { from: 1, to: 2, color: '#dbeafe', name: '1-2' },
-                            { from: 3, to: 5, color: '#93c5fd', name: '3-5' },
-                            { from: 6, to: 10, color: '#3b82f6', name: '6-10' },
-                            { from: 11, to: 999, color: '#1e40af', name: '11+' },
+                            { from: 0, to: 0, color: '#E2E8F0', name: '0' }, // Slate 200
+                            { from: 1, to: 2, color: '#C7D2FE', name: '1-2' }, // Indigo 200
+                            { from: 3, to: 5, color: '#818CF8', name: '3-5' }, // Indigo 400
+                            { from: 6, to: 10, color: '#6366F1', name: '6-10' }, // Indigo 500
+                            { from: 11, to: 999, color: '#4F46E5', name: '11+' }, // Indigo 600
                         ]
                         : [
-                            { from: 0, to: 0, color: '#f3f4f6', name: 'Sin datos' },
-                            { from: 1, to: 60, color: '#fca5a5', name: '0-60' },
-                            { from: 61, to: 80, color: '#fcd34d', name: '61-80' },
-                            { from: 81, to: 100, color: '#86efac', name: '81-100' },
+                            { from: 0, to: 0, color: '#E2E8F0', name: 'Sin datos' }, // Slate 200
+                            { from: 1, to: 60, color: '#F87171', name: '0-60' }, // Red 400
+                            { from: 61, to: 80, color: '#FBBF24', name: '61-80' }, // Amber 400
+                            { from: 81, to: 100, color: '#34D399', name: '81-100' }, // Emerald 400
                         ],
                 },
             },

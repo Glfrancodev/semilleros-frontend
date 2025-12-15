@@ -159,12 +159,7 @@ export default function Dashboard() {
                             <MatrizAreaCategoriaChart />
                         </div>
 
-                        {/* Placeholder for future phases */}
-                        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
-                            <p className="text-gray-500 dark:text-gray-400 text-center">
-                                Más gráficos próximamente (Matriz)
-                            </p>
-                        </div>
+
                     </div>
                 )}
             </div>
