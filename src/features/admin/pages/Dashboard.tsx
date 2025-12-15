@@ -24,6 +24,10 @@ import EstudiantesGlobalKPI from "../components/global-reports/kpis/EstudiantesG
 import JuradosGlobalKPI from "../components/global-reports/kpis/JuradosGlobalKPI";
 import TutoresGlobalKPI from "../components/global-reports/kpis/TutoresGlobalKPI";
 
+// Global Tendencias Components
+import AreasFrequentesChart from "../components/global-reports/tendencias/AreasFrequentesChart";
+import CategoriasDistribucionChart from "../components/global-reports/tendencias/CategoriasDistribucionChart";
+
 type TabType = "feriaActual" | "global";
 
 export default function Dashboard() {
@@ -113,10 +117,21 @@ export default function Dashboard() {
                             <TutoresGlobalKPI />
                         </div>
 
+                        {/* Tendencias Section */}
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                Tendencias
+                            </h3>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <AreasFrequentesChart />
+                                <CategoriasDistribucionChart />
+                            </div>
+                        </div>
+
                         {/* Placeholder for future phases */}
                         <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
                             <p className="text-gray-500 dark:text-gray-400 text-center">
-                                Más gráficos y estadísticas globales próximamente (Tendencias, Rendimiento, Matriz)
+                                Más gráficos próximamente (Rendimiento, Matriz)
                             </p>
                         </div>
                     </div>

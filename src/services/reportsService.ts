@@ -154,4 +154,26 @@ export const reportsService = {
         });
         return response.data;
     },
+
+    // Tendencias Globales
+    getAreasFrecuentesGlobal: async (filtros?: any): Promise<any> => {
+        const response = await axios.get(`${API_URL}/reports/global/tendencias/areas-frecuentes`, {
+            params: filtros
+        });
+        return response.data;
+    },
+
+    getCategoriasFrecuentesGlobal: async (filtros?: any): Promise<any> => {
+        const response = await axios.get(`${API_URL}/reports/global/tendencias/categorias-frecuentes`, {
+            params: filtros
+        });
+        return response.data;
+    },
+
+    getComparacionFeriasGlobal: async (filtros?: any): Promise<any> => {
+        const response = await axios.get(`${API_URL}/reports/global/tendencias/comparacion-ferias`, {
+            params: filtros
+        });
+        return response.data;
+    },
 };
