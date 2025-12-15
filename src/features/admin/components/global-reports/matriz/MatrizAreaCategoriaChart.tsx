@@ -11,6 +11,21 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [metrica, setMetrica] = useState<'cantidad' | 'promedio'>('cantidad');
+    const [isDark, setIsDark] = useState(false);
+
+    // Detectar Dark Mode
+    useEffect(() => {
+        const checkDarkMode = () => {
+            setIsDark(document.documentElement.classList.contains('dark'));
+        };
+
+        checkDarkMode();
+
+        const observer = new MutationObserver(checkDarkMode);
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+        return () => observer.disconnect();
+    }, []);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -29,95 +44,44 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
         fetchData();
     }, [filtros]);
 
-    if (loading) {
-        return (
-            <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden p-6 dark:border-gray-800 dark:bg-white/[0.03] animate-pulse">
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-4"></div>
-                <div className="h-96 bg-gray-200 dark:bg-gray-700 rounded"></div>
-            </div>
-        );
-    }
-
-    if (!data || !data.matriz || data.matriz.length === 0) {
-        return (
-            <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden dark:border-gray-800 dark:bg-white/[0.03]">
-                <div className="h-1.5 w-full bg-rose-500 dark:bg-rose-400 opacity-80"></div>
-                <div className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
-                        Matriz Área vs Categoría
-                    </h3>
-                    <div className="flex items-center justify-center h-64 text-gray-500 dark:text-gray-400">
-                        <p>No hay datos disponibles</p>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-
     // Preparar datos para el heatmap
-    if (!Array.isArray(data.matriz) || !Array.isArray(data.totalesPorCategoria)) {
-        return (
-            <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden dark:border-gray-800 dark:bg-white/[0.03]">
-                <div className="h-1.5 w-full bg-rose-500 dark:bg-rose-400 opacity-80"></div>
-                <div className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
-                        Matriz Área vs Categoría
-                    </h3>
-                    <div className="flex items-center justify-center h-64 text-gray-500 dark:text-gray-400">
-                        <p>Error: Datos inválidos</p>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    const { areas, categorias, series } = useMemo(() => {
+        if (!data || !Array.isArray(data.matriz) || !Array.isArray(data.totalesPorCategoria)) {
+            return { areas: [], categorias: [], series: [] };
+        }
 
-    const areas = data.matriz.map((item: any) => item.area.nombre);
-    const categorias = data.totalesPorCategoria.map((cat: any) => cat.categoria);
+        const areas = data.matriz.map((item: any) => item.area.nombre);
+        const categorias = data.totalesPorCategoria.map((cat: any) => cat.categoria);
 
-    const series = categorias.map((categoria: string) => {
-        const dataPoints = data.matriz.map((areaItem: any) => {
-            const catData = areaItem.categorias?.find((c: any) => c.categoria.nombre === categoria);
-            if (!catData) return 0;
+        const series = categorias.map((categoria: string) => {
+            const dataPoints = data.matriz.map((areaItem: any) => {
+                const catData = areaItem.categorias?.find((c: any) => c.categoria.nombre === categoria);
+                if (!catData) return 0;
 
-            if (metrica === 'cantidad') {
-                return catData.metricas.totalProyectos;
-            } else {
-                return catData.metricas.promedioCalificacion || 0;
-            }
-        });
-
-        return {
-            name: categoria,
-            data: dataPoints,
-        };
-    });
-
-    // Detectar Dark Mode de forma segura
-    const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
-
-    useEffect(() => {
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (mutation.attributeName === 'class') {
-                    const newIsDark = document.documentElement.classList.contains('dark');
-                    setIsDark(newIsDark);
+                if (metrica === 'cantidad') {
+                    return catData.metricas.totalProyectos;
+                } else {
+                    return catData.metricas.promedioCalificacion || 0;
                 }
             });
+
+            return {
+                name: categoria,
+                data: dataPoints,
+            };
         });
 
-        observer.observe(document.documentElement, { attributes: true });
-        return () => observer.disconnect();
-    }, []);
+        return { areas, categorias, series };
+    }, [data, metrica]);
 
-    // Memoizar opciones para evitar re-renderizados innecesarios
+    // Opciones del heatmap
     const heatmapOptions = useMemo<ApexOptions>(() => ({
         chart: {
             type: 'heatmap',
             fontFamily: 'Outfit, sans-serif',
             toolbar: { show: false },
             background: 'transparent',
-            animations: { enabled: false } // Desactivar animaciones al cambiar tema para evitar saltos
+            animations: { enabled: false }
         },
         theme: {
             mode: isDark ? 'dark' : 'light',
@@ -130,17 +94,17 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
                 colorScale: {
                     ranges: metrica === 'cantidad'
                         ? [
-                            { from: 0, to: 0, color: isDark ? '#1e293b' : '#f1f5f9', name: '0' },
-                            { from: 1, to: 2, color: isDark ? '#3730a3' : '#c7d2fe', name: '1-2' },
-                            { from: 3, to: 5, color: isDark ? '#4f46e5' : '#818cf8', name: '3-5' },
-                            { from: 6, to: 10, color: isDark ? '#6366f1' : '#6366f1', name: '6-10' },
-                            { from: 11, to: 999, color: isDark ? '#818cf8' : '#4f46e5', name: '11+' },
+                            { from: 0, to: 0, color: isDark ? '#1e293b' : '#e2e8f0', name: '0' },
+                            { from: 1, to: 2, color: isDark ? '#7c3aed' : '#a78bfa', name: '1-2' },
+                            { from: 3, to: 5, color: isDark ? '#8b5cf6' : '#8b5cf6', name: '3-5' },
+                            { from: 6, to: 10, color: isDark ? '#a78bfa' : '#7c3aed', name: '6-10' },
+                            { from: 11, to: 999, color: isDark ? '#c4b5fd' : '#6d28d9', name: '11+' },
                         ]
                         : [
-                            { from: 0, to: 0, color: isDark ? '#1e293b' : '#f1f5f9', name: 'Sin datos' },
-                            { from: 1, to: 60, color: '#ef4444', name: '0-60' },
-                            { from: 61, to: 80, color: '#f59e0b', name: '61-80' },
-                            { from: 81, to: 100, color: '#10b981', name: '81-100' },
+                            { from: 0, to: 0, color: isDark ? '#1e293b' : '#e2e8f0', name: 'Sin datos' },
+                            { from: 1, to: 60, color: isDark ? '#dc2626' : '#f87171', name: '0-60' },
+                            { from: 61, to: 80, color: isDark ? '#f59e0b' : '#fbbf24', name: '61-80' },
+                            { from: 81, to: 100, color: isDark ? '#10b981' : '#34d399', name: '81-100' },
                         ],
                 },
             },
@@ -150,7 +114,7 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
             style: {
                 fontSize: '12px',
                 fontWeight: 600,
-                colors: [isDark ? '#e2e8f0' : '#1e293b'],
+                colors: [isDark ? '#f1f5f9' : '#0f172a'],
             },
             formatter: (val: number) => {
                 if (val === 0) return '-';
@@ -204,6 +168,46 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
         },
     }), [isDark, metrica, areas, categorias, data]);
 
+    if (loading) {
+        return (
+            <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden p-6 dark:border-gray-800 dark:bg-white/[0.03] animate-pulse">
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-4"></div>
+                <div className="h-96 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            </div>
+        );
+    }
+
+    if (!data || !data.matriz || data.matriz.length === 0) {
+        return (
+            <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden dark:border-gray-800 dark:bg-white/[0.03]">
+                <div className="h-1.5 w-full bg-rose-500 dark:bg-rose-400 opacity-80"></div>
+                <div className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+                        Matriz Área vs Categoría
+                    </h3>
+                    <div className="flex items-center justify-center h-64 text-gray-500 dark:text-gray-400">
+                        <p>No hay datos disponibles</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!Array.isArray(data.matriz) || !Array.isArray(data.totalesPorCategoria)) {
+        return (
+            <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden dark:border-gray-800 dark:bg-white/[0.03]">
+                <div className="h-1.5 w-full bg-rose-500 dark:bg-rose-400 opacity-80"></div>
+                <div className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+                        Matriz Área vs Categoría
+                    </h3>
+                    <div className="flex items-center justify-center h-64 text-gray-500 dark:text-gray-400">
+                        <p>Error: Datos inválidos</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden dark:border-gray-800 dark:bg-white/[0.03]">
@@ -214,7 +218,6 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
                         Matriz Área vs Categoría
                     </h3>
 
-                    {/* Metric Toggle */}
                     <div className="flex gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
                         <button
                             onClick={() => setMetrica('cantidad')}
@@ -237,7 +240,6 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
                     </div>
                 </div>
 
-                {/* Stats Cards */}
                 <div className="grid grid-cols-3 gap-3 mb-4">
                     <div className="p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg">
                         <p className="text-xs text-gray-600 dark:text-gray-400">Total Proyectos</p>
@@ -259,11 +261,17 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
                     </div>
                 </div>
 
-                {/* Heatmap */}
-                {/* Heatmap */}
-                <Chart key={`${metrica}-${isDark ? 'dark' : 'light'}`} options={heatmapOptions} series={series} type="heatmap" height={350} />
+                <div className="w-full" style={{ minHeight: '350px' }}>
+                    {series.length > 0 && (
+                        <Chart
+                            options={heatmapOptions}
+                            series={series}
+                            type="heatmap"
+                            height={350}
+                        />
+                    )}
+                </div>
 
-                {/* Totales por Categoría */}
                 <div className="mt-6">
                     <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
                         Totales por Categoría
