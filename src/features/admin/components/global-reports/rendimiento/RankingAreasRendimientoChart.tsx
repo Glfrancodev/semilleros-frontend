@@ -150,58 +150,58 @@ export default function RankingAreasRendimientoChart({ filtros }: RankingAreasRe
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead className="bg-gray-50 dark:bg-gray-800">
                             <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-12">
                                     #
                                 </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                                     Área
                                 </th>
-                                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                    Promedio
+                                <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-20">
+                                    Prom.
                                 </th>
-                                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                    Proyectos
+                                <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-16">
+                                    Proy.
                                 </th>
-                                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                    Desv. Est.
+                                <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-16">
+                                    σ
                                 </th>
-                                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-24">
                                     Evolución
                                 </th>
-                                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                    Tendencia
+                                <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-12">
+                                    ↕
                                 </th>
                             </tr>
                         </thead>
                         <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                             {data.ranking.map((item: any) => (
                                 <tr key={item.area.idArea} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                                    <td className="px-4 py-3 text-sm font-bold text-gray-900 dark:text-white">
+                                    <td className="px-2 py-3 text-sm font-bold text-gray-900 dark:text-white">
                                         {item.posicion === 1 && <span className="text-yellow-500">🥇</span>}
                                         {item.posicion === 2 && <span className="text-gray-400">🥈</span>}
                                         {item.posicion === 3 && <span className="text-amber-600">🥉</span>}
                                         {item.posicion > 3 && item.posicion}
                                     </td>
-                                    <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                                    <td className="px-3 py-3 text-sm font-medium text-gray-900 dark:text-white">
                                         {item.area.nombre}
                                     </td>
-                                    <td className="px-4 py-3 text-sm text-center font-bold text-indigo-600 dark:text-indigo-400">
-                                        {parseFloat(item.estadisticas.promedioHistorico).toFixed(2)}
+                                    <td className="px-2 py-3 text-sm text-center font-bold text-indigo-600 dark:text-indigo-400">
+                                        {parseFloat(item.estadisticas.promedioHistorico).toFixed(1)}
                                     </td>
-                                    <td className="px-4 py-3 text-sm text-center text-gray-700 dark:text-gray-300">
+                                    <td className="px-2 py-3 text-sm text-center text-gray-700 dark:text-gray-300">
                                         {item.estadisticas.totalProyectos}
                                     </td>
-                                    <td className="px-4 py-3 text-sm text-center text-gray-700 dark:text-gray-300">
-                                        {parseFloat(item.estadisticas.desviacionEstandar).toFixed(2)}
+                                    <td className="px-2 py-3 text-sm text-center text-gray-700 dark:text-gray-300">
+                                        {parseFloat(item.estadisticas.desviacionEstandar).toFixed(1)}
                                     </td>
-                                    <td className="px-4 py-3 text-center">
+                                    <td className="px-2 py-3 text-center">
                                         {item.evolucion.length > 1 ? (
                                             renderSparkline(item.evolucion)
                                         ) : (
                                             <span className="text-xs text-gray-400">N/A</span>
                                         )}
                                     </td>
-                                    <td className="px-4 py-3 text-center text-lg">
+                                    <td className="px-2 py-3 text-center text-lg">
                                         {getTendenciaIcon(item.tendencia.direccion)}
                                     </td>
                                 </tr>
