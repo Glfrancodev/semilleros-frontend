@@ -168,10 +168,9 @@ export const exportToPDF = async (elementId: string, data: ControlNotasData) => 
             backgroundColor: '#ffffff',
             logging: false,
             // TRUCO CLAVE: Ignorar estilos que causen problemas
-            ignoreElements: (element) => {
-                // Ignorar elementos que usen oklch o estilos problemáticos
-                const style = window.getComputedStyle(element);
-                return false; // No ignorar nada por ahora
+            ignoreElements: () => {
+                // No ignorar elementos por ahora
+                return false;
             },
             onclone: (clonedDoc) => {
                 // Inyectar CSS override para convertir todos los colores a RGB
