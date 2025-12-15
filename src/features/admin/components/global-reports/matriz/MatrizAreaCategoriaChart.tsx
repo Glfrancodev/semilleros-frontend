@@ -52,27 +52,49 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
         const max = Math.max(...valoresFiltrados);
         const min = Math.min(...valoresFiltrados);
 
-        // Si todos los valores son iguales o muy cercanos
-        if (max - min <= 2) {
+        // Obtener valores únicos y ordenarlos
+        const valoresUnicos = [...new Set(valoresFiltrados)].sort((a, b) => a - b);
+
+        // Si solo hay 1 valor único
+        if (valoresUnicos.length === 1) {
             return [
                 { from: 0, to: 0 },
-                { from: min, to: max + 1 }
+                { from: min, to: min }
             ];
         }
 
-        // Calcular cuartiles para distribución más inteligente
-        const sorted = [...valoresFiltrados].sort((a, b) => a - b);
-        const q1 = sorted[Math.floor(sorted.length * 0.25)];
-        const q2 = sorted[Math.floor(sorted.length * 0.5)];
-        const q3 = sorted[Math.floor(sorted.length * 0.75)];
+        // Si el máximo es menor o igual a 5, usar valores individuales
+        if (max <= 5) {
+            const rangos = [{ from: 0, to: 0 }];
+            valoresUnicos.forEach(val => {
+                rangos.push({ from: val, to: val });
+            });
+            return rangos;
+        }
 
-        // Crear rangos sin gaps y sin solapamientos
+        // Para valores entre 6 y 10, agrupar proporcionalmente en 4 rangos
+        if (max <= 10) {
+            return [
+                { from: 0, to: 0 },
+                { from: 1, to: Math.floor(max * 0.3) },
+                { from: Math.floor(max * 0.3) + 1, to: Math.floor(max * 0.6) },
+                { from: Math.floor(max * 0.6) + 1, to: Math.floor(max * 0.8) },
+                { from: Math.floor(max * 0.8) + 1, to: max }
+            ];
+        }
+
+        // Para valores mayores a 10, usar cuartiles
+        const sorted = [...valoresFiltrados].sort((a, b) => a - b);
+        const q1 = Math.floor(sorted[Math.floor(sorted.length * 0.25)]);
+        const q2 = Math.floor(sorted[Math.floor(sorted.length * 0.5)]);
+        const q3 = Math.floor(sorted[Math.floor(sorted.length * 0.75)]);
+
         return [
             { from: 0, to: 0 },
-            { from: 1, to: q1 },
+            { from: min, to: q1 },
             { from: q1 + 1, to: q2 },
             { from: q2 + 1, to: q3 },
-            { from: q3 + 1, to: max + 1 }
+            { from: q3 + 1, to: max }
         ];
     };
 
@@ -153,9 +175,9 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
                 color: colores[index],
                 name: rango.from === 0
                     ? '0'
-                    : rango.to <= rango.from + 1
-                        ? `${Math.round(rango.from)}`
-                        : `${Math.round(rango.from)}-${Math.round(rango.to - 1)}`
+                    : rango.from === rango.to
+                        ? `${rango.from}`
+                        : `${rango.from}-${rango.to}`
             }));
         };
 
