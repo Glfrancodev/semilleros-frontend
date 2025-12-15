@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import KPICard from "./KPICard";
-import { reportsService, KPIResponse } from "../../../../services/reportsService";
+import { reportsService } from "../../../../services/reportsService";
 import { UserIcon } from "../../../../assets/icons";
 
 interface JuradosKPIProps {
@@ -8,7 +8,7 @@ interface JuradosKPIProps {
 }
 
 export default function JuradosKPI({ filtros }: JuradosKPIProps) {
-    const [data, setData] = useState<KPIResponse | null>(null);
+    const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -17,7 +17,7 @@ export default function JuradosKPI({ filtros }: JuradosKPIProps) {
             try {
                 setLoading(true);
                 const response = await reportsService.getJurados(filtros);
-                setData(response);
+                setData((response as any).data);
                 setError(null);
             } catch (err) {
                 console.error('Error fetching jurados:', err);
@@ -45,7 +45,7 @@ export default function JuradosKPI({ filtros }: JuradosKPIProps) {
     return (
         <KPICard
             title="Jurados"
-            value={data?.valor ?? 0}
+            value={data?.totalUnicos ?? 0}
             subtitle="Docentes jurados asignados"
             icon={<UserIcon />}
             loading={loading}

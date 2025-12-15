@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import KPICard from "./KPICard";
-import { reportsService, KPIResponse } from "../../../../services/reportsService";
+import { reportsService } from "../../../../services/reportsService";
 import { FolderIcon } from "../../../../assets/icons";
 
 interface ProyectosKPIProps {
@@ -8,7 +8,7 @@ interface ProyectosKPIProps {
 }
 
 export default function ProyectosKPI({ filtros }: ProyectosKPIProps) {
-    const [data, setData] = useState<KPIResponse | null>(null);
+    const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -17,7 +17,7 @@ export default function ProyectosKPI({ filtros }: ProyectosKPIProps) {
             try {
                 setLoading(true);
                 const response = await reportsService.getProyectosInscritos(filtros);
-                setData(response);
+                setData((response as any).data);
                 setError(null);
             } catch (err) {
                 console.error('Error fetching proyectos:', err);
@@ -45,7 +45,7 @@ export default function ProyectosKPI({ filtros }: ProyectosKPIProps) {
     return (
         <KPICard
             title="Proyectos Inscritos"
-            value={data?.valor ?? 0}
+            value={data?.total ?? 0}
             subtitle="Total de proyectos registrados"
             icon={<FolderIcon />}
             loading={loading}

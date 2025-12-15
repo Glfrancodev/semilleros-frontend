@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import KPICard from "./KPICard";
-import { reportsService, KPIResponse } from "../../../../services/reportsService";
+import { reportsService } from "../../../../services/reportsService";
 import { UserCircleIcon } from "../../../../assets/icons";
 
 interface TutoresKPIProps {
@@ -8,7 +8,7 @@ interface TutoresKPIProps {
 }
 
 export default function TutoresKPI({ filtros }: TutoresKPIProps) {
-    const [data, setData] = useState<KPIResponse | null>(null);
+    const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -17,7 +17,7 @@ export default function TutoresKPI({ filtros }: TutoresKPIProps) {
             try {
                 setLoading(true);
                 const response = await reportsService.getTutores(filtros);
-                setData(response);
+                setData((response as any).data);
                 setError(null);
             } catch (err) {
                 console.error('Error fetching tutores:', err);
@@ -45,7 +45,7 @@ export default function TutoresKPI({ filtros }: TutoresKPIProps) {
     return (
         <KPICard
             title="Tutores"
-            value={data?.valor ?? 0}
+            value={data?.totalUnicos ?? 0}
             subtitle="Docentes tutores activos"
             icon={<UserCircleIcon />}
             loading={loading}
