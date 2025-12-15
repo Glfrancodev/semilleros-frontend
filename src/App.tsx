@@ -5,7 +5,7 @@ import NotFound from "./legacy/pages/OtherPage/NotFound";
 import Calendar from "./legacy/pages/Calendar";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
-import Home from "./legacy/pages/Dashboard/Home";
+import Dashboard from "./features/admin/pages/Dashboard";
 import SignInPage from "./features/auth/pages/SignInPage";
 import ProfilePage from "./features/profile/pages/ProfilePage";
 import PublicProfilePage from "./features/profile/pages/PublicProfilePage";
@@ -54,7 +54,7 @@ function PrivateRoute() {
 // Ruta pública: si ya está autenticado, redirige según el rol
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { token, user } = useAuth();
-  
+
   if (!token) {
     return <>{children}</>;
   }
@@ -63,17 +63,17 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   if (user) {
     switch (user.rol) {
       case ROLES.ADMIN:
-        return <Navigate to="/tareas-revisiones" replace />;
+        return <Navigate to="/dashboard" replace />;
       case ROLES.DOCENTE:
         return <Navigate to="/mis-materias" replace />;
       case ROLES.ESTUDIANTE:
         return <Navigate to="/estudiante/convocatorias" replace />;
       default:
-        return <Navigate to="/tareas-revisiones" replace />;
+        return <Navigate to="/dashboard" replace />;
     }
   }
 
-  return <Navigate to="/tareas-revisiones" replace />;
+  return <Navigate to="/dashboard" replace />;
 }
 
 export default function App() {
@@ -103,7 +103,7 @@ export default function App() {
           {/* Rutas públicas adicionales */}
           <Route path="/reunion/:proyectoId" element={<ReunionPage />} />
           <Route path="/estudiante/proyectos/:idProyecto/documento" element={<DocumentoEditorPage />} />
-          
+
           {/* Rutas públicas con layout (ferias y proyectos) */}
           <Route element={<AppLayout />}>
             <Route path="/estudiante/proyectos/:idProyecto" element={<ProyectoDetallePage />} />
@@ -115,10 +115,10 @@ export default function App() {
           {/* Rutas privadas */}
           <Route element={<PrivateRoute />}>
             <Route element={<AppLayout />}>
-              <Route path="/dashboard" element={<Home />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/calendar" element={<Calendar />} />
-              
+
               {/* Rutas de Admin */}
               <Route path="/usuarios" element={<UsuariosPage />} />
               <Route path="/administrativos" element={<AdministrativosPage />} />
@@ -134,12 +134,12 @@ export default function App() {
               <Route path="/ferias" element={<FeriasPage />} />
               <Route path="/semestres" element={<SemestresPage />} />
               <Route path="/materias/:idSemestre" element={<MateriasPage />} />
-              
+
               {/* Rutas de Estudiante */}
               <Route path="/estudiante/convocatorias" element={<ConvocatoriasPage />} />
               <Route path="/estudiante/proyectos/guias" element={<GuiasDescubrirPage />} />
               <Route path="/estudiante/proyectos/mis-proyectos" element={<MisProyectosPage />} />
-              
+
               {/* Rutas de Docente */}
               <Route path="/mis-materias" element={<MisMateriasPage />} />
               <Route path="/mis-materias/:idMateria/proyectos" element={<MateriaProyectos />} />
@@ -153,7 +153,7 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AuthProvider>
-      
+
       {/* Toast Notifications */}
       <Toaster
         position="top-center"

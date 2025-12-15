@@ -25,6 +25,11 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
+    icon: <GridIcon />,
+    name: "Dashboard",
+    path: "/dashboard",
+  },
+  {
     icon: <UserCircleIcon />,
     name: "Cuentas",
     subItems: [
@@ -105,10 +110,9 @@ const AdminSidebar: React.FC = () => {
   return (
     <aside
       className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
-        ${
-          isExpanded || isMobileOpen
-            ? "w-[290px]"
-            : isHovered
+        ${isExpanded || isMobileOpen
+          ? "w-[290px]"
+          : isHovered
             ? "w-[290px]"
             : "w-[90px]"
         }
@@ -119,9 +123,8 @@ const AdminSidebar: React.FC = () => {
     >
       {/* Logo */}
       <div
-        className={`py-8 flex ${
-          !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
-        }`}
+        className={`py-8 flex ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
+          }`}
       >
         <Link to="/">
           {isExpanded || isHovered || isMobileOpen ? (
@@ -155,11 +158,10 @@ const AdminSidebar: React.FC = () => {
       {/* Menu */}
       <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
         <h2
-          className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-            !isExpanded && !isHovered
+          className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${!isExpanded && !isHovered
               ? "lg:justify-center"
               : "justify-start"
-          }`}
+            }`}
         >
           {isExpanded || isHovered || isMobileOpen ? "Menú Admin" : <HorizontaLDots />}
         </h2>
@@ -170,22 +172,19 @@ const AdminSidebar: React.FC = () => {
               {nav.subItems ? (
                 <button
                   onClick={() => handleSubmenuToggle(index)}
-                  className={`menu-item group ${
-                    openSubmenu === index
+                  className={`menu-item group ${openSubmenu === index
                       ? "menu-item-active"
                       : "menu-item-inactive"
-                  } cursor-pointer ${
-                    !isExpanded && !isHovered
+                    } cursor-pointer ${!isExpanded && !isHovered
                       ? "lg:justify-center"
                       : "lg:justify-start"
-                  }`}
+                    }`}
                 >
                   <span
-                    className={`menu-item-icon-size ${
-                      openSubmenu === index
+                    className={`menu-item-icon-size ${openSubmenu === index
                         ? "menu-item-icon-active"
                         : "menu-item-icon-inactive"
-                    }`}
+                      }`}
                   >
                     {nav.icon}
                   </span>
@@ -194,29 +193,26 @@ const AdminSidebar: React.FC = () => {
                   )}
                   {(isExpanded || isHovered || isMobileOpen) && (
                     <ChevronDownIcon
-                      className={`ml-auto w-5 h-5 transition-transform duration-200 ${
-                        openSubmenu === index
+                      className={`ml-auto w-5 h-5 transition-transform duration-200 ${openSubmenu === index
                           ? "rotate-180 text-brand-500"
                           : ""
-                      }`}
+                        }`}
                     />
                   )}
                 </button>
               ) : (
                 <Link
                   to={nav.path!}
-                  className={`menu-item group ${
-                    isActive(nav.path!)
+                  className={`menu-item group ${isActive(nav.path!)
                       ? "menu-item-active"
                       : "menu-item-inactive"
-                  }`}
+                    }`}
                 >
                   <span
-                    className={`menu-item-icon-size ${
-                      isActive(nav.path!)
+                    className={`menu-item-icon-size ${isActive(nav.path!)
                         ? "menu-item-icon-active"
                         : "menu-item-icon-inactive"
-                    }`}
+                      }`}
                   >
                     {nav.icon}
                   </span>
@@ -245,11 +241,10 @@ const AdminSidebar: React.FC = () => {
                       <li key={subItem.name}>
                         <Link
                           to={subItem.path}
-                          className={`menu-dropdown-item ${
-                            isActive(subItem.path)
+                          className={`menu-dropdown-item ${isActive(subItem.path)
                               ? "menu-dropdown-item-active"
                               : "menu-dropdown-item-inactive"
-                          }`}
+                            }`}
                         >
                           {subItem.icon && (
                             <span className="menu-item-icon-size w-5 h-5 flex-shrink-0">
