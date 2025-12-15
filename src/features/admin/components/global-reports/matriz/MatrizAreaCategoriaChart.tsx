@@ -44,25 +44,58 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
         fetchData();
     }, [filtros]);
 
+    // Calcular rangos dinámicos basados en los datos
+    const getRangosDinamicos = (valores: number[]) => {
+        const valoresFiltrados = valores.filter(v => v > 0);
+        if (valoresFiltrados.length === 0) return null;
+
+        const max = Math.max(...valoresFiltrados);
+        const min = Math.min(...valoresFiltrados);
+
+        // Si todos los valores son iguales o muy cercanos
+        if (max - min <= 2) {
+            return [
+                { from: 0, to: 0 },
+                { from: min, to: max }
+            ];
+        }
+
+        // Calcular cuartiles para distribución más inteligente
+        const sorted = [...valoresFiltrados].sort((a, b) => a - b);
+        const q1 = sorted[Math.floor(sorted.length * 0.25)];
+        const q2 = sorted[Math.floor(sorted.length * 0.5)];
+        const q3 = sorted[Math.floor(sorted.length * 0.75)];
+
+        return [
+            { from: 0, to: 0 },
+            { from: min, to: q1 },
+            { from: q1 + 0.01, to: q2 },
+            { from: q2 + 0.01, to: q3 },
+            { from: q3 + 0.01, to: max }
+        ];
+    };
+
     // Preparar datos para el heatmap
-    const { areas, categorias, series } = useMemo(() => {
+    const { areas, categorias, series, rangos } = useMemo(() => {
         if (!data || !Array.isArray(data.matriz) || !Array.isArray(data.totalesPorCategoria)) {
-            return { areas: [], categorias: [], series: [] };
+            return { areas: [], categorias: [], series: [], rangos: null };
         }
 
         const areas = data.matriz.map((item: any) => item.area.nombre);
         const categorias = data.totalesPorCategoria.map((cat: any) => cat.categoria);
 
+        const todosLosValores: number[] = [];
         const series = categorias.map((categoria: string) => {
             const dataPoints = data.matriz.map((areaItem: any) => {
                 const catData = areaItem.categorias?.find((c: any) => c.categoria.nombre === categoria);
                 if (!catData) return 0;
 
-                if (metrica === 'cantidad') {
-                    return catData.metricas.totalProyectos;
-                } else {
-                    return catData.metricas.promedioCalificacion || 0;
-                }
+                const valor = metrica === 'cantidad'
+                    ? catData.metricas.totalProyectos
+                    : (catData.metricas.promedioCalificacion || 0);
+
+                todosLosValores.push(valor);
+                return valor;
             });
 
             return {
@@ -71,102 +104,148 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
             };
         });
 
-        return { areas, categorias, series };
+        const rangos = metrica === 'cantidad'
+            ? getRangosDinamicos(todosLosValores)
+            : null; // Para promedio usamos rangos fijos (0-60, 61-80, 81-100)
+
+        return { areas, categorias, series, rangos };
     }, [data, metrica]);
 
     // Opciones del heatmap
-    const heatmapOptions = useMemo<ApexOptions>(() => ({
-        chart: {
-            type: 'heatmap',
-            fontFamily: 'Outfit, sans-serif',
-            toolbar: { show: false },
-            background: 'transparent',
-            animations: { enabled: false }
-        },
-        theme: {
-            mode: isDark ? 'dark' : 'light',
-        },
-        plotOptions: {
-            heatmap: {
-                shadeIntensity: 0.5,
-                radius: 4,
-                useFillColorAsStroke: false,
-                colorScale: {
-                    ranges: metrica === 'cantidad'
-                        ? [
-                            { from: 0, to: 0, color: isDark ? '#1e293b' : '#e2e8f0', name: '0' },
-                            { from: 1, to: 2, color: isDark ? '#7c3aed' : '#a78bfa', name: '1-2' },
-                            { from: 3, to: 5, color: isDark ? '#8b5cf6' : '#8b5cf6', name: '3-5' },
-                            { from: 6, to: 10, color: isDark ? '#a78bfa' : '#7c3aed', name: '6-10' },
-                            { from: 11, to: 999, color: isDark ? '#c4b5fd' : '#6d28d9', name: '11+' },
-                        ]
-                        : [
-                            { from: 0, to: 0, color: isDark ? '#1e293b' : '#e2e8f0', name: 'Sin datos' },
-                            { from: 1, to: 60, color: isDark ? '#dc2626' : '#f87171', name: '0-60' },
-                            { from: 61, to: 80, color: isDark ? '#f59e0b' : '#fbbf24', name: '61-80' },
-                            { from: 81, to: 100, color: isDark ? '#10b981' : '#34d399', name: '81-100' },
-                        ],
+    const heatmapOptions = useMemo<ApexOptions>(() => {
+        // Función para generar rangos de colores
+        const getColorRanges = () => {
+            if (metrica === 'promedio') {
+                // Rangos fijos para promedio con colores MUY distinguibles
+                return isDark ? [
+                    { from: 0, to: 0, color: '#0f172a', name: 'Sin datos' },
+                    { from: 1, to: 60, color: '#dc2626', name: '0-60 (Bajo)' },
+                    { from: 61, to: 80, color: '#f59e0b', name: '61-80 (Medio)' },
+                    { from: 81, to: 100, color: '#10b981', name: '81-100 (Alto)' },
+                ] : [
+                    { from: 0, to: 0, color: '#f1f5f9', name: 'Sin datos' },
+                    { from: 1, to: 60, color: '#ef4444', name: '0-60 (Bajo)' },
+                    { from: 61, to: 80, color: '#f59e0b', name: '61-80 (Medio)' },
+                    { from: 81, to: 100, color: '#22c55e', name: '81-100 (Alto)' },
+                ];
+            }
+
+            // Rangos dinámicos para cantidad con colores MUY distinguibles
+            if (!rangos || rangos.length < 2) {
+                return isDark ? [
+                    { from: 0, to: 0, color: '#0f172a', name: '0' },
+                    { from: 1, to: 999, color: '#8b5cf6', name: '1+' },
+                ] : [
+                    { from: 0, to: 0, color: '#f1f5f9', name: '0' },
+                    { from: 1, to: 999, color: '#7c3aed', name: '1+' },
+                ];
+            }
+
+            // Colores con MUCHO contraste en degradado
+            const coloresDark = ['#0f172a', '#1e40af', '#3b82f6', '#8b5cf6', '#c026d3'];
+            const coloresLight = ['#f1f5f9', '#93c5fd', '#60a5fa', '#8b5cf6', '#a855f7'];
+            const colores = isDark ? coloresDark : coloresLight;
+
+            return rangos.map((rango, index) => ({
+                from: rango.from,
+                to: rango.to,
+                color: colores[index],
+                name: rango.from === 0
+                    ? '0'
+                    : rango.to === rango.from
+                        ? `${Math.round(rango.from)}`
+                        : `${Math.round(rango.from)}-${Math.round(rango.to)}`
+            }));
+        };
+
+        return {
+            chart: {
+                type: 'heatmap',
+                fontFamily: 'Outfit, sans-serif',
+                toolbar: { show: false },
+                background: 'transparent',
+                animations: { enabled: false }
+            },
+            theme: {
+                mode: isDark ? 'dark' : 'light',
+            },
+            plotOptions: {
+                heatmap: {
+                    shadeIntensity: 0.5,
+                    radius: 4,
+                    useFillColorAsStroke: false,
+                    colorScale: {
+                        ranges: getColorRanges(),
+                    },
                 },
             },
-        },
-        dataLabels: {
-            enabled: true,
-            style: {
+            dataLabels: {
+                enabled: true,
+                style: {
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    colors: [isDark ? '#ffffff' : '#000000'],
+                },
+                formatter: (val: number) => {
+                    if (val === 0) return '-';
+                    return metrica === 'cantidad' ? val.toString() : val.toFixed(1);
+                },
+            },
+            xaxis: {
+                categories: areas,
+                labels: {
+                    style: {
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        colors: isDark ? '#94a3b8' : '#475569',
+                    },
+                },
+            },
+            yaxis: {
+                labels: {
+                    style: {
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        colors: isDark ? '#94a3b8' : '#475569',
+                    },
+                },
+            },
+            tooltip: {
+                theme: isDark ? 'dark' : 'light',
+                y: {
+                    formatter: (val: number, opts: any) => {
+                        if (val === 0) return 'Sin datos';
+                        const categoria = categorias[opts.seriesIndex];
+                        const area = areas[opts.dataPointIndex];
+
+                        const areaData = data.matriz.find((a: any) => a.area.nombre === area);
+                        const catData = areaData?.categorias?.find((c: any) => c.categoria.nombre === categoria);
+
+                        if (!catData) return 'Sin datos';
+
+                        if (metrica === 'cantidad') {
+                            return `${val} proyectos (${catData.metricas.porcentajeDelArea.toFixed(1)}% del área)`;
+                        } else {
+                            return `Promedio: ${val.toFixed(2)} pts`;
+                        }
+                    },
+                },
+            },
+            legend: {
+                show: true,
+                position: 'bottom',
                 fontSize: '12px',
-                fontWeight: 600,
-                colors: [isDark ? '#f1f5f9' : '#0f172a'],
-            },
-            formatter: (val: number) => {
-                if (val === 0) return '-';
-                return metrica === 'cantidad' ? val.toString() : val.toFixed(1);
-            },
-        },
-        xaxis: {
-            categories: areas,
-            labels: {
-                style: {
-                    fontSize: '11px',
-                    colors: isDark ? '#94a3b8' : '#64748b',
+                labels: {
+                    colors: isDark ? '#e2e8f0' : '#334155',
                 },
+                markers: {
+                    width: 14,
+                    height: 14,
+                    radius: 2,
+                } as any
             },
-        },
-        yaxis: {
-            labels: {
-                style: {
-                    fontSize: '11px',
-                    colors: isDark ? '#94a3b8' : '#64748b',
-                },
-            },
-        },
-        tooltip: {
-            theme: isDark ? 'dark' : 'light',
-            y: {
-                formatter: (val: number, opts: any) => {
-                    if (val === 0) return 'Sin datos';
-                    const categoria = categorias[opts.seriesIndex];
-                    const area = areas[opts.dataPointIndex];
-
-                    const areaData = data.matriz.find((a: any) => a.area.nombre === area);
-                    const catData = areaData?.categorias?.find((c: any) => c.categoria.nombre === categoria);
-
-                    if (!catData) return 'Sin datos';
-
-                    if (metrica === 'cantidad') {
-                        return `${val} proyectos (${catData.metricas.porcentajeDelArea.toFixed(1)}% del área)`;
-                    } else {
-                        return `Promedio: ${val.toFixed(2)} pts`;
-                    }
-                },
-            },
-        },
-        legend: {
-            show: true,
-            position: 'bottom',
-            labels: {
-                colors: isDark ? '#cbd5e1' : '#475569',
-            },
-        },
-    }), [isDark, metrica, areas, categorias, data]);
+        };
+    }, [isDark, metrica, areas, categorias, data, rangos]);
 
     if (loading) {
         return (
