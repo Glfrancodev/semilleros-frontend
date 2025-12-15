@@ -56,7 +56,7 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
         if (max - min <= 2) {
             return [
                 { from: 0, to: 0 },
-                { from: min, to: max }
+                { from: min, to: max + 1 }
             ];
         }
 
@@ -66,12 +66,13 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
         const q2 = sorted[Math.floor(sorted.length * 0.5)];
         const q3 = sorted[Math.floor(sorted.length * 0.75)];
 
+        // Crear rangos sin gaps y sin solapamientos
         return [
             { from: 0, to: 0 },
-            { from: min, to: q1 },
-            { from: q1 + 0.01, to: q2 },
-            { from: q2 + 0.01, to: q3 },
-            { from: q3 + 0.01, to: max }
+            { from: 1, to: q1 },
+            { from: q1 + 1, to: q2 },
+            { from: q2 + 1, to: q3 },
+            { from: q3 + 1, to: max + 1 }
         ];
     };
 
@@ -152,9 +153,9 @@ export default function MatrizAreaCategoriaChart({ filtros }: MatrizAreaCategori
                 color: colores[index],
                 name: rango.from === 0
                     ? '0'
-                    : rango.to === rango.from
+                    : rango.to <= rango.from + 1
                         ? `${Math.round(rango.from)}`
-                        : `${Math.round(rango.from)}-${Math.round(rango.to)}`
+                        : `${Math.round(rango.from)}-${Math.round(rango.to - 1)}`
             }));
         };
 
