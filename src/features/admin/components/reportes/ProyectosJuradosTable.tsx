@@ -33,7 +33,7 @@ export default function ProyectosJuradosTable({ data, loading, reporteGenerado, 
         return (
             <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-8">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-                    👨‍⚖️ Previsualización
+                    Reporte Generado:
                 </h3>
                 <div className="text-center text-gray-500 dark:text-gray-400">
                     <p>Selecciona un reporte y haz clic en Generar Reporte</p>
@@ -50,7 +50,7 @@ export default function ProyectosJuradosTable({ data, loading, reporteGenerado, 
         return (
             <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-8">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-                    👨‍⚖️ Previsualización
+                    Reporte Generado:
                 </h3>
                 <div className="text-center text-gray-500 dark:text-gray-400">
                     <p>No hay proyectos aprobados para exposición</p>
@@ -69,7 +69,7 @@ export default function ProyectosJuradosTable({ data, loading, reporteGenerado, 
         <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
             {/* Título */}
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-                👨‍⚖️ Previsualización
+                Reporte Generado:
             </h3>
 
             <div className="space-y-6">
@@ -155,7 +155,7 @@ export default function ProyectosJuradosTable({ data, loading, reporteGenerado, 
                                 {data.proyectos.map((proyecto, index) => (
                                     <tr
                                         key={proyecto.idProyecto}
-                                        className={index % 2 === 0 ? "bg-white dark:bg-gray-800" : "bg-gray-50 dark:bg-gray-750"}
+                                        className={index % 2 === 0 ? "bg-white dark:bg-gray-800" : "bg-gray-50 dark:bg-gray-900"}
                                     >
                                         {isColumnVisible("proyecto") && (
                                             <td className="px-4 py-3">

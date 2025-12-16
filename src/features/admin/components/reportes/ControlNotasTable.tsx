@@ -16,7 +16,7 @@ export default function ControlNotasTable({ data, loading, visibleColumns = [] }
         return (
             <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-8">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-                    📋 Previsualización
+                    Reporte Generado:
                 </h3>
                 <div className="animate-pulse space-y-4">
                     <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
@@ -31,7 +31,7 @@ export default function ControlNotasTable({ data, loading, visibleColumns = [] }
         return (
             <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-8">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-                    📋 Previsualización
+                    Reporte Generado:
                 </h3>
                 <div className="text-center text-gray-500 dark:text-gray-400">
                     <p>No hay datos para mostrar</p>
@@ -71,7 +71,7 @@ export default function ControlNotasTable({ data, loading, visibleColumns = [] }
         <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
             {/* Título */}
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-                📋 Previsualización
+                Reporte Generado:
             </h3>
 
             <div className="space-y-6">
@@ -110,17 +110,17 @@ export default function ControlNotasTable({ data, loading, visibleColumns = [] }
                             <thead className="bg-gray-50 dark:bg-gray-700">
                                 <tr>
                                     {isColumnVisible("proyecto") && (
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-r border-gray-200 dark:border-gray-600">
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Proyecto
                                         </th>
                                     )}
                                     {isColumnVisible("area") && (
-                                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-r border-gray-200 dark:border-gray-600">
+                                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Área
                                         </th>
                                     )}
                                     {isColumnVisible("categoria") && (
-                                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-r border-gray-200 dark:border-gray-600">
+                                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Categoría
                                         </th>
                                     )}
@@ -145,24 +145,24 @@ export default function ControlNotasTable({ data, loading, visibleColumns = [] }
                                 {data.matriz.map((fila, index) => (
                                     <tr
                                         key={fila.proyecto.idProyecto}
-                                        className={index % 2 === 0 ? "bg-white dark:bg-gray-800" : "bg-gray-50 dark:bg-gray-750"}
+                                        className={index % 2 === 0 ? "bg-white dark:bg-gray-800" : "bg-gray-50 dark:bg-gray-900"}
                                     >
                                         {isColumnVisible("proyecto") && (
-                                            <td className="px-4 py-3 border-r border-gray-200 dark:border-gray-600">
+                                            <td className="px-4 py-3">
                                                 <div className="text-sm font-medium text-gray-900 dark:text-white">
                                                     {fila.proyecto.nombre}
                                                 </div>
                                             </td>
                                         )}
                                         {isColumnVisible("area") && (
-                                            <td className="px-4 py-3 text-center border-r border-gray-200 dark:border-gray-600">
+                                            <td className="px-4 py-3 text-center">
                                                 <span className="text-sm text-gray-700 dark:text-gray-300">
                                                     {fila.proyecto.area}
                                                 </span>
                                             </td>
                                         )}
                                         {isColumnVisible("categoria") && (
-                                            <td className="px-4 py-3 text-center border-r border-gray-200 dark:border-gray-600">
+                                            <td className="px-4 py-3 text-center">
                                                 <span className="text-sm text-gray-700 dark:text-gray-300">
                                                     {fila.proyecto.categoria}
                                                 </span>

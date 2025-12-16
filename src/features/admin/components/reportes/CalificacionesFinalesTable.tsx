@@ -4,14 +4,20 @@ interface Props {
     data: CalificacionesFinalesData | null;
     loading: boolean;
     reporteGenerado: boolean;
+    visibleColumns?: string[];
 }
 
-export default function CalificacionesFinalesTable({ data, loading, reporteGenerado }: Props) {
+export default function CalificacionesFinalesTable({ data, loading, reporteGenerado, visibleColumns = [] }: Props) {
+    const isColumnVisible = (columnId: string) => {
+        if (visibleColumns.length === 0) return true;
+        return visibleColumns.includes(columnId);
+    };
+
     if (loading) {
         return (
             <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-8">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-                    📊 Previsualización
+                    Reporte Generado:
                 </h3>
                 <div className="animate-pulse space-y-4">
                     <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
@@ -27,7 +33,7 @@ export default function CalificacionesFinalesTable({ data, loading, reporteGener
         return (
             <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-8">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-                    📊 Previsualización
+                    Reporte Generado:
                 </h3>
                 <div className="text-center text-gray-500 dark:text-gray-400">
                     <p>Selecciona un reporte y haz clic en Generar Reporte</p>
@@ -44,7 +50,7 @@ export default function CalificacionesFinalesTable({ data, loading, reporteGener
         return (
             <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-8">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-                    📊 Previsualización
+                    Reporte Generado:
                 </h3>
                 <div className="text-center text-gray-500 dark:text-gray-400">
                     <p>No hay proyectos aprobados para exposición</p>
@@ -104,7 +110,7 @@ export default function CalificacionesFinalesTable({ data, loading, reporteGener
         <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
             {/* Título */}
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-                📊 Previsualización
+                Reporte Generado:
             </h3>
 
             <div className="space-y-6">
@@ -136,65 +142,90 @@ export default function CalificacionesFinalesTable({ data, loading, reporteGener
                         <table className="w-full">
                             <thead className="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Proyecto
-                                    </th>
-                                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Área
-                                    </th>
-                                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Categoría
-                                    </th>
-                                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Cal. 1
-                                    </th>
-                                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Cal. 2
-                                    </th>
-                                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Cal. 3
-                                    </th>
-                                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Nota Final
-                                    </th>
+                                    {isColumnVisible("proyecto") && (
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Proyecto
+                                        </th>
+                                    )}
+                                    {isColumnVisible("area") && (
+                                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Área
+                                        </th>
+                                    )}
+                                    {isColumnVisible("categoria") && (
+                                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Categoría
+                                        </th>
+                                    )}
+                                    {isColumnVisible("calificacion1") && (
+                                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Cal. 1
+                                        </th>
+                                    )}
+                                    {isColumnVisible("calificacion2") && (
+                                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Cal. 2
+                                        </th>
+                                    )}
+                                    {isColumnVisible("calificacion3") && (
+                                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Cal. 3
+                                        </th>
+                                    )}
+                                    {isColumnVisible("notaFinal") && (
+                                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Nota Final
+                                        </th>
+                                    )}
                                 </tr>
                             </thead>
                             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 {data.proyectos.map((proyecto, index) => (
                                     <tr
                                         key={proyecto.idProyecto}
-                                        className={index % 2 === 0 ? "bg-white dark:bg-gray-800" : "bg-gray-50 dark:bg-gray-750"}
+                                        className={index % 2 === 0 ? "bg-white dark:bg-gray-800" : "bg-gray-50 dark:bg-gray-900"}
                                     >
-                                        <td className="px-4 py-3">
-                                            <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                                {proyecto.nombre}
-                                            </div>
-                                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                {proyecto.area} • {proyecto.categoria}
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            <span className="text-sm text-gray-900 dark:text-white">
-                                                {proyecto.area}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            <span className="text-sm text-gray-900 dark:text-white">
-                                                {proyecto.categoria}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            {renderCalificacion(proyecto.calificacion1)}
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            {renderCalificacion(proyecto.calificacion2)}
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            {renderCalificacion(proyecto.calificacion3)}
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            {renderNotaFinal(proyecto.notaFinal)}
-                                        </td>
+                                        {isColumnVisible("proyecto") && (
+                                            <td className="px-4 py-3">
+                                                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                                    {proyecto.nombre}
+                                                </div>
+                                            </td>
+                                        )}
+                                        {isColumnVisible("area") && (
+                                            <td className="px-4 py-3 text-center">
+                                                <span className="text-sm text-gray-700 dark:text-gray-300">
+                                                    {proyecto.area}
+                                                </span>
+                                            </td>
+                                        )}
+                                        {isColumnVisible("categoria") && (
+                                            <td className="px-4 py-3 text-center">
+                                                <span className="text-sm text-gray-700 dark:text-gray-300">
+                                                    {proyecto.categoria}
+                                                </span>
+                                            </td>
+                                        )}
+                                        {isColumnVisible("calificacion1") && (
+                                            <td className="px-4 py-3 text-center">
+                                                {renderCalificacion(proyecto.calificacion1)}
+                                            </td>
+                                        )}
+                                        {isColumnVisible("calificacion2") && (
+                                            <td className="px-4 py-3 text-center">
+                                                {renderCalificacion(proyecto.calificacion2)}
+                                            </td>
+                                        )}
+                                        {isColumnVisible("calificacion3") && (
+                                            <td className="px-4 py-3 text-center">
+                                                {renderCalificacion(proyecto.calificacion3)}
+                                            </td>
+                                        )}
+                                        {isColumnVisible("notaFinal") && (
+                                            <td className="px-4 py-3 text-center">
+                                                {renderNotaFinal(proyecto.notaFinal)}
+                                            </td>
+                                        )}
                                     </tr>
                                 ))}
                             </tbody>

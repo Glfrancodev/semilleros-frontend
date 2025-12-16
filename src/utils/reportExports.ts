@@ -297,24 +297,32 @@ export const exportToPDF = async (elementId: string, data: ControlNotasData) => 
 /**
  * Exporta el reporte de Proyectos con Jurados a CSV
  */
-export const exportProyectosJuradosToCSV = (data: ProyectosJuradosData) => {
+export const exportProyectosJuradosToCSV = (data: ProyectosJuradosData, visibleColumns: string[] = []) => {
     if (!data || data.proyectos.length === 0) {
         throw new Error('No hay datos para exportar');
     }
 
+    const isColumnVisible = (columnId: string) => visibleColumns.length === 0 || visibleColumns.includes(columnId);
+
     // Construir encabezados
-    const headers = ['Proyecto', 'Área', 'Categoría', 'Jurado 1', 'Jurado 2', 'Jurado 3'];
+    const headers = [];
+    if (isColumnVisible('proyecto')) headers.push('Proyecto');
+    if (isColumnVisible('area')) headers.push('Área');
+    if (isColumnVisible('categoria')) headers.push('Categoría');
+    if (isColumnVisible('jurado1')) headers.push('Jurado 1');
+    if (isColumnVisible('jurado2')) headers.push('Jurado 2');
+    if (isColumnVisible('jurado3')) headers.push('Jurado 3');
 
     // Construir filas
     const rows = data.proyectos.map(proyecto => {
-        return [
-            proyecto.nombre,
-            proyecto.area,
-            proyecto.categoria,
-            proyecto.jurado1 ? `${proyecto.jurado1.nombre} (${proyecto.jurado1.correo})` : '-',
-            proyecto.jurado2 ? `${proyecto.jurado2.nombre} (${proyecto.jurado2.correo})` : '-',
-            proyecto.jurado3 ? `${proyecto.jurado3.nombre} (${proyecto.jurado3.correo})` : '-',
-        ];
+        const row = [];
+        if (isColumnVisible('proyecto')) row.push(proyecto.nombre);
+        if (isColumnVisible('area')) row.push(proyecto.area);
+        if (isColumnVisible('categoria')) row.push(proyecto.categoria);
+        if (isColumnVisible('jurado1')) row.push(proyecto.jurado1 ? `${proyecto.jurado1.nombre} (${proyecto.jurado1.correo})` : '-');
+        if (isColumnVisible('jurado2')) row.push(proyecto.jurado2 ? `${proyecto.jurado2.nombre} (${proyecto.jurado2.correo})` : '-');
+        if (isColumnVisible('jurado3')) row.push(proyecto.jurado3 ? `${proyecto.jurado3.nombre} (${proyecto.jurado3.correo})` : '-');
+        return row;
     });
 
     // Combinar encabezados y filas
@@ -340,26 +348,30 @@ export const exportProyectosJuradosToCSV = (data: ProyectosJuradosData) => {
 /**
  * Exporta el reporte de Proyectos con Jurados a Excel
  */
-export const exportProyectosJuradosToExcel = (data: ProyectosJuradosData) => {
+export const exportProyectosJuradosToExcel = (data: ProyectosJuradosData, visibleColumns: string[] = []) => {
     if (!data || data.proyectos.length === 0) {
         throw new Error('No hay datos para exportar');
     }
+
+    const isColumnVisible = (columnId: string) => visibleColumns.length === 0 || visibleColumns.includes(columnId);
 
     // Crear workbook
     const wb = XLSX.utils.book_new();
 
     // Construir datos para la hoja
-    const rows = data.proyectos.map(proyecto => ({
-        'Proyecto': proyecto.nombre,
-        'Área': proyecto.area,
-        'Categoría': proyecto.categoria,
-        'Jurado 1 - Nombre': proyecto.jurado1?.nombre || '-',
-        'Jurado 1 - Correo': proyecto.jurado1?.correo || '-',
-        'Jurado 2 - Nombre': proyecto.jurado2?.nombre || '-',
-        'Jurado 2 - Correo': proyecto.jurado2?.correo || '-',
-        'Jurado 3 - Nombre': proyecto.jurado3?.nombre || '-',
-        'Jurado 3 - Correo': proyecto.jurado3?.correo || '-',
-    }));
+    const rows = data.proyectos.map(proyecto => {
+        const row: any = {};
+        if (isColumnVisible('proyecto')) row['Proyecto'] = proyecto.nombre;
+        if (isColumnVisible('area')) row['Área'] = proyecto.area;
+        if (isColumnVisible('categoria')) row['Categoría'] = proyecto.categoria;
+        if (isColumnVisible('jurado1')) row['Jurado 1 - Nombre'] = proyecto.jurado1?.nombre || '-';
+        if (isColumnVisible('email1')) row['Jurado 1 - Correo'] = proyecto.jurado1?.correo || '-';
+        if (isColumnVisible('jurado2')) row['Jurado 2 - Nombre'] = proyecto.jurado2?.nombre || '-';
+        if (isColumnVisible('email2')) row['Jurado 2 - Correo'] = proyecto.jurado2?.correo || '-';
+        if (isColumnVisible('jurado3')) row['Jurado 3 - Nombre'] = proyecto.jurado3?.nombre || '-';
+        if (isColumnVisible('email3')) row['Jurado 3 - Correo'] = proyecto.jurado3?.correo || '-';
+        return row;
+    });
 
     // Crear hoja de cálculo
     const ws = XLSX.utils.json_to_sheet(rows);
@@ -567,21 +579,33 @@ export const exportProyectosJuradosToPDF = async (elementId: string, data: Proye
 /**
  * Exporta el reporte de Calificaciones Finales a CSV
  */
-export const exportCalificacionesFinalesToCSV = (data: CalificacionesFinalesData) => {
+export const exportCalificacionesFinalesToCSV = (data: CalificacionesFinalesData, visibleColumns: string[] = []) => {
     if (!data || data.proyectos.length === 0) {
         throw new Error('No hay datos para exportar');
     }
 
-    const headers = ['Proyecto', 'Área', 'Categoría', 'Calificación 1', 'Calificación 2', 'Calificación 3', 'Nota Final'];
-    const rows = data.proyectos.map(proyecto => [
-        proyecto.nombre,
-        proyecto.area,
-        proyecto.categoria,
-        proyecto.calificacion1,
-        proyecto.calificacion2,
-        proyecto.calificacion3,
-        proyecto.notaFinal,
-    ]);
+    const isColumnVisible = (columnId: string) => visibleColumns.length === 0 || visibleColumns.includes(columnId);
+
+    const headers = [];
+    if (isColumnVisible('proyecto')) headers.push('Proyecto');
+    if (isColumnVisible('area')) headers.push('Área');
+    if (isColumnVisible('categoria')) headers.push('Categoría');
+    if (isColumnVisible('calificacion1')) headers.push('Calificación 1');
+    if (isColumnVisible('calificacion2')) headers.push('Calificación 2');
+    if (isColumnVisible('calificacion3')) headers.push('Calificación 3');
+    if (isColumnVisible('notaFinal')) headers.push('Nota Final');
+
+    const rows = data.proyectos.map(proyecto => {
+        const row = [];
+        if (isColumnVisible('proyecto')) row.push(proyecto.nombre);
+        if (isColumnVisible('area')) row.push(proyecto.area);
+        if (isColumnVisible('categoria')) row.push(proyecto.categoria);
+        if (isColumnVisible('calificacion1')) row.push(proyecto.calificacion1);
+        if (isColumnVisible('calificacion2')) row.push(proyecto.calificacion2);
+        if (isColumnVisible('calificacion3')) row.push(proyecto.calificacion3);
+        if (isColumnVisible('notaFinal')) row.push(proyecto.notaFinal);
+        return row;
+    });
 
     const csvContent = [
         headers.join(','),
@@ -604,22 +628,26 @@ export const exportCalificacionesFinalesToCSV = (data: CalificacionesFinalesData
 /**
  * Exporta el reporte de Calificaciones Finales a Excel
  */
-export const exportCalificacionesFinalesToExcel = (data: CalificacionesFinalesData) => {
+export const exportCalificacionesFinalesToExcel = (data: CalificacionesFinalesData, visibleColumns: string[] = []) => {
     if (!data || data.proyectos.length === 0) {
         throw new Error('No hay datos para exportar');
     }
 
+    const isColumnVisible = (columnId: string) => visibleColumns.length === 0 || visibleColumns.includes(columnId);
+
     const wb = XLSX.utils.book_new();
 
-    const rows = data.proyectos.map(proyecto => ({
-        'Proyecto': proyecto.nombre,
-        'Área': proyecto.area,
-        'Categoría': proyecto.categoria,
-        'Calificación 1': proyecto.calificacion1,
-        'Calificación 2': proyecto.calificacion2,
-        'Calificación 3': proyecto.calificacion3,
-        'Nota Final': proyecto.notaFinal,
-    }));
+    const rows = data.proyectos.map(proyecto => {
+        const row: any = {};
+        if (isColumnVisible('proyecto')) row['Proyecto'] = proyecto.nombre;
+        if (isColumnVisible('area')) row['Área'] = proyecto.area;
+        if (isColumnVisible('categoria')) row['Categoría'] = proyecto.categoria;
+        if (isColumnVisible('calificacion1')) row['Calificación 1'] = proyecto.calificacion1;
+        if (isColumnVisible('calificacion2')) row['Calificación 2'] = proyecto.calificacion2;
+        if (isColumnVisible('calificacion3')) row['Calificación 3'] = proyecto.calificacion3;
+        if (isColumnVisible('notaFinal')) row['Nota Final'] = proyecto.notaFinal;
+        return row;
+    });
 
     const ws = XLSX.utils.json_to_sheet(rows);
 

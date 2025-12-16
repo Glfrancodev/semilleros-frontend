@@ -148,6 +148,14 @@ export default function ReportesPage() {
                 const data = await reportsService.getControlNotas();
                 setReporteData(data);
                 setReporteGenerado(true);
+
+                // Initialize all columns as visible including dynamic tasks
+                const allColumnIds = ['proyecto', 'area', 'categoria'];
+                data.tareas.forEach((tarea: { idTarea: string }) => {
+                    allColumnIds.push(`tarea-${tarea.idTarea}`);
+                });
+                setVisibleColumns(allColumnIds);
+
                 toast.success("Reporte generado exitosamente");
             } else if (selectedReporte === "proyectos-jurados") {
                 const data = await reportsService.getProyectosJurados();
@@ -204,11 +212,11 @@ export default function ReportesPage() {
                 const data = reporteData as ProyectosJuradosData;
                 switch (format) {
                     case 'csv':
-                        exportProyectosJuradosToCSV(data);
+                        exportProyectosJuradosToCSV(data, visibleColumns);
                         toast.success("Reporte exportado a CSV");
                         break;
                     case 'excel':
-                        exportProyectosJuradosToExcel(data);
+                        exportProyectosJuradosToExcel(data, visibleColumns);
                         toast.success("Reporte exportado a Excel");
                         break;
                     case 'pdf':
@@ -400,6 +408,7 @@ export default function ReportesPage() {
                                     data={reporteData as CalificacionesFinalesData}
                                     loading={loading}
                                     reporteGenerado={reporteGenerado}
+                                    visibleColumns={visibleColumns}
                                 />
                             </div>
                         )}
