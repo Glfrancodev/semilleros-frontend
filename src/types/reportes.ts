@@ -238,3 +238,83 @@ export interface DistribucionRango {
     cantidad: number;
     porcentaje: number;
 }
+
+// ============================================
+// Tipos para Ranking de Áreas Frecuentes (Global)
+// ============================================
+
+export interface RankingAreasFrecuentesData {
+    ranking: AreaRanking[];
+    estadisticas: {
+        totalAreas: number;
+        totalProyectos: number;
+        areaDominante: {
+            nombre: string;
+            porcentaje: number;
+        };
+    };
+    filtros: {
+        fechaInicio: string | null;
+        fechaFin: string | null;
+        ferias: string[];
+        limit: number;
+    };
+    timestamp: string;
+}
+
+export interface AreaRanking {
+    area: {
+        idArea: string;
+        nombre: string;
+    };
+    totalProyectos: number;
+    porcentajeTotal: number;
+    tendencia: {
+        direccion: 'creciente' | 'decreciente' | 'estable';
+        variacionPromedio: number;
+    };
+    distribucionPorFeria: DistribucionPorFeria[];
+}
+
+export interface DistribucionPorFeria {
+    feria: string;
+    cantidad: number;
+    porcentaje: number;
+}
+
+// ============================================
+// Tipos para Ranking de Categorías Frecuentes (Global)
+// ============================================
+
+export interface RankingCategoriasFrecuentesData {
+    ranking: CategoriaRanking[];
+    estadisticas: {
+        totalCategorias: number;
+        totalProyectos: number;
+        categoriaDominante: {
+            nombre: string;
+            porcentaje: number;
+        };
+    };
+    filtros: {
+        fechaInicio: string | null;
+        fechaFin: string | null;
+        ferias: string[];
+        limit: number;
+    };
+    timestamp: string;
+}
+
+export interface CategoriaRanking {
+    categoria: {
+        idCategoria: string;
+        nombre: string;
+    };
+    totalProyectos: number;
+    porcentajeTotal: number;
+    tendencia: {
+        direccion: 'creciente' | 'decreciente' | 'estable';
+        variacionPromedio: number;
+    };
+    distribucionPorFeria: DistribucionPorFeria[];
+}

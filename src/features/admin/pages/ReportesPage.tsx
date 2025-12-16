@@ -7,9 +7,11 @@ import ProyectosJuradosTable from "../components/reportes/ProyectosJuradosTable"
 import CalificacionesFinalesTable from "../components/reportes/CalificacionesFinalesTable";
 import ProyectosIntegrantesTable from "../components/reportes/ProyectosIntegrantesTable";
 import PromedioNotasFeriasTable from "../components/reportes/PromedioNotasFeriasTable";
+import RankingAreasFrecuentesTable from "../components/reportes/RankingAreasFrecuentesTable";
+import RankingCategoriasFrecuentesTable from "../components/reportes/RankingCategoriasFrecuentesTable";
 import TableSettings from "../components/reportes/TableSettings";
 import { reportsService } from "../../../services/reportsService";
-import { ReporteConfig, ControlNotasData, ProyectosJuradosData, CalificacionesFinalesData, ProyectosIntegrantesData, PromedioNotasFeriasData } from "../../../types/reportes";
+import { ReporteConfig, ControlNotasData, ProyectosJuradosData, CalificacionesFinalesData, ProyectosIntegrantesData, PromedioNotasFeriasData, RankingAreasFrecuentesData, RankingCategoriasFrecuentesData } from "../../../types/reportes";
 import {
     exportToCSV,
     exportToExcel,
@@ -25,7 +27,13 @@ import {
     exportProyectosIntegrantesToPDF,
     exportPromedioNotasFeriasToCSV,
     exportPromedioNotasFeriasToExcel,
-    exportPromedioNotasFeriasToPDF
+    exportPromedioNotasFeriasToPDF,
+    exportRankingAreasFrecuentesToCSV,
+    exportRankingAreasFrecuentesToExcel,
+    exportRankingAreasFrecuentesToPDF,
+    exportRankingCategoriasFrecuentesToCSV,
+    exportRankingCategoriasFrecuentesToExcel,
+    exportRankingCategoriasFrecuentesToPDF
 } from "../../../utils/reportExports";
 import toast from "react-hot-toast";
 
@@ -66,12 +74,24 @@ const REPORTES_GLOBALES: ReporteConfig[] = [
         descripcion: "Estadísticas de promedio de calificaciones por feria a lo largo del tiempo",
         filtrosDisponibles: [],
     },
+    {
+        id: "ranking-areas-frecuentes",
+        nombre: "Ranking de Áreas Frecuentes",
+        descripcion: "Ranking de áreas más frecuentes con estadísticas de proyectos y tendencias",
+        filtrosDisponibles: [],
+    },
+    {
+        id: "ranking-categorias-frecuentes",
+        nombre: "Ranking de Categorías Frecuentes",
+        descripcion: "Ranking de categorías más frecuentes con estadísticas de proyectos y tendencias",
+        filtrosDisponibles: [],
+    },
 ];
 
 export default function ReportesPage() {
     const [activeTab, setActiveTab] = useState<TabType>("feriaActual");
     const [selectedReporte, setSelectedReporte] = useState<string | null>(null);
-    const [reporteData, setReporteData] = useState<ControlNotasData | ProyectosJuradosData | CalificacionesFinalesData | ProyectosIntegrantesData | PromedioNotasFeriasData | null>(null);
+    const [reporteData, setReporteData] = useState<ControlNotasData | ProyectosJuradosData | CalificacionesFinalesData | ProyectosIntegrantesData | PromedioNotasFeriasData | RankingAreasFrecuentesData | RankingCategoriasFrecuentesData | null>(null);
     const [loading, setLoading] = useState(false);
     const [showExportMenu, setShowExportMenu] = useState(false);
     const [reporteGenerado, setReporteGenerado] = useState(false);
@@ -146,6 +166,22 @@ export default function ReportesPage() {
                     { id: "calificacionMinima", label: "Calificación Mínima" },
                     { id: "totalProyectos", label: "Total Proyectos Calificados" },
                 ];
+            case "ranking-areas-frecuentes":
+                return [
+                    { id: "ranking", label: "Ranking" },
+                    { id: "nombreArea", label: "Nombre Área" },
+                    { id: "totalProyectos", label: "Total Proyectos" },
+                    { id: "porcentajeTotal", label: "Porcentaje Total" },
+                    { id: "tendencia", label: "Tendencia" },
+                ];
+            case "ranking-categorias-frecuentes":
+                return [
+                    { id: "ranking", label: "Ranking" },
+                    { id: "nombreCategoria", label: "Nombre Categoría" },
+                    { id: "totalProyectos", label: "Total Proyectos" },
+                    { id: "porcentajeTotal", label: "Porcentaje Total" },
+                    { id: "tendencia", label: "Tendencia" },
+                ];
             default:
                 return [];
         }
@@ -159,6 +195,16 @@ export default function ReportesPage() {
         // Inicializar todas las columnas como visibles
         const columns = getAvailableColumns(reporteId);
         setVisibleColumns(columns.map(col => col.id));
+    };
+
+    // Limpiar estado cuando cambia de pestaña
+    const handleTabChange = (tab: TabType) => {
+        setActiveTab(tab);
+        setSelectedReporte(null);
+        setReporteData(null);
+        setReporteGenerado(false);
+        setVisibleColumns([]);
+        setShowExportMenu(false);
     };
 
     const handleGenerarReporte = async () => {
@@ -199,6 +245,16 @@ export default function ReportesPage() {
                 toast.success("Reporte generado exitosamente");
             } else if (selectedReporte === "promedio-notas-ferias") {
                 const data = await reportsService.getPromedioNotasFerias();
+                setReporteData(data);
+                setReporteGenerado(true);
+                toast.success("Reporte generado exitosamente");
+            } else if (selectedReporte === "ranking-areas-frecuentes") {
+                const data = await reportsService.getRankingAreasFrecuentes();
+                setReporteData(data);
+                setReporteGenerado(true);
+                toast.success("Reporte generado exitosamente");
+            } else if (selectedReporte === "ranking-categorias-frecuentes") {
+                const data = await reportsService.getRankingCategoriasFrecuentes();
                 setReporteData(data);
                 setReporteGenerado(true);
                 toast.success("Reporte generado exitosamente");
@@ -302,6 +358,38 @@ export default function ReportesPage() {
                         toast.success("Reporte exportado a PDF");
                         break;
                 }
+            } else if (selectedReporte === "ranking-areas-frecuentes") {
+                const data = reporteData as RankingAreasFrecuentesData;
+                switch (format) {
+                    case 'csv':
+                        exportRankingAreasFrecuentesToCSV(data, visibleColumns);
+                        toast.success("Reporte exportado a CSV");
+                        break;
+                    case 'excel':
+                        exportRankingAreasFrecuentesToExcel(data, visibleColumns);
+                        toast.success("Reporte exportado a Excel");
+                        break;
+                    case 'pdf':
+                        await exportRankingAreasFrecuentesToPDF('ranking-areas-frecuentes-table', data);
+                        toast.success("Reporte exportado a PDF");
+                        break;
+                }
+            } else if (selectedReporte === "ranking-categorias-frecuentes") {
+                const data = reporteData as RankingCategoriasFrecuentesData;
+                switch (format) {
+                    case 'csv':
+                        exportRankingCategoriasFrecuentesToCSV(data, visibleColumns);
+                        toast.success("Reporte exportado a CSV");
+                        break;
+                    case 'excel':
+                        exportRankingCategoriasFrecuentesToExcel(data, visibleColumns);
+                        toast.success("Reporte exportado a Excel");
+                        break;
+                    case 'pdf':
+                        await exportRankingCategoriasFrecuentesToPDF('ranking-categorias-frecuentes-table', data);
+                        toast.success("Reporte exportado a PDF");
+                        break;
+                }
             }
         } catch (error: any) {
             console.error("Error exporting report:", error);
@@ -321,7 +409,7 @@ export default function ReportesPage() {
                 {/* Tabs Navigation */}
                 <div className="flex gap-2 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg w-full">
                     <button
-                        onClick={() => setActiveTab("feriaActual")}
+                        onClick={() => handleTabChange("feriaActual")}
                         className={`flex-1 py-3 px-6 text-center font-semibold text-sm rounded-lg transition-colors duration-150 ${activeTab === "feriaActual"
                             ? "bg-brand-500 text-white shadow-md dark:bg-transparent dark:border-2 dark:border-brand-400 dark:text-brand-400"
                             : "bg-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
@@ -331,7 +419,7 @@ export default function ReportesPage() {
                     </button>
 
                     <button
-                        onClick={() => setActiveTab("global")}
+                        onClick={() => handleTabChange("global")}
                         className={`flex-1 py-3 px-6 text-center font-semibold text-sm rounded-lg transition-colors duration-150 ${activeTab === "global"
                             ? "bg-brand-500 text-white shadow-md dark:bg-transparent dark:border-2 dark:border-brand-400 dark:text-brand-400"
                             : "bg-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
@@ -544,11 +632,42 @@ export default function ReportesPage() {
                             </div>
                         )}
 
+                        {/* Table Settings */}
+                        {reporteGenerado && reporteData && (
+                            <TableSettings
+                                columns={getAvailableColumns(selectedReporte)}
+                                visibleColumns={visibleColumns}
+                                onColumnsChange={setVisibleColumns}
+                            />
+                        )}
+
                         {/* Tabla de Reporte */}
                         {selectedReporte === "promedio-notas-ferias" && (
                             <div id="promedio-notas-ferias-table">
                                 <PromedioNotasFeriasTable
                                     data={reporteData as PromedioNotasFeriasData}
+                                    loading={loading}
+                                    reporteGenerado={reporteGenerado}
+                                    visibleColumns={visibleColumns}
+                                />
+                            </div>
+                        )}
+
+                        {selectedReporte === "ranking-areas-frecuentes" && (
+                            <div id="ranking-areas-frecuentes-table">
+                                <RankingAreasFrecuentesTable
+                                    data={reporteData as RankingAreasFrecuentesData}
+                                    loading={loading}
+                                    reporteGenerado={reporteGenerado}
+                                    visibleColumns={visibleColumns}
+                                />
+                            </div>
+                        )}
+
+                        {selectedReporte === "ranking-categorias-frecuentes" && (
+                            <div id="ranking-categorias-frecuentes-table">
+                                <RankingCategoriasFrecuentesTable
+                                    data={reporteData as RankingCategoriasFrecuentesData}
                                     loading={loading}
                                     reporteGenerado={reporteGenerado}
                                     visibleColumns={visibleColumns}

@@ -232,4 +232,18 @@ export const reportsService = {
         });
         return response.data.data;
     },
+
+    getRankingAreasFrecuentes: async (filtros?: any) => {
+        const response = await axios.get(`${API_URL}/reports/global/tendencias/areas-frecuentes`, {
+            params: filtros
+        });
+        return response.data.data;
+    },
+
+    getRankingCategoriasFrecuentes: async (filtros?: any) => {
+        const response = await axios.get(`${API_URL}/reports/global/tendencias/categorias-frecuentes`, {
+            params: filtros
+        });
+        return response.data.data;
+    },
 };

@@ -1147,32 +1147,55 @@ export const exportPromedioNotasFeriasToPDF = async (elementId: string, data: an
 
     const element = document.getElementById(elementId);
     if (!element) {
-        throw new Error('Elemento no encontrado');
+        throw new Error('Elemento no encontrado para exportar');
     }
 
-    let wrapper: HTMLDivElement | null = null;
+    // Crear un wrapper con fondo blanco sólido
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'absolute';
+    wrapper.style.left = '-9999px';
+    wrapper.style.top = '0';
+    wrapper.style.backgroundColor = '#ffffff';
+    wrapper.style.padding = '20px';
+    wrapper.style.width = element.offsetWidth + 'px';
+
+    // Clonar el elemento
+    const clone = element.cloneNode(true) as HTMLElement;
+    wrapper.appendChild(clone);
+    document.body.appendChild(wrapper);
+
+    // Suprimir errores de oklch temporalmente
     const originalErrorHandler = window.onerror;
+    window.onerror = (message) => {
+        if (typeof message === 'string' && message.includes('oklch')) {
+            return true; // Suprimir error
+        }
+        return false;
+    };
 
     try {
-        window.onerror = () => true;
-
-        wrapper = document.createElement('div');
-        wrapper.style.position = 'absolute';
-        wrapper.style.left = '-9999px';
-        wrapper.style.top = '0';
-        wrapper.style.width = '1200px';
-        wrapper.style.background = 'white';
-        wrapper.style.padding = '20px';
-        document.body.appendChild(wrapper);
-
-        const clone = element.cloneNode(true) as HTMLElement;
-        wrapper.appendChild(clone);
-
-        const canvas = await html2canvas(clone, {
+        // Capturar el elemento como imagen usando html2canvas
+        const canvas = await html2canvas(wrapper, {
             scale: 2,
             useCORS: true,
+            allowTaint: false,
+            backgroundColor: '#ffffff',
             logging: false,
-            backgroundColor: '#ffffff'
+            ignoreElements: () => {
+                return false;
+            },
+            onclone: (clonedDoc) => {
+                // Inyectar CSS override para convertir todos los colores a RGB
+                const style = clonedDoc.createElement('style');
+                style.innerHTML = `
+                    * {
+                        color: inherit !important;
+                        background-color: inherit !important;
+                        border-color: inherit !important;
+                    }
+                `;
+                clonedDoc.head.appendChild(style);
+            }
         });
 
         const pdf = new jsPDF({
@@ -1239,6 +1262,7 @@ export const exportPromedioNotasFeriasToPDF = async (elementId: string, data: an
 
         pdf.save(`promedio-notas-ferias-${new Date().toISOString().split('T')[0]}.pdf`);
         document.body.removeChild(wrapper);
+        window.onerror = originalErrorHandler;
     } catch (error) {
         if (wrapper && wrapper.parentNode) {
             document.body.removeChild(wrapper);
@@ -1248,3 +1272,477 @@ export const exportPromedioNotasFeriasToPDF = async (elementId: string, data: an
         throw new Error('Error al generar el PDF. Intenta usar la exportación a Excel o CSV.');
     }
 };
+
+// ============================================
+// EXPORTACIONES PARA RANKING ÁREAS FRECUENTES (GLOBAL)
+// ============================================
+
+/**
+ * Exporta el reporte de Ranking de Áreas Frecuentes a CSV
+ */
+export const exportRankingAreasFrecuentesToCSV = (data: any, visibleColumns: string[] = []) => {
+    if (!data || !data.ranking || data.ranking.length === 0) {
+        throw new Error('No hay datos para exportar');
+    }
+
+    const isColumnVisible = (columnId: string) => visibleColumns.length === 0 || visibleColumns.includes(columnId);
+
+    // Construir encabezados
+    const headers = [];
+    if (isColumnVisible('ranking')) headers.push('Ranking');
+    if (isColumnVisible('nombreArea')) headers.push('Nombre Área');
+    if (isColumnVisible('totalProyectos')) headers.push('Total Proyectos');
+    if (isColumnVisible('porcentajeTotal')) headers.push('Porcentaje Total');
+    if (isColumnVisible('tendencia')) headers.push('Tendencia');
+
+    // Construir filas
+    const rows = data.ranking.map((item: any, index: number) => {
+        const row = [];
+        if (isColumnVisible('ranking')) row.push(index + 1);
+        if (isColumnVisible('nombreArea')) row.push(item.area.nombre);
+        if (isColumnVisible('totalProyectos')) row.push(item.totalProyectos);
+        if (isColumnVisible('porcentajeTotal')) row.push(item.porcentajeTotal.toFixed(1) + '%');
+        if (isColumnVisible('tendencia')) row.push(item.tendencia.direccion);
+        return row;
+    });
+
+    // Combinar encabezados y filas
+    const csvContent = [
+        headers.join(','),
+        ...rows.map((row: any[]) => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    // Descargar archivo
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', `ranking-areas-frecuentes-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+/**
+ * Exporta el reporte de Ranking de Áreas Frecuentes a Excel
+ */
+export const exportRankingAreasFrecuentesToExcel = (data: any, visibleColumns: string[] = []) => {
+    if (!data || !data.ranking || data.ranking.length === 0) {
+        throw new Error('No hay datos para exportar');
+    }
+
+    const isColumnVisible = (columnId: string) => visibleColumns.length === 0 || visibleColumns.includes(columnId);
+
+    const wb = XLSX.utils.book_new();
+
+    const rows = data.ranking.map((item: any, index: number) => {
+        const row: any = {};
+        if (isColumnVisible('ranking')) row['Ranking'] = index + 1;
+        if (isColumnVisible('nombreArea')) row['Nombre Área'] = item.area.nombre;
+        if (isColumnVisible('totalProyectos')) row['Total Proyectos'] = item.totalProyectos;
+        if (isColumnVisible('porcentajeTotal')) row['Porcentaje Total'] = item.porcentajeTotal;
+        if (isColumnVisible('tendencia')) row['Tendencia'] = item.tendencia.direccion;
+        return row;
+    });
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+
+    const colWidths = [];
+    if (isColumnVisible('ranking')) colWidths.push({ wch: 10 });
+    if (isColumnVisible('nombreArea')) colWidths.push({ wch: 35 });
+    if (isColumnVisible('totalProyectos')) colWidths.push({ wch: 18 });
+    if (isColumnVisible('porcentajeTotal')) colWidths.push({ wch: 18 });
+    if (isColumnVisible('tendencia')) colWidths.push({ wch: 15 });
+    ws['!cols'] = colWidths;
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Ranking Áreas');
+
+    // Agregar hoja de estadísticas generales
+    const statsData = [
+        { Métrica: 'Total Áreas', Valor: data.estadisticas.totalAreas },
+        { Métrica: 'Total Proyectos', Valor: data.estadisticas.totalProyectos },
+        { Métrica: 'Área Dominante', Valor: data.estadisticas.areaDominante.nombre },
+        { Métrica: 'Porcentaje Dominante', Valor: data.estadisticas.areaDominante.porcentaje.toFixed(1) + '%' },
+    ];
+    const wsStats = XLSX.utils.json_to_sheet(statsData);
+    XLSX.utils.book_append_sheet(wb, wsStats, 'Estadísticas');
+
+    XLSX.writeFile(wb, `ranking-areas-frecuentes-${new Date().toISOString().split('T')[0]}.xlsx`);
+};
+
+/**
+ * Exporta el reporte de Ranking de Áreas Frecuentes a PDF
+ */
+export const exportRankingAreasFrecuentesToPDF = async (elementId: string, data: any) => {
+    if (!data || !data.ranking || data.ranking.length === 0) {
+        throw new Error('No hay datos para exportar');
+    }
+
+    const element = document.getElementById(elementId);
+    if (!element) {
+        throw new Error('Elemento no encontrado para exportar');
+    }
+
+    // Crear un wrapper con fondo blanco sólido
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'absolute';
+    wrapper.style.left = '-9999px';
+    wrapper.style.top = '0';
+    wrapper.style.backgroundColor = '#ffffff';
+    wrapper.style.padding = '20px';
+    wrapper.style.width = element.offsetWidth + 'px';
+
+    // Clonar el elemento
+    const clone = element.cloneNode(true) as HTMLElement;
+    wrapper.appendChild(clone);
+    document.body.appendChild(wrapper);
+
+    // Suprimir errores de oklch temporalmente
+    const originalErrorHandler = window.onerror;
+    window.onerror = (message) => {
+        if (typeof message === 'string' && message.includes('oklch')) {
+            return true; // Suprimir error
+        }
+        return false;
+    };
+
+    try {
+        // Capturar el elemento como imagen usando html2canvas
+        const canvas = await html2canvas(wrapper, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: false,
+            backgroundColor: '#ffffff',
+            logging: false,
+            ignoreElements: () => {
+                return false;
+            },
+            onclone: (clonedDoc) => {
+                // Inyectar CSS override para convertir todos los colores a RGB
+                const style = clonedDoc.createElement('style');
+                style.innerHTML = `
+                    * {
+                        color: inherit !important;
+                        background-color: inherit !important;
+                        border-color: inherit !important;
+                    }
+                `;
+                clonedDoc.head.appendChild(style);
+            }
+        });
+
+        const pdf = new jsPDF({
+            orientation: 'landscape',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+
+        const imgWidth = pageWidth - 20;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        let finalWidth = imgWidth;
+        let finalHeight = imgHeight;
+
+        if (imgHeight > pageHeight - 40) {
+            finalHeight = pageHeight - 40;
+            finalWidth = (canvas.width * finalHeight) / canvas.height;
+        }
+
+        const xPosition = (pageWidth - finalWidth) / 2;
+
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Ranking de Áreas Frecuentes', pageWidth / 2, 15, { align: 'center' });
+
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`Generado: ${new Date().toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        })}`, pageWidth / 2, 21, { align: 'center' });
+
+        const imgData = canvas.toDataURL('image/png');
+        pdf.addImage(imgData, 'PNG', xPosition, 25, finalWidth, finalHeight);
+
+        // Agregar página de estadísticas
+        pdf.addPage();
+
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Estadísticas Generales', pageWidth / 2, 20, { align: 'center' });
+
+        const statsData = [
+            ['Total Áreas', data.estadisticas.totalAreas.toString()],
+            ['Total Proyectos', data.estadisticas.totalProyectos.toString()],
+            ['Área Dominante', data.estadisticas.areaDominante.nombre],
+            ['Porcentaje Dominante', data.estadisticas.areaDominante.porcentaje.toFixed(1) + '%'],
+        ];
+
+        autoTable(pdf, {
+            startY: 30,
+            head: [['Métrica', 'Valor']],
+            body: statsData,
+            theme: 'grid',
+            headStyles: { fillColor: [79, 70, 229], fontSize: 12, fontStyle: 'bold' },
+            styles: { fontSize: 10, cellPadding: 5 },
+        });
+
+        pdf.save(`ranking-areas-frecuentes-${new Date().toISOString().split('T')[0]}.pdf`);
+        document.body.removeChild(wrapper);
+        window.onerror = originalErrorHandler;
+    } catch (error) {
+        if (wrapper && wrapper.parentNode) {
+            document.body.removeChild(wrapper);
+        }
+        window.onerror = originalErrorHandler;
+        console.error('Error generating PDF:', error);
+        throw new Error('Error al generar el PDF. Intenta usar la exportación a Excel o CSV.');
+    }
+};
+
+// ============================================
+// EXPORTACIONES PARA RANKING CATEGORÍAS FRECUENTES (GLOBAL)
+// ============================================
+
+/**
+ * Exporta el reporte de Ranking de Categorías Frecuentes a CSV
+ */
+export const exportRankingCategoriasFrecuentesToCSV = (data: any, visibleColumns: string[] = []) => {
+    if (!data || !data.ranking || data.ranking.length === 0) {
+        throw new Error('No hay datos para exportar');
+    }
+
+    const isColumnVisible = (columnId: string) => visibleColumns.length === 0 || visibleColumns.includes(columnId);
+
+    // Construir encabezados
+    const headers = [];
+    if (isColumnVisible('ranking')) headers.push('Ranking');
+    if (isColumnVisible('nombreCategoria')) headers.push('Nombre Categoría');
+    if (isColumnVisible('totalProyectos')) headers.push('Total Proyectos');
+    if (isColumnVisible('porcentajeTotal')) headers.push('Porcentaje Total');
+    if (isColumnVisible('tendencia')) headers.push('Tendencia');
+
+    // Construir filas
+    const rows = data.ranking.map((item: any, index: number) => {
+        const row = [];
+        if (isColumnVisible('ranking')) row.push(index + 1);
+        if (isColumnVisible('nombreCategoria')) row.push(item.categoria.nombre);
+        if (isColumnVisible('totalProyectos')) row.push(item.totalProyectos);
+        if (isColumnVisible('porcentajeTotal')) row.push(item.porcentajeTotal.toFixed(1) + '%');
+        if (isColumnVisible('tendencia')) row.push(item.tendencia.direccion);
+        return row;
+    });
+
+    // Combinar encabezados y filas
+    const csvContent = [
+        headers.join(','),
+        ...rows.map((row: any[]) => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    // Descargar archivo
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', `ranking-categorias-frecuentes-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+/**
+ * Exporta el reporte de Ranking de Categorías Frecuentes a Excel
+ */
+export const exportRankingCategoriasFrecuentesToExcel = (data: any, visibleColumns: string[] = []) => {
+    if (!data || !data.ranking || data.ranking.length === 0) {
+        throw new Error('No hay datos para exportar');
+    }
+
+    const isColumnVisible = (columnId: string) => visibleColumns.length === 0 || visibleColumns.includes(columnId);
+
+    const wb = XLSX.utils.book_new();
+
+    const rows = data.ranking.map((item: any, index: number) => {
+        const row: any = {};
+        if (isColumnVisible('ranking')) row['Ranking'] = index + 1;
+        if (isColumnVisible('nombreCategoria')) row['Nombre Categoría'] = item.categoria.nombre;
+        if (isColumnVisible('totalProyectos')) row['Total Proyectos'] = item.totalProyectos;
+        if (isColumnVisible('porcentajeTotal')) row['Porcentaje Total'] = item.porcentajeTotal;
+        if (isColumnVisible('tendencia')) row['Tendencia'] = item.tendencia.direccion;
+        return row;
+    });
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+
+    const colWidths = [];
+    if (isColumnVisible('ranking')) colWidths.push({ wch: 10 });
+    if (isColumnVisible('nombreCategoria')) colWidths.push({ wch: 35 });
+    if (isColumnVisible('totalProyectos')) colWidths.push({ wch: 18 });
+    if (isColumnVisible('porcentajeTotal')) colWidths.push({ wch: 18 });
+    if (isColumnVisible('tendencia')) colWidths.push({ wch: 15 });
+    ws['!cols'] = colWidths;
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Ranking Categorías');
+
+    // Agregar hoja de estadísticas generales
+    const statsData = [
+        { Métrica: 'Total Categorías', Valor: data.estadisticas.totalCategorias },
+        { Métrica: 'Total Proyectos', Valor: data.estadisticas.totalProyectos },
+        { Métrica: 'Categoría Dominante', Valor: data.estadisticas.categoriaDominante.nombre },
+        { Métrica: 'Porcentaje Dominante', Valor: data.estadisticas.categoriaDominante.porcentaje.toFixed(1) + '%' },
+    ];
+    const wsStats = XLSX.utils.json_to_sheet(statsData);
+    XLSX.utils.book_append_sheet(wb, wsStats, 'Estadísticas');
+
+    XLSX.writeFile(wb, `ranking-categorias-frecuentes-${new Date().toISOString().split('T')[0]}.xlsx`);
+};
+
+/**
+ * Exporta el reporte de Ranking de Categorías Frecuentes a PDF
+ */
+export const exportRankingCategoriasFrecuentesToPDF = async (elementId: string, data: any) => {
+    if (!data || !data.ranking || data.ranking.length === 0) {
+        throw new Error('No hay datos para exportar');
+    }
+
+    const element = document.getElementById(elementId);
+    if (!element) {
+        throw new Error('Elemento no encontrado para exportar');
+    }
+
+    // Crear un wrapper con fondo blanco sólido
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'absolute';
+    wrapper.style.left = '-9999px';
+    wrapper.style.top = '0';
+    wrapper.style.backgroundColor = '#ffffff';
+    wrapper.style.padding = '20px';
+    wrapper.style.width = element.offsetWidth + 'px';
+
+    // Clonar el elemento
+    const clone = element.cloneNode(true) as HTMLElement;
+    wrapper.appendChild(clone);
+    document.body.appendChild(wrapper);
+
+    // Suprimir errores de oklch temporalmente
+    const originalErrorHandler = window.onerror;
+    window.onerror = (message) => {
+        if (typeof message === 'string' && message.includes('oklch')) {
+            return true; // Suprimir error
+        }
+        return false;
+    };
+
+    try {
+        // Capturar el elemento como imagen usando html2canvas
+        const canvas = await html2canvas(wrapper, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: false,
+            backgroundColor: '#ffffff',
+            logging: false,
+            ignoreElements: () => {
+                return false;
+            },
+            onclone: (clonedDoc) => {
+                // Inyectar CSS override para convertir todos los colores a RGB
+                const style = clonedDoc.createElement('style');
+                style.innerHTML = `
+                    * {
+                        color: inherit !important;
+                        background-color: inherit !important;
+                        border-color: inherit !important;
+                    }
+                `;
+                clonedDoc.head.appendChild(style);
+            }
+        });
+
+        const pdf = new jsPDF({
+            orientation: 'landscape',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+
+        const imgWidth = pageWidth - 20;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        let finalWidth = imgWidth;
+        let finalHeight = imgHeight;
+
+        if (imgHeight > pageHeight - 40) {
+            finalHeight = pageHeight - 40;
+            finalWidth = (canvas.width * finalHeight) / canvas.height;
+        }
+
+        const xPosition = (pageWidth - finalWidth) / 2;
+
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Ranking de Categorías Frecuentes', pageWidth / 2, 15, { align: 'center' });
+
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`Generado: ${new Date().toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        })}`, pageWidth / 2, 21, { align: 'center' });
+
+        const imgData = canvas.toDataURL('image/png');
+        pdf.addImage(imgData, 'PNG', xPosition, 25, finalWidth, finalHeight);
+
+        // Agregar página de estadísticas
+        pdf.addPage();
+
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Estadísticas Generales', pageWidth / 2, 20, { align: 'center' });
+
+        const statsData = [
+            ['Total Categorías', data.estadisticas.totalCategorias.toString()],
+            ['Total Proyectos', data.estadisticas.totalProyectos.toString()],
+            ['Categoría Dominante', data.estadisticas.categoriaDominante.nombre],
+            ['Porcentaje Dominante', data.estadisticas.categoriaDominante.porcentaje.toFixed(1) + '%'],
+        ];
+
+        autoTable(pdf, {
+            startY: 30,
+            head: [['Métrica', 'Valor']],
+            body: statsData,
+            theme: 'grid',
+            headStyles: { fillColor: [79, 70, 229], fontSize: 12, fontStyle: 'bold' },
+            styles: { fontSize: 10, cellPadding: 5 },
+        });
+
+        pdf.save(`ranking-categorias-frecuentes-${new Date().toISOString().split('T')[0]}.pdf`);
+        document.body.removeChild(wrapper);
+        window.onerror = originalErrorHandler;
+    } catch (error) {
+        if (wrapper && wrapper.parentNode) {
+            document.body.removeChild(wrapper);
+        }
+        window.onerror = originalErrorHandler;
+        console.error('Error generating PDF:', error);
+        throw new Error('Error al generar el PDF. Intenta usar la exportación a Excel o CSV.');
+    }
+};
+
+
