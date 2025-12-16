@@ -459,39 +459,86 @@ export const exportProyectosJuradosToPDF = async (elementId: string, data: Proye
         // Restaurar el manejador de errores original
         window.onerror = originalErrorHandler;
 
-        // Crear PDF
+        // Crear PDF en orientación landscape para tablas anchas
         const pdf = new jsPDF({
             orientation: 'landscape',
             unit: 'mm',
             format: 'a4'
         });
 
-        // Calcular dimensiones
-        const imgWidth = 277; // A4 landscape width in mm (minus margins)
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+
+        // Calcular dimensiones para que quepa en una página
+        const imgWidth = pageWidth - 20; // Margen de 10mm a cada lado
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-        // Agregar imagen al PDF
-        const imgData = canvas.toDataURL('image/png');
-        pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+        // Si la imagen es muy alta, ajustar para que quepa
+        let finalWidth = imgWidth;
+        let finalHeight = imgHeight;
 
-        // Agregar tabla de estadísticas en nueva página
-        pdf.addPage();
+        if (imgHeight > pageHeight - 40) {
+            // Si es muy alta, ajustar proporcionalmente
+            finalHeight = pageHeight - 40;
+            finalWidth = (canvas.width * finalHeight) / canvas.height;
+        }
+
+        // Centrar la imagen
+        const xPosition = (pageWidth - finalWidth) / 2;
+
+        // Agregar título
         pdf.setFontSize(16);
-        pdf.text('Estadísticas', 14, 15);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(`Proyectos con Jurados - ${data.feriaActual.nombre}`, pageWidth / 2, 15, { align: 'center' });
+
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`Generado: ${new Date().toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        })}`, pageWidth / 2, 21, { align: 'center' });
+
+        // Agregar la imagen de la previsualización
+        const imgData = canvas.toDataURL('image/png');
+        pdf.addImage(imgData, 'PNG', xPosition, 25, finalWidth, finalHeight);
+
+        // Agregar página de estadísticas
+        pdf.addPage();
+
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Estadísticas del Reporte', pageWidth / 2, 20, { align: 'center' });
+
+        // Tabla de estadísticas usando autoTable
+        const statsData = [
+            ['Total Proyectos', data.estadisticas.totalProyectos.toString()],
+            ['Proyectos con Jurados', data.estadisticas.proyectosConJurados.toString()],
+            ['Proyectos sin Jurados', data.estadisticas.proyectosSinJurados.toString()],
+            ['Proyectos con 1 Jurado', data.estadisticas.proyectosCon1Jurado.toString()],
+            ['Proyectos con 2 Jurados', data.estadisticas.proyectosCon2Jurados.toString()],
+            ['Proyectos con 3 Jurados', data.estadisticas.proyectosCon3Jurados.toString()],
+        ];
 
         autoTable(pdf, {
-            startY: 25,
+            startY: 30,
             head: [['Métrica', 'Valor']],
-            body: [
-                ['Total Proyectos', data.estadisticas.totalProyectos.toString()],
-                ['Proyectos con Jurados', data.estadisticas.proyectosConJurados.toString()],
-                ['Proyectos sin Jurados', data.estadisticas.proyectosSinJurados.toString()],
-                ['Proyectos con 1 Jurado', data.estadisticas.proyectosCon1Jurado.toString()],
-                ['Proyectos con 2 Jurados', data.estadisticas.proyectosCon2Jurados.toString()],
-                ['Proyectos con 3 Jurados', data.estadisticas.proyectosCon3Jurados.toString()],
-            ],
+            body: statsData,
             theme: 'grid',
-            headStyles: { fillColor: [79, 70, 229] },
+            headStyles: {
+                fillColor: [79, 70, 229],
+                fontSize: 12,
+                fontStyle: 'bold',
+            },
+            bodyStyles: {
+                fontSize: 11,
+            },
+            columnStyles: {
+                0: { cellWidth: 100 },
+                1: { cellWidth: 50, halign: 'center' },
+            },
         });
 
         // Descargar PDF
