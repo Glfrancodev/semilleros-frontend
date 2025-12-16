@@ -6,6 +6,7 @@ import ControlNotasTable from "../components/reportes/ControlNotasTable";
 import ProyectosJuradosTable from "../components/reportes/ProyectosJuradosTable";
 import CalificacionesFinalesTable from "../components/reportes/CalificacionesFinalesTable";
 import ProyectosIntegrantesTable from "../components/reportes/ProyectosIntegrantesTable";
+import TableSettings from "../components/reportes/TableSettings";
 import { reportsService } from "../../../services/reportsService";
 import { ReporteConfig, ControlNotasData, ProyectosJuradosData, CalificacionesFinalesData, ProyectosIntegrantesData } from "../../../types/reportes";
 import {
@@ -61,12 +62,78 @@ export default function ReportesPage() {
     const [loading, setLoading] = useState(false);
     const [showExportMenu, setShowExportMenu] = useState(false);
     const [reporteGenerado, setReporteGenerado] = useState(false);
+    const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
+
+    // Definir columnas disponibles por tipo de reporte
+    const getAvailableColumns = (reporteId: string | null) => {
+        if (!reporteId) return [];
+
+        switch (reporteId) {
+            case "control-notas":
+                const columns = [
+                    { id: "proyecto", label: "Proyecto" },
+                    { id: "area", label: "Área" },
+                    { id: "categoria", label: "Categoría" },
+                ];
+
+                // Add dynamic task columns if data is available
+                if (reporteData && 'tareas' in reporteData) {
+                    const controlData = reporteData as ControlNotasData;
+                    controlData.tareas.forEach((tarea) => {
+                        columns.push({
+                            id: `tarea-${tarea.idTarea}`,
+                            label: tarea.nombre
+                        });
+                    });
+                }
+
+                return columns;
+            case "proyectos-jurados":
+                return [
+                    { id: "proyecto", label: "Proyecto" },
+                    { id: "area", label: "Área" },
+                    { id: "categoria", label: "Categoría" },
+                    { id: "jurado1", label: "Jurado 1" },
+                    { id: "email1", label: "Email 1" },
+                    { id: "jurado2", label: "Jurado 2" },
+                    { id: "email2", label: "Email 2" },
+                    { id: "jurado3", label: "Jurado 3" },
+                    { id: "email3", label: "Email 3" },
+                ];
+            case "calificaciones-finales":
+                return [
+                    { id: "proyecto", label: "Proyecto" },
+                    { id: "area", label: "Área" },
+                    { id: "categoria", label: "Categoría" },
+                    { id: "calificacion1", label: "Calificación 1" },
+                    { id: "calificacion2", label: "Calificación 2" },
+                    { id: "calificacion3", label: "Calificación 3" },
+                    { id: "notaFinal", label: "Nota Final" },
+                ];
+            case "proyectos-integrantes":
+                return [
+                    { id: "proyecto", label: "Proyecto" },
+                    { id: "area", label: "Área" },
+                    { id: "categoria", label: "Categoría" },
+                    { id: "lider", label: "Líder" },
+                    { id: "codigoLider", label: "Código Líder" },
+                    { id: "integrantes", label: "Integrantes" },
+                    { id: "codigosIntegrantes", label: "Códigos Integrantes" },
+                    { id: "total", label: "Total" },
+                ];
+            default:
+                return [];
+        }
+    };
 
     // Limpiar datos cuando cambia el tipo de reporte
     const handleReporteChange = (reporteId: string) => {
         setSelectedReporte(reporteId);
         setReporteData(null);
         setReporteGenerado(false);
+        // Inicializar todas las columnas como visibles
+        const columns = getAvailableColumns(reporteId);
+        setVisibleColumns(columns.map(col => col.id));
     };
 
     const handleGenerarReporte = async () => {
@@ -121,11 +188,11 @@ export default function ReportesPage() {
                 const data = reporteData as ControlNotasData;
                 switch (format) {
                     case 'csv':
-                        exportToCSV(data);
+                        exportToCSV(data, visibleColumns);
                         toast.success("Reporte exportado a CSV");
                         break;
                     case 'excel':
-                        exportToExcel(data);
+                        exportToExcel(data, visibleColumns);
                         toast.success("Reporte exportado a Excel");
                         break;
                     case 'pdf':
@@ -169,11 +236,11 @@ export default function ReportesPage() {
                 const data = reporteData as ProyectosIntegrantesData;
                 switch (format) {
                     case 'csv':
-                        exportProyectosIntegrantesToCSV(data);
+                        exportProyectosIntegrantesToCSV(data, visibleColumns);
                         toast.success("Reporte exportado a CSV");
                         break;
                     case 'excel':
-                        exportProyectosIntegrantesToExcel(data);
+                        exportProyectosIntegrantesToExcel(data, visibleColumns);
                         toast.success("Reporte exportado a Excel");
                         break;
                     case 'pdf':
@@ -296,10 +363,23 @@ export default function ReportesPage() {
                             </div>
                         )}
 
+                        {/* Table Settings - Solo mostrar cuando hay reporte generado */}
+                        {reporteGenerado && selectedReporte && (
+                            <TableSettings
+                                columns={getAvailableColumns(selectedReporte)}
+                                visibleColumns={visibleColumns}
+                                onColumnsChange={setVisibleColumns}
+                            />
+                        )}
+
                         {/* Tabla de Reporte */}
                         {selectedReporte === "control-notas" && (
                             <div id="control-notas-table">
-                                <ControlNotasTable data={reporteData as ControlNotasData} loading={loading} />
+                                <ControlNotasTable
+                                    data={reporteData as ControlNotasData}
+                                    loading={loading}
+                                    visibleColumns={visibleColumns}
+                                />
                             </div>
                         )}
 
@@ -309,6 +389,7 @@ export default function ReportesPage() {
                                     data={reporteData as ProyectosJuradosData}
                                     loading={loading}
                                     reporteGenerado={reporteGenerado}
+                                    visibleColumns={visibleColumns}
                                 />
                             </div>
                         )}
@@ -329,6 +410,7 @@ export default function ReportesPage() {
                                     data={reporteData as ProyectosIntegrantesData}
                                     loading={loading}
                                     reporteGenerado={reporteGenerado}
+                                    visibleColumns={visibleColumns}
                                 />
                             </div>
                         )}

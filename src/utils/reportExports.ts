@@ -7,46 +7,56 @@ import { ControlNotasData, ProyectosJuradosData, CalificacionesFinalesData, Proy
 /**
  * Exporta el reporte de Control de Notas a CSV
  */
-export const exportToCSV = (data: ControlNotasData) => {
+export const exportToCSV = (data: ControlNotasData, visibleColumns: string[] = []) => {
     if (!data || data.matriz.length === 0) {
         throw new Error('No hay datos para exportar');
     }
 
+    const isColumnVisible = (columnId: string) => visibleColumns.length === 0 || visibleColumns.includes(columnId);
+
     // Construir encabezados
-    const headers = ['Proyecto', 'Área', 'Categoría'];
+    const headers = [];
+    if (isColumnVisible('proyecto')) headers.push('Proyecto');
+    if (isColumnVisible('area')) headers.push('Área');
+    if (isColumnVisible('categoria')) headers.push('Categoría');
+
     data.tareas.forEach(tarea => {
-        headers.push(`${tarea.nombre} (Orden ${tarea.orden})`);
+        const tareaId = `tarea-${tarea.idTarea}`;
+        if (isColumnVisible(tareaId)) {
+            headers.push(`${tarea.nombre} (Orden ${tarea.orden})`);
+        }
     });
 
     // Construir filas
     const rows = data.matriz.map(fila => {
-        const row = [
-            fila.proyecto.nombre,
-            fila.proyecto.area || '-',
-            fila.proyecto.categoria || '-',
-        ];
+        const row = [];
+        if (isColumnVisible('proyecto')) row.push(fila.proyecto.nombre);
+        if (isColumnVisible('area')) row.push(fila.proyecto.area || '-');
+        if (isColumnVisible('categoria')) row.push(fila.proyecto.categoria || '-');
 
-        // Agregar calificaciones/estados de cada tarea
+        // Agregar calificaciones/estados de cada tarea visible
         fila.tareas.forEach(tarea => {
-            if (tarea.estado === 'revisado') {
-                row.push(tarea.calificacion?.toString() || '-');
-            } else if (tarea.estado === 'pendiente_revision') {
-                row.push('Pendiente');
-            } else {
-                row.push('No enviado');
+            const tareaId = `tarea-${tarea.idTarea}`;
+            if (isColumnVisible(tareaId)) {
+                if (tarea.estado === 'revisado') {
+                    row.push(tarea.calificacion || '-');
+                } else if (tarea.estado === 'pendiente_revision') {
+                    row.push('Pendiente');
+                } else {
+                    row.push('No enviado');
+                }
             }
         });
 
         return row;
     });
 
-    // Combinar encabezados y filas
+    // Crear contenido CSV
     const csvContent = [
         headers.join(','),
         ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
     ].join('\n');
 
-    // Descargar archivo
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -63,36 +73,36 @@ export const exportToCSV = (data: ControlNotasData) => {
 /**
  * Exporta el reporte de Control de Notas a Excel
  */
-export const exportToExcel = (data: ControlNotasData) => {
+export const exportToExcel = (data: ControlNotasData, visibleColumns: string[] = []) => {
     if (!data || data.matriz.length === 0) {
         throw new Error('No hay datos para exportar');
     }
+
+    const isColumnVisible = (columnId: string) => visibleColumns.length === 0 || visibleColumns.includes(columnId);
 
     // Crear workbook
     const wb = XLSX.utils.book_new();
 
     // Construir datos para la hoja
-    const headers = ['Proyecto', 'Área', 'Categoría'];
-    data.tareas.forEach(tarea => {
-        headers.push(`${tarea.nombre} (Orden ${tarea.orden})`);
-    });
-
     const rows = data.matriz.map(fila => {
-        const row: any = {
-            'Proyecto': fila.proyecto.nombre,
-            'Área': fila.proyecto.area || '-',
-            'Categoría': fila.proyecto.categoria || '-',
-        };
+        const row: any = {};
 
-        // Agregar calificaciones/estados de cada tarea
+        if (isColumnVisible('proyecto')) row['Proyecto'] = fila.proyecto.nombre;
+        if (isColumnVisible('area')) row['Área'] = fila.proyecto.area || '-';
+        if (isColumnVisible('categoria')) row['Categoría'] = fila.proyecto.categoria || '-';
+
+        // Agregar calificaciones/estados de cada tarea visible
         fila.tareas.forEach(tarea => {
-            const columnName = `${tarea.nombreTarea} (Orden ${tarea.ordenTarea})`;
-            if (tarea.estado === 'revisado') {
-                row[columnName] = tarea.calificacion || '-';
-            } else if (tarea.estado === 'pendiente_revision') {
-                row[columnName] = 'Pendiente';
-            } else {
-                row[columnName] = 'No enviado';
+            const tareaId = `tarea-${tarea.idTarea}`;
+            if (isColumnVisible(tareaId)) {
+                const columnName = `${tarea.nombreTarea} (Orden ${tarea.ordenTarea})`;
+                if (tarea.estado === 'revisado') {
+                    row[columnName] = tarea.calificacion || '-';
+                } else if (tarea.estado === 'pendiente_revision') {
+                    row[columnName] = 'Pendiente';
+                } else {
+                    row[columnName] = 'No enviado';
+                }
             }
         });
 
@@ -101,14 +111,6 @@ export const exportToExcel = (data: ControlNotasData) => {
 
     // Crear hoja de cálculo
     const ws = XLSX.utils.json_to_sheet(rows);
-
-    // Ajustar ancho de columnas
-    const colWidths = headers.map(header => ({
-        wch: Math.max(header.length, 15)
-    }));
-    ws['!cols'] = colWidths;
-
-    // Agregar hoja al workbook
     XLSX.utils.book_append_sheet(wb, ws, 'Control de Notas');
 
     // Agregar hoja de estadísticas
@@ -755,34 +757,50 @@ export const exportCalificacionesFinalesToPDF = async (elementId: string, data: 
 // EXPORTACIONES PARA PROYECTOS CON INTEGRANTES
 // ============================================
 
-export const exportProyectosIntegrantesToCSV = (data: ProyectosIntegrantesData) => {
+export const exportProyectosIntegrantesToCSV = (data: ProyectosIntegrantesData, visibleColumns: string[] = []) => {
     if (!data || data.proyectos.length === 0) {
         throw new Error('No hay datos para exportar');
     }
 
+    // Si no hay columnas visibles, exportar todas
+    const shouldExport = (columnId: string) => visibleColumns.length === 0 || visibleColumns.includes(columnId);
+
     const maxIntegrantes = Math.max(...data.proyectos.map(p => p.integrantes.length));
-    const headers = ['Proyecto', 'Área', 'Categoría', 'Líder', 'Código Líder'];
-    for (let i = 1; i <= maxIntegrantes; i++) {
-        headers.push(`Integrante ${i}`, `Código ${i}`);
+    const headers = [];
+
+    if (shouldExport('proyecto')) headers.push('Proyecto');
+    if (shouldExport('area')) headers.push('Área');
+    if (shouldExport('categoria')) headers.push('Categoría');
+    if (shouldExport('lider')) {
+        headers.push('Líder', 'Código Líder');
     }
-    headers.push('Total Integrantes');
+    if (shouldExport('integrantes')) {
+        for (let i = 1; i <= maxIntegrantes; i++) {
+            headers.push(`Integrante ${i}`, `Código ${i}`);
+        }
+    }
+    if (shouldExport('total')) headers.push('Total Integrantes');
 
     const rows = data.proyectos.map(proyecto => {
-        const row = [
-            proyecto.nombre,
-            proyecto.area,
-            proyecto.categoria,
-            proyecto.lider?.nombre || 'Sin líder',
-            proyecto.lider?.codigo || '',
-        ];
-        for (let i = 0; i < maxIntegrantes; i++) {
-            if (i < proyecto.integrantes.length) {
-                row.push(proyecto.integrantes[i].nombre, proyecto.integrantes[i].codigo);
-            } else {
-                row.push('', '');
+        const row = [];
+
+        if (shouldExport('proyecto')) row.push(proyecto.nombre);
+        if (shouldExport('area')) row.push(proyecto.area);
+        if (shouldExport('categoria')) row.push(proyecto.categoria);
+        if (shouldExport('lider')) {
+            row.push(proyecto.lider?.nombre || 'Sin líder', proyecto.lider?.codigo || '');
+        }
+        if (shouldExport('integrantes')) {
+            for (let i = 0; i < maxIntegrantes; i++) {
+                if (i < proyecto.integrantes.length) {
+                    row.push(proyecto.integrantes[i].nombre, proyecto.integrantes[i].codigo);
+                } else {
+                    row.push('', '');
+                }
             }
         }
-        row.push(proyecto.totalIntegrantes.toString());
+        if (shouldExport('total')) row.push(proyecto.totalIntegrantes.toString());
+
         return row;
     });
 
@@ -798,41 +816,53 @@ export const exportProyectosIntegrantesToCSV = (data: ProyectosIntegrantesData) 
     document.body.removeChild(link);
 };
 
-export const exportProyectosIntegrantesToExcel = (data: ProyectosIntegrantesData) => {
+export const exportProyectosIntegrantesToExcel = (data: ProyectosIntegrantesData, visibleColumns: string[] = []) => {
     if (!data || data.proyectos.length === 0) {
         throw new Error('No hay datos para exportar');
     }
 
+    const shouldExport = (columnId: string) => visibleColumns.length === 0 || visibleColumns.includes(columnId);
     const wb = XLSX.utils.book_new();
     const maxIntegrantes = Math.max(...data.proyectos.map(p => p.integrantes.length));
 
     const rows = data.proyectos.map(proyecto => {
-        const row: any = {
-            'Proyecto': proyecto.nombre,
-            'Área': proyecto.area,
-            'Categoría': proyecto.categoria,
-            'Líder': proyecto.lider?.nombre || 'Sin líder',
-            'Código Líder': proyecto.lider?.codigo || '',
-        };
-        for (let i = 0; i < maxIntegrantes; i++) {
-            if (i < proyecto.integrantes.length) {
-                row[`Integrante ${i + 1}`] = proyecto.integrantes[i].nombre;
-                row[`Código ${i + 1}`] = proyecto.integrantes[i].codigo;
-            } else {
-                row[`Integrante ${i + 1}`] = '';
-                row[`Código ${i + 1}`] = '';
+        const row: any = {};
+
+        if (shouldExport('proyecto')) row['Proyecto'] = proyecto.nombre;
+        if (shouldExport('area')) row['Área'] = proyecto.area;
+        if (shouldExport('categoria')) row['Categoría'] = proyecto.categoria;
+        if (shouldExport('lider')) {
+            row['Líder'] = proyecto.lider?.nombre || 'Sin líder';
+            row['Código Líder'] = proyecto.lider?.codigo || '';
+        }
+        if (shouldExport('integrantes')) {
+            for (let i = 0; i < maxIntegrantes; i++) {
+                if (i < proyecto.integrantes.length) {
+                    row[`Integrante ${i + 1}`] = proyecto.integrantes[i].nombre;
+                    row[`Código ${i + 1}`] = proyecto.integrantes[i].codigo;
+                } else {
+                    row[`Integrante ${i + 1}`] = '';
+                    row[`Código ${i + 1}`] = '';
+                }
             }
         }
-        row['Total Integrantes'] = proyecto.totalIntegrantes;
+        if (shouldExport('total')) row['Total Integrantes'] = proyecto.totalIntegrantes;
+
         return row;
     });
 
     const ws = XLSX.utils.json_to_sheet(rows);
-    const colWidths = [{ wch: 35 }, { wch: 25 }, { wch: 20 }, { wch: 25 }, { wch: 15 }];
-    for (let i = 0; i < maxIntegrantes; i++) {
-        colWidths.push({ wch: 25 }, { wch: 15 });
+    const colWidths = [];
+    if (shouldExport('proyecto')) colWidths.push({ wch: 35 });
+    if (shouldExport('area')) colWidths.push({ wch: 25 });
+    if (shouldExport('categoria')) colWidths.push({ wch: 20 });
+    if (shouldExport('lider')) colWidths.push({ wch: 25 }, { wch: 15 });
+    if (shouldExport('integrantes')) {
+        for (let i = 0; i < maxIntegrantes; i++) {
+            colWidths.push({ wch: 25 }, { wch: 15 });
+        }
     }
-    colWidths.push({ wch: 15 });
+    if (shouldExport('total')) colWidths.push({ wch: 15 });
     ws['!cols'] = colWidths;
     XLSX.utils.book_append_sheet(wb, ws, 'Proyectos con Integrantes');
 

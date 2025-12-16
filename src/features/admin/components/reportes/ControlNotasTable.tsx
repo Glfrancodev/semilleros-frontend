@@ -3,9 +3,15 @@ import { ControlNotasData, TareaEstado } from "../../../../types/reportes";
 interface Props {
     data: ControlNotasData | null;
     loading: boolean;
+    visibleColumns?: string[];
 }
 
-export default function ControlNotasTable({ data, loading }: Props) {
+export default function ControlNotasTable({ data, loading, visibleColumns = [] }: Props) {
+    const isColumnVisible = (columnId: string) => {
+        if (visibleColumns.length === 0) return true;
+        return visibleColumns.includes(columnId);
+    };
+
     if (loading) {
         return (
             <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-8">
@@ -100,23 +106,39 @@ export default function ControlNotasTable({ data, loading }: Props) {
                 {/* Tabla */}
                 <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="w-full">
+                        <table className="w-full border-collapse">
                             <thead className="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider sticky left-0 bg-gray-50 dark:bg-gray-700 z-10">
-                                        Proyecto
-                                    </th>
-                                    {data.tareas.map((tarea) => (
-                                        <th
-                                            key={tarea.idTarea}
-                                            className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider min-w-[120px]"
-                                        >
-                                            <div>{tarea.nombre}</div>
-                                            <div className="text-xs font-normal text-gray-400 dark:text-gray-500 mt-1">
-                                                (Orden {tarea.orden})
-                                            </div>
+                                    {isColumnVisible("proyecto") && (
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-r border-gray-200 dark:border-gray-600">
+                                            Proyecto
                                         </th>
-                                    ))}
+                                    )}
+                                    {isColumnVisible("area") && (
+                                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-r border-gray-200 dark:border-gray-600">
+                                            Área
+                                        </th>
+                                    )}
+                                    {isColumnVisible("categoria") && (
+                                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-r border-gray-200 dark:border-gray-600">
+                                            Categoría
+                                        </th>
+                                    )}
+                                    {data.tareas.map((tarea) => {
+                                        const tareaId = `tarea-${tarea.idTarea}`;
+                                        if (!isColumnVisible(tareaId)) return null;
+                                        return (
+                                            <th
+                                                key={tarea.idTarea}
+                                                className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider min-w-[120px]"
+                                            >
+                                                <div>{tarea.nombre}</div>
+                                                <div className="text-xs font-normal text-gray-400 dark:text-gray-500 mt-1">
+                                                    (Orden {tarea.orden})
+                                                </div>
+                                            </th>
+                                        );
+                                    })}
                                 </tr>
                             </thead>
                             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -125,26 +147,39 @@ export default function ControlNotasTable({ data, loading }: Props) {
                                         key={fila.proyecto.idProyecto}
                                         className={index % 2 === 0 ? "bg-white dark:bg-gray-800" : "bg-gray-50 dark:bg-gray-750"}
                                     >
-                                        <td className="px-6 py-4 whitespace-nowrap sticky left-0 bg-inherit z-10">
-                                            <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                                {fila.proyecto.nombre}
-                                            </div>
-                                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                {fila.proyecto.area && fila.proyecto.categoria && (
-                                                    <span>
-                                                        {fila.proyecto.area} • {fila.proyecto.categoria}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        {fila.tareas.map((tarea) => (
-                                            <td
-                                                key={tarea.idTarea}
-                                                className="px-6 py-4 whitespace-nowrap text-center"
-                                            >
-                                                {renderEstadoCelda(tarea)}
+                                        {isColumnVisible("proyecto") && (
+                                            <td className="px-4 py-3 border-r border-gray-200 dark:border-gray-600">
+                                                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                                    {fila.proyecto.nombre}
+                                                </div>
                                             </td>
-                                        ))}
+                                        )}
+                                        {isColumnVisible("area") && (
+                                            <td className="px-4 py-3 text-center border-r border-gray-200 dark:border-gray-600">
+                                                <span className="text-sm text-gray-700 dark:text-gray-300">
+                                                    {fila.proyecto.area}
+                                                </span>
+                                            </td>
+                                        )}
+                                        {isColumnVisible("categoria") && (
+                                            <td className="px-4 py-3 text-center border-r border-gray-200 dark:border-gray-600">
+                                                <span className="text-sm text-gray-700 dark:text-gray-300">
+                                                    {fila.proyecto.categoria}
+                                                </span>
+                                            </td>
+                                        )}
+                                        {fila.tareas.map((tarea) => {
+                                            const tareaId = `tarea-${tarea.idTarea}`;
+                                            if (!isColumnVisible(tareaId)) return null;
+                                            return (
+                                                <td
+                                                    key={tarea.idTarea}
+                                                    className="px-6 py-4 whitespace-nowrap text-center"
+                                                >
+                                                    {renderEstadoCelda(tarea)}
+                                                </td>
+                                            );
+                                        })}
                                     </tr>
                                 ))}
                             </tbody>
