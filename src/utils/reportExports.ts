@@ -861,15 +861,24 @@ export const exportProyectosIntegrantesToExcel = (data: ProyectosIntegrantesData
         if (shouldExport('categoria')) row['Categoría'] = proyecto.categoria;
         if (shouldExport('lider')) {
             row['Líder'] = proyecto.lider?.nombre || 'Sin líder';
+        }
+        if (shouldExport('codigoLider')) {
             row['Código Líder'] = proyecto.lider?.codigo || '';
         }
         if (shouldExport('integrantes')) {
             for (let i = 0; i < maxIntegrantes; i++) {
                 if (i < proyecto.integrantes.length) {
                     row[`Integrante ${i + 1}`] = proyecto.integrantes[i].nombre;
-                    row[`Código ${i + 1}`] = proyecto.integrantes[i].codigo;
                 } else {
                     row[`Integrante ${i + 1}`] = '';
+                }
+            }
+        }
+        if (shouldExport('codigosIntegrantes')) {
+            for (let i = 0; i < maxIntegrantes; i++) {
+                if (i < proyecto.integrantes.length) {
+                    row[`Código ${i + 1}`] = proyecto.integrantes[i].codigo;
+                } else {
                     row[`Código ${i + 1}`] = '';
                 }
             }
@@ -884,10 +893,16 @@ export const exportProyectosIntegrantesToExcel = (data: ProyectosIntegrantesData
     if (shouldExport('proyecto')) colWidths.push({ wch: 35 });
     if (shouldExport('area')) colWidths.push({ wch: 25 });
     if (shouldExport('categoria')) colWidths.push({ wch: 20 });
-    if (shouldExport('lider')) colWidths.push({ wch: 25 }, { wch: 15 });
+    if (shouldExport('lider')) colWidths.push({ wch: 25 });
+    if (shouldExport('codigoLider')) colWidths.push({ wch: 15 });
     if (shouldExport('integrantes')) {
         for (let i = 0; i < maxIntegrantes; i++) {
-            colWidths.push({ wch: 25 }, { wch: 15 });
+            colWidths.push({ wch: 25 });
+        }
+    }
+    if (shouldExport('codigosIntegrantes')) {
+        for (let i = 0; i < maxIntegrantes; i++) {
+            colWidths.push({ wch: 15 });
         }
     }
     if (shouldExport('total')) colWidths.push({ wch: 15 });

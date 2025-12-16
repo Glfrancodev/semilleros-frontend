@@ -228,11 +228,11 @@ export default function ReportesPage() {
                 const data = reporteData as CalificacionesFinalesData;
                 switch (format) {
                     case 'csv':
-                        exportCalificacionesFinalesToCSV(data);
+                        exportCalificacionesFinalesToCSV(data, visibleColumns);
                         toast.success("Reporte exportado a CSV");
                         break;
                     case 'excel':
-                        exportCalificacionesFinalesToExcel(data);
+                        exportCalificacionesFinalesToExcel(data, visibleColumns);
                         toast.success("Reporte exportado a Excel");
                         break;
                     case 'pdf':
