@@ -77,3 +77,45 @@ export interface Estadisticas {
     tareasPendientes: number;
     tareasNoEnviadas: number;
 }
+
+// ============================================
+// Tipos para Proyectos con Jurados
+// ============================================
+
+export interface ProyectosJuradosData {
+    proyectos: ProyectoConJurados[];
+    estadisticas: EstadisticasJurados;
+    feriaActual: {
+        idFeria: string;
+        nombre: string;
+        semestre: number;
+        año: number;
+    };
+    timestamp: string;
+}
+
+export interface ProyectoConJurados {
+    idProyecto: string;
+    nombre: string;
+    area: string;
+    categoria: string;
+    jurado1: Jurado | null;
+    jurado2: Jurado | null;
+    jurado3: Jurado | null;
+}
+
+export interface Jurado {
+    idDocente: string;
+    codigoDocente: string;
+    nombre: string;
+    correo: string;
+}
+
+export interface EstadisticasJurados {
+    totalProyectos: number;
+    proyectosConJurados: number;
+    proyectosSinJurados: number;
+    proyectosCon1Jurado: number;
+    proyectosCon2Jurados: number;
+    proyectosCon3Jurados: number;
+}

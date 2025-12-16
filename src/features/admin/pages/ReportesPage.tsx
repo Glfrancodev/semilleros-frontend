@@ -3,8 +3,9 @@ import PageMeta from "../../../components/common/PageMeta";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import ReportSelector from "../components/reportes/ReportSelector";
 import ControlNotasTable from "../components/reportes/ControlNotasTable";
+import ProyectosJuradosTable from "../components/reportes/ProyectosJuradosTable";
 import { reportsService } from "../../../services/reportsService";
-import { ReporteConfig, ControlNotasData } from "../../../types/reportes";
+import { ReporteConfig, ControlNotasData, ProyectosJuradosData } from "../../../types/reportes";
 import { exportToCSV, exportToExcel, exportToPDF } from "../../../utils/reportExports";
 import toast from "react-hot-toast";
 
@@ -18,12 +19,18 @@ const REPORTES_DISPONIBLES: ReporteConfig[] = [
         descripcion: "Matriz de proyectos vs tareas con calificaciones y estados de revisión de la feria actual",
         filtrosDisponibles: [],
     },
+    {
+        id: "proyectos-jurados",
+        nombre: "Proyectos con Jurados",
+        descripcion: "Lista de proyectos aprobados para exposición con sus jurados asignados",
+        filtrosDisponibles: [],
+    },
 ];
 
 export default function ReportesPage() {
     const [activeTab, setActiveTab] = useState<TabType>("feriaActual");
     const [selectedReporte, setSelectedReporte] = useState<string | null>(null);
-    const [reporteData, setReporteData] = useState<ControlNotasData | null>(null);
+    const [reporteData, setReporteData] = useState<ControlNotasData | ProyectosJuradosData | null>(null);
     const [loading, setLoading] = useState(false);
     const [showExportMenu, setShowExportMenu] = useState(false);
 
@@ -39,6 +46,10 @@ export default function ReportesPage() {
                 const data = await reportsService.getControlNotas();
                 setReporteData(data);
                 toast.success("Reporte generado exitosamente");
+            } else if (selectedReporte === "proyectos-jurados") {
+                const data = await reportsService.getProyectosJurados();
+                setReporteData(data);
+                toast.success("Reporte generado exitosamente");
             }
         } catch (error: any) {
             console.error("Error loading report:", error);
@@ -50,7 +61,7 @@ export default function ReportesPage() {
     };
 
     const handleExport = async (format: 'csv' | 'excel' | 'pdf') => {
-        if (!reporteData) {
+        if (!reporteData || !selectedReporte) {
             toast.error("Genera el reporte primero");
             return;
         }
@@ -58,19 +69,25 @@ export default function ReportesPage() {
         try {
             setShowExportMenu(false);
 
-            switch (format) {
-                case 'csv':
-                    exportToCSV(reporteData);
-                    toast.success("Reporte exportado a CSV");
-                    break;
-                case 'excel':
-                    exportToExcel(reporteData);
-                    toast.success("Reporte exportado a Excel");
-                    break;
-                case 'pdf':
-                    await exportToPDF('control-notas-table', reporteData);
-                    toast.success("Reporte exportado a PDF");
-                    break;
+            if (selectedReporte === "control-notas") {
+                const data = reporteData as ControlNotasData;
+                switch (format) {
+                    case 'csv':
+                        exportToCSV(data);
+                        toast.success("Reporte exportado a CSV");
+                        break;
+                    case 'excel':
+                        exportToExcel(data);
+                        toast.success("Reporte exportado a Excel");
+                        break;
+                    case 'pdf':
+                        await exportToPDF('control-notas-table', data);
+                        toast.success("Reporte exportado a PDF");
+                        break;
+                }
+            } else if (selectedReporte === "proyectos-jurados") {
+                // Por ahora, los proyectos-jurados no tienen exportación implementada
+                toast.error("Exportación de Proyectos con Jurados próximamente");
             }
         } catch (error: any) {
             console.error("Error exporting report:", error);
@@ -189,7 +206,13 @@ export default function ReportesPage() {
                         {/* Tabla de Reporte */}
                         {selectedReporte === "control-notas" && (
                             <div id="control-notas-table">
-                                <ControlNotasTable data={reporteData} loading={loading} />
+                                <ControlNotasTable data={reporteData as ControlNotasData} loading={loading} />
+                            </div>
+                        )}
+
+                        {selectedReporte === "proyectos-jurados" && (
+                            <div id="proyectos-jurados-table">
+                                <ProyectosJuradosTable data={reporteData as ProyectosJuradosData} loading={loading} />
                             </div>
                         )}
                     </div>

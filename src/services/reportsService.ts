@@ -208,4 +208,9 @@ export const reportsService = {
         });
         return response.data.data;
     },
+
+    getProyectosJurados: async (): Promise<any> => {
+        const response = await axios.get(`${API_URL}/reports/feria-actual/proyectos-jurados`);
+        return response.data.data;
+    },
 };
