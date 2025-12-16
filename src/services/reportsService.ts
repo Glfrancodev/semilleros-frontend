@@ -218,4 +218,9 @@ export const reportsService = {
         const response = await axios.get(`${API_URL}/reports/feria-actual/calificaciones-finales`);
         return response.data.data;
     },
+
+    getProyectosIntegrantes: async (): Promise<any> => {
+        const response = await axios.get(`${API_URL}/reports/feria-actual/proyectos-integrantes`);
+        return response.data.data;
+    },
 };

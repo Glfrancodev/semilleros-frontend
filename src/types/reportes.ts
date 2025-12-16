@@ -152,3 +152,43 @@ export interface EstadisticasCalificaciones {
     proyectosCalificados: number;
     proyectosPendientes: number;
 }
+
+// ============================================
+// Tipos para Proyectos con Integrantes
+// ============================================
+
+export interface ProyectosIntegrantesData {
+    proyectos: ProyectoConIntegrantes[];
+    estadisticas: EstadisticasIntegrantes;
+    feriaActual: {
+        idFeria: string;
+        nombre: string;
+        semestre: number;
+        año: number;
+    };
+    timestamp: string;
+}
+
+export interface ProyectoConIntegrantes {
+    idProyecto: string;
+    nombre: string;
+    area: string;
+    categoria: string;
+    lider: {
+        nombre: string;
+        codigo: string;
+    } | null;
+    integrantes: Integrante[];
+    totalIntegrantes: number;
+}
+
+export interface Integrante {
+    nombre: string;
+    codigo: string;
+}
+
+export interface EstadisticasIntegrantes {
+    totalProyectos: number;
+    totalEstudiantes: number;
+    promedioIntegrantesPorProyecto: number;
+}

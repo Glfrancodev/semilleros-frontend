@@ -2,7 +2,7 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import html2canvas from 'html2canvas';
-import { ControlNotasData, ProyectosJuradosData, CalificacionesFinalesData } from '../types/reportes';
+import { ControlNotasData, ProyectosJuradosData, CalificacionesFinalesData, ProyectosIntegrantesData } from '../types/reportes';
 
 /**
  * Exporta el reporte de Control de Notas a CSV
@@ -740,6 +740,203 @@ export const exportCalificacionesFinalesToPDF = async (elementId: string, data: 
         });
 
         pdf.save(`calificaciones-finales-${data.feriaActual.nombre}-${new Date().toISOString().split('T')[0]}.pdf`);
+        document.body.removeChild(wrapper);
+    } catch (error) {
+        if (wrapper && wrapper.parentNode) {
+            document.body.removeChild(wrapper);
+        }
+        window.onerror = originalErrorHandler;
+        console.error('Error generating PDF:', error);
+        throw new Error('Error al generar el PDF. Intenta usar la exportación a Excel o CSV.');
+    }
+};
+
+// ============================================
+// EXPORTACIONES PARA PROYECTOS CON INTEGRANTES
+// ============================================
+
+export const exportProyectosIntegrantesToCSV = (data: ProyectosIntegrantesData) => {
+    if (!data || data.proyectos.length === 0) {
+        throw new Error('No hay datos para exportar');
+    }
+
+    const maxIntegrantes = Math.max(...data.proyectos.map(p => p.integrantes.length));
+    const headers = ['Proyecto', 'Área', 'Categoría', 'Líder', 'Código Líder'];
+    for (let i = 1; i <= maxIntegrantes; i++) {
+        headers.push(`Integrante ${i}`, `Código ${i}`);
+    }
+    headers.push('Total Integrantes');
+
+    const rows = data.proyectos.map(proyecto => {
+        const row = [
+            proyecto.nombre,
+            proyecto.area,
+            proyecto.categoria,
+            proyecto.lider?.nombre || 'Sin líder',
+            proyecto.lider?.codigo || '',
+        ];
+        for (let i = 0; i < maxIntegrantes; i++) {
+            if (i < proyecto.integrantes.length) {
+                row.push(proyecto.integrantes[i].nombre, proyecto.integrantes[i].codigo);
+            } else {
+                row.push('', '');
+            }
+        }
+        row.push(proyecto.totalIntegrantes.toString());
+        return row;
+    });
+
+    const csvContent = [headers.join(','), ...rows.map(row => row.map(cell => `"${cell}"`).join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `proyectos-integrantes-${data.feriaActual.nombre}-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+export const exportProyectosIntegrantesToExcel = (data: ProyectosIntegrantesData) => {
+    if (!data || data.proyectos.length === 0) {
+        throw new Error('No hay datos para exportar');
+    }
+
+    const wb = XLSX.utils.book_new();
+    const maxIntegrantes = Math.max(...data.proyectos.map(p => p.integrantes.length));
+
+    const rows = data.proyectos.map(proyecto => {
+        const row: any = {
+            'Proyecto': proyecto.nombre,
+            'Área': proyecto.area,
+            'Categoría': proyecto.categoria,
+            'Líder': proyecto.lider?.nombre || 'Sin líder',
+            'Código Líder': proyecto.lider?.codigo || '',
+        };
+        for (let i = 0; i < maxIntegrantes; i++) {
+            if (i < proyecto.integrantes.length) {
+                row[`Integrante ${i + 1}`] = proyecto.integrantes[i].nombre;
+                row[`Código ${i + 1}`] = proyecto.integrantes[i].codigo;
+            } else {
+                row[`Integrante ${i + 1}`] = '';
+                row[`Código ${i + 1}`] = '';
+            }
+        }
+        row['Total Integrantes'] = proyecto.totalIntegrantes;
+        return row;
+    });
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const colWidths = [{ wch: 35 }, { wch: 25 }, { wch: 20 }, { wch: 25 }, { wch: 15 }];
+    for (let i = 0; i < maxIntegrantes; i++) {
+        colWidths.push({ wch: 25 }, { wch: 15 });
+    }
+    colWidths.push({ wch: 15 });
+    ws['!cols'] = colWidths;
+    XLSX.utils.book_append_sheet(wb, ws, 'Proyectos con Integrantes');
+
+    const statsData = [
+        { Métrica: 'Total Proyectos', Valor: data.estadisticas.totalProyectos },
+        { Métrica: 'Total Estudiantes', Valor: data.estadisticas.totalEstudiantes },
+        { Métrica: 'Promedio por Proyecto', Valor: data.estadisticas.promedioIntegrantesPorProyecto },
+    ];
+    const wsStats = XLSX.utils.json_to_sheet(statsData);
+    XLSX.utils.book_append_sheet(wb, wsStats, 'Estadísticas');
+    XLSX.writeFile(wb, `proyectos-integrantes-${data.feriaActual.nombre}-${new Date().toISOString().split('T')[0]}.xlsx`);
+};
+
+export const exportProyectosIntegrantesToPDF = async (elementId: string, data: ProyectosIntegrantesData) => {
+    if (!data || data.proyectos.length === 0) {
+        throw new Error('No hay datos para exportar');
+    }
+
+    const element = document.getElementById(elementId);
+    if (!element) {
+        throw new Error('Elemento no encontrado para exportar');
+    }
+
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'absolute';
+    wrapper.style.left = '-9999px';
+    wrapper.style.top = '0';
+    wrapper.style.backgroundColor = '#ffffff';
+    wrapper.style.padding = '20px';
+    wrapper.style.width = element.offsetWidth + 'px';
+
+    const clone = element.cloneNode(true) as HTMLElement;
+    wrapper.appendChild(clone);
+    document.body.appendChild(wrapper);
+
+    const originalErrorHandler = window.onerror;
+    window.onerror = (message) => {
+        if (typeof message === 'string' && message.includes('oklch')) {
+            return true;
+        }
+        return false;
+    };
+
+    try {
+        const canvas = await html2canvas(wrapper, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: false,
+            backgroundColor: '#ffffff',
+            logging: false,
+            ignoreElements: () => false,
+            onclone: (clonedDoc) => {
+                const style = clonedDoc.createElement('style');
+                style.innerHTML = `* { color: inherit !important; background-color: inherit !important; border-color: inherit !important; }`;
+                clonedDoc.head.appendChild(style);
+            }
+        });
+
+        window.onerror = originalErrorHandler;
+        const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = pageWidth - 20;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let finalWidth = imgWidth;
+        let finalHeight = imgHeight;
+        if (imgHeight > pageHeight - 40) {
+            finalHeight = pageHeight - 40;
+            finalWidth = (canvas.width * finalHeight) / canvas.height;
+        }
+        const xPosition = (pageWidth - finalWidth) / 2;
+
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(`Proyectos con Integrantes - ${data.feriaActual.nombre}`, pageWidth / 2, 15, { align: 'center' });
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`Generado: ${new Date().toLocaleDateString('es-ES', {
+            year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        })}`, pageWidth / 2, 21, { align: 'center' });
+
+        const imgData = canvas.toDataURL('image/png');
+        pdf.addImage(imgData, 'PNG', xPosition, 25, finalWidth, finalHeight);
+
+        pdf.addPage();
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Estadísticas del Reporte', pageWidth / 2, 20, { align: 'center' });
+
+        autoTable(pdf, {
+            startY: 30,
+            head: [['Métrica', 'Valor']],
+            body: [
+                ['Total Proyectos', data.estadisticas.totalProyectos.toString()],
+                ['Total Estudiantes', data.estadisticas.totalEstudiantes.toString()],
+                ['Promedio por Proyecto', data.estadisticas.promedioIntegrantesPorProyecto.toString()],
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [79, 70, 229], fontSize: 12, fontStyle: 'bold' },
+            bodyStyles: { fontSize: 11 },
+            columnStyles: { 0: { cellWidth: 100 }, 1: { cellWidth: 50, halign: 'center' } },
+        });
+
+        pdf.save(`proyectos-integrantes-${data.feriaActual.nombre}-${new Date().toISOString().split('T')[0]}.pdf`);
         document.body.removeChild(wrapper);
     } catch (error) {
         if (wrapper && wrapper.parentNode) {

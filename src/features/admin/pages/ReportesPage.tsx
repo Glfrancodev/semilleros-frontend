@@ -5,8 +5,9 @@ import ReportSelector from "../components/reportes/ReportSelector";
 import ControlNotasTable from "../components/reportes/ControlNotasTable";
 import ProyectosJuradosTable from "../components/reportes/ProyectosJuradosTable";
 import CalificacionesFinalesTable from "../components/reportes/CalificacionesFinalesTable";
+import ProyectosIntegrantesTable from "../components/reportes/ProyectosIntegrantesTable";
 import { reportsService } from "../../../services/reportsService";
-import { ReporteConfig, ControlNotasData, ProyectosJuradosData, CalificacionesFinalesData } from "../../../types/reportes";
+import { ReporteConfig, ControlNotasData, ProyectosJuradosData, CalificacionesFinalesData, ProyectosIntegrantesData } from "../../../types/reportes";
 import {
     exportToCSV,
     exportToExcel,
@@ -16,7 +17,10 @@ import {
     exportProyectosJuradosToPDF,
     exportCalificacionesFinalesToCSV,
     exportCalificacionesFinalesToExcel,
-    exportCalificacionesFinalesToPDF
+    exportCalificacionesFinalesToPDF,
+    exportProyectosIntegrantesToCSV,
+    exportProyectosIntegrantesToExcel,
+    exportProyectosIntegrantesToPDF
 } from "../../../utils/reportExports";
 import toast from "react-hot-toast";
 
@@ -42,12 +46,18 @@ const REPORTES_DISPONIBLES: ReporteConfig[] = [
         descripcion: "Calificaciones de jurados y promedio final de proyectos aprobados",
         filtrosDisponibles: [],
     },
+    {
+        id: "proyectos-integrantes",
+        nombre: "Proyectos con Integrantes",
+        descripcion: "Lista de proyectos con líder e integrantes del equipo",
+        filtrosDisponibles: [],
+    },
 ];
 
 export default function ReportesPage() {
     const [activeTab, setActiveTab] = useState<TabType>("feriaActual");
     const [selectedReporte, setSelectedReporte] = useState<string | null>(null);
-    const [reporteData, setReporteData] = useState<ControlNotasData | ProyectosJuradosData | CalificacionesFinalesData | null>(null);
+    const [reporteData, setReporteData] = useState<ControlNotasData | ProyectosJuradosData | CalificacionesFinalesData | ProyectosIntegrantesData | null>(null);
     const [loading, setLoading] = useState(false);
     const [showExportMenu, setShowExportMenu] = useState(false);
     const [reporteGenerado, setReporteGenerado] = useState(false);
@@ -79,6 +89,11 @@ export default function ReportesPage() {
                 toast.success("Reporte generado exitosamente");
             } else if (selectedReporte === "calificaciones-finales") {
                 const data = await reportsService.getCalificacionesFinales();
+                setReporteData(data);
+                setReporteGenerado(true);
+                toast.success("Reporte generado exitosamente");
+            } else if (selectedReporte === "proyectos-integrantes") {
+                const data = await reportsService.getProyectosIntegrantes();
                 setReporteData(data);
                 setReporteGenerado(true);
                 toast.success("Reporte generado exitosamente");
@@ -147,6 +162,22 @@ export default function ReportesPage() {
                         break;
                     case 'pdf':
                         await exportCalificacionesFinalesToPDF('calificaciones-finales-table', data);
+                        toast.success("Reporte exportado a PDF");
+                        break;
+                }
+            } else if (selectedReporte === "proyectos-integrantes") {
+                const data = reporteData as ProyectosIntegrantesData;
+                switch (format) {
+                    case 'csv':
+                        exportProyectosIntegrantesToCSV(data);
+                        toast.success("Reporte exportado a CSV");
+                        break;
+                    case 'excel':
+                        exportProyectosIntegrantesToExcel(data);
+                        toast.success("Reporte exportado a Excel");
+                        break;
+                    case 'pdf':
+                        await exportProyectosIntegrantesToPDF('proyectos-integrantes-table', data);
                         toast.success("Reporte exportado a PDF");
                         break;
                 }
@@ -286,6 +317,16 @@ export default function ReportesPage() {
                             <div id="calificaciones-finales-table">
                                 <CalificacionesFinalesTable
                                     data={reporteData as CalificacionesFinalesData}
+                                    loading={loading}
+                                    reporteGenerado={reporteGenerado}
+                                />
+                            </div>
+                        )}
+
+                        {selectedReporte === "proyectos-integrantes" && (
+                            <div id="proyectos-integrantes-table">
+                                <ProyectosIntegrantesTable
+                                    data={reporteData as ProyectosIntegrantesData}
                                     loading={loading}
                                     reporteGenerado={reporteGenerado}
                                 />
