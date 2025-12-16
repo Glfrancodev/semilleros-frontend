@@ -13,11 +13,6 @@ export default function PromedioNotasFeriasTable({ data, loading, reporteGenerad
         return visibleColumns.includes(columnId);
     };
 
-    // Debug: Log data structure
-    console.log('PromedioNotasFeriasTable - data:', data);
-    console.log('PromedioNotasFeriasTable - series:', data?.series);
-    console.log('PromedioNotasFeriasTable - first serie:', data?.series?.[0]);
-
     if (loading) {
         return (
             <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-8">
