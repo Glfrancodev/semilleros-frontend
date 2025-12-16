@@ -223,4 +223,13 @@ export const reportsService = {
         const response = await axios.get(`${API_URL}/reports/feria-actual/proyectos-integrantes`);
         return response.data.data;
     },
+
+    // ========== Reportes Descargables - Global ==========
+
+    getPromedioNotasFerias: async (filtros?: any) => {
+        const response = await axios.get(`${API_URL}/reports/global/rendimiento/promedio-por-feria`, {
+            params: filtros
+        });
+        return response.data.data;
+    },
 };

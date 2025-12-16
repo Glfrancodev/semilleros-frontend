@@ -1020,3 +1020,231 @@ export const exportProyectosIntegrantesToPDF = async (elementId: string, data: P
         throw new Error('Error al generar el PDF. Intenta usar la exportación a Excel o CSV.');
     }
 };
+
+// ============================================
+// EXPORTACIONES PARA PROMEDIO NOTAS FERIAS (GLOBAL)
+// ============================================
+
+/**
+ * Exporta el reporte de Promedio de Notas de Ferias a CSV
+ */
+export const exportPromedioNotasFeriasToCSV = (data: any, visibleColumns: string[] = []) => {
+    if (!data || !data.series || data.series.length === 0) {
+        throw new Error('No hay datos para exportar');
+    }
+
+    const isColumnVisible = (columnId: string) => visibleColumns.length === 0 || visibleColumns.includes(columnId);
+
+    // Construir encabezados
+    const headers = [];
+    if (isColumnVisible('nombreFeria')) headers.push('Nombre Feria');
+    if (isColumnVisible('semestre')) headers.push('Semestre');
+    if (isColumnVisible('año')) headers.push('Año');
+    if (isColumnVisible('promedioGeneral')) headers.push('Promedio General');
+    if (isColumnVisible('mediana')) headers.push('Mediana');
+    if (isColumnVisible('desviacionEstandar')) headers.push('Desviación Estándar');
+    if (isColumnVisible('calificacionMaxima')) headers.push('Calificación Máxima');
+    if (isColumnVisible('calificacionMinima')) headers.push('Calificación Mínima');
+    if (isColumnVisible('totalProyectos')) headers.push('Total Proyectos Calificados');
+
+    // Construir filas
+    const rows = data.series.map((serie: any) => {
+        const row = [];
+        if (isColumnVisible('nombreFeria')) row.push(serie.feria.nombre);
+        if (isColumnVisible('semestre')) row.push(serie.feria.semestre);
+        if (isColumnVisible('año')) row.push(serie.feria.año);
+        if (isColumnVisible('promedioGeneral')) row.push(serie.estadisticas.promedioGeneral.toFixed(2));
+        if (isColumnVisible('mediana')) row.push(serie.estadisticas.mediana.toFixed(2));
+        if (isColumnVisible('desviacionEstandar')) row.push(serie.estadisticas.desviacionEstandar.toFixed(2));
+        if (isColumnVisible('calificacionMaxima')) row.push(serie.estadisticas.calificacionMaxima.toFixed(2));
+        if (isColumnVisible('calificacionMinima')) row.push(serie.estadisticas.calificacionMinima.toFixed(2));
+        if (isColumnVisible('totalProyectos')) row.push(serie.estadisticas.totalProyectosCalificados);
+        return row;
+    });
+
+    // Combinar encabezados y filas
+    const csvContent = [
+        headers.join(','),
+        ...rows.map((row: any[]) => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    // Descargar archivo
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', `promedio-notas-ferias-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+/**
+ * Exporta el reporte de Promedio de Notas de Ferias a Excel
+ */
+export const exportPromedioNotasFeriasToExcel = (data: any, visibleColumns: string[] = []) => {
+    if (!data || !data.series || data.series.length === 0) {
+        throw new Error('No hay datos para exportar');
+    }
+
+    const isColumnVisible = (columnId: string) => visibleColumns.length === 0 || visibleColumns.includes(columnId);
+
+    const wb = XLSX.utils.book_new();
+
+    const rows = data.series.map((serie: any) => {
+        const row: any = {};
+        if (isColumnVisible('nombreFeria')) row['Nombre Feria'] = serie.feria.nombre;
+        if (isColumnVisible('semestre')) row['Semestre'] = serie.feria.semestre;
+        if (isColumnVisible('año')) row['Año'] = serie.feria.año;
+        if (isColumnVisible('promedioGeneral')) row['Promedio General'] = serie.estadisticas.promedioGeneral;
+        if (isColumnVisible('mediana')) row['Mediana'] = serie.estadisticas.mediana;
+        if (isColumnVisible('desviacionEstandar')) row['Desviación Estándar'] = serie.estadisticas.desviacionEstandar;
+        if (isColumnVisible('calificacionMaxima')) row['Calificación Máxima'] = serie.estadisticas.calificacionMaxima;
+        if (isColumnVisible('calificacionMinima')) row['Calificación Mínima'] = serie.estadisticas.calificacionMinima;
+        if (isColumnVisible('totalProyectos')) row['Total Proyectos Calificados'] = serie.estadisticas.totalProyectosCalificados;
+        return row;
+    });
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+
+    const colWidths = [];
+    if (isColumnVisible('nombreFeria')) colWidths.push({ wch: 35 });
+    if (isColumnVisible('semestre')) colWidths.push({ wch: 12 });
+    if (isColumnVisible('año')) colWidths.push({ wch: 10 });
+    if (isColumnVisible('promedioGeneral')) colWidths.push({ wch: 18 });
+    if (isColumnVisible('mediana')) colWidths.push({ wch: 12 });
+    if (isColumnVisible('desviacionEstandar')) colWidths.push({ wch: 18 });
+    if (isColumnVisible('calificacionMaxima')) colWidths.push({ wch: 20 });
+    if (isColumnVisible('calificacionMinima')) colWidths.push({ wch: 20 });
+    if (isColumnVisible('totalProyectos')) colWidths.push({ wch: 25 });
+    ws['!cols'] = colWidths;
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Promedio Notas Ferias');
+
+    // Agregar hoja de estadísticas generales
+    const statsData = [
+        { Métrica: 'Total Ferias', Valor: data.series.length },
+        { Métrica: 'Promedio Histórico', Valor: data.tendenciaGeneral.promedioHistorico.toFixed(2) },
+        { Métrica: 'Tendencia', Valor: data.tendenciaGeneral.direccion },
+        { Métrica: 'Tasa de Crecimiento', Valor: data.tendenciaGeneral.tasaCrecimientoPromedio.toFixed(2) + '%' },
+    ];
+    const wsStats = XLSX.utils.json_to_sheet(statsData);
+    XLSX.utils.book_append_sheet(wb, wsStats, 'Estadísticas');
+
+    XLSX.writeFile(wb, `promedio-notas-ferias-${new Date().toISOString().split('T')[0]}.xlsx`);
+};
+
+/**
+ * Exporta el reporte de Promedio de Notas de Ferias a PDF
+ */
+export const exportPromedioNotasFeriasToPDF = async (elementId: string, data: any) => {
+    if (!data || !data.series || data.series.length === 0) {
+        throw new Error('No hay datos para exportar');
+    }
+
+    const element = document.getElementById(elementId);
+    if (!element) {
+        throw new Error('Elemento no encontrado');
+    }
+
+    let wrapper: HTMLDivElement | null = null;
+    const originalErrorHandler = window.onerror;
+
+    try {
+        window.onerror = () => true;
+
+        wrapper = document.createElement('div');
+        wrapper.style.position = 'absolute';
+        wrapper.style.left = '-9999px';
+        wrapper.style.top = '0';
+        wrapper.style.width = '1200px';
+        wrapper.style.background = 'white';
+        wrapper.style.padding = '20px';
+        document.body.appendChild(wrapper);
+
+        const clone = element.cloneNode(true) as HTMLElement;
+        wrapper.appendChild(clone);
+
+        const canvas = await html2canvas(clone, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff'
+        });
+
+        const pdf = new jsPDF({
+            orientation: 'landscape',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+
+        const imgWidth = pageWidth - 20;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        let finalWidth = imgWidth;
+        let finalHeight = imgHeight;
+
+        if (imgHeight > pageHeight - 40) {
+            finalHeight = pageHeight - 40;
+            finalWidth = (canvas.width * finalHeight) / canvas.height;
+        }
+
+        const xPosition = (pageWidth - finalWidth) / 2;
+
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Promedio de Notas de Ferias', pageWidth / 2, 15, { align: 'center' });
+
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`Generado: ${new Date().toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        })}`, pageWidth / 2, 21, { align: 'center' });
+
+        const imgData = canvas.toDataURL('image/png');
+        pdf.addImage(imgData, 'PNG', xPosition, 25, finalWidth, finalHeight);
+
+        // Agregar página de estadísticas
+        pdf.addPage();
+
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Estadísticas Generales', pageWidth / 2, 20, { align: 'center' });
+
+        const statsData = [
+            ['Total Ferias', data.series.length.toString()],
+            ['Promedio Histórico', data.tendenciaGeneral.promedioHistorico.toFixed(2)],
+            ['Tendencia', data.tendenciaGeneral.direccion],
+            ['Tasa de Crecimiento', data.tendenciaGeneral.tasaCrecimientoPromedio.toFixed(2) + '%'],
+        ];
+
+        autoTable(pdf, {
+            startY: 30,
+            head: [['Métrica', 'Valor']],
+            body: statsData,
+            theme: 'grid',
+            headStyles: { fillColor: [79, 70, 229], fontSize: 12, fontStyle: 'bold' },
+            styles: { fontSize: 10, cellPadding: 5 },
+        });
+
+        pdf.save(`promedio-notas-ferias-${new Date().toISOString().split('T')[0]}.pdf`);
+        document.body.removeChild(wrapper);
+    } catch (error) {
+        if (wrapper && wrapper.parentNode) {
+            document.body.removeChild(wrapper);
+        }
+        window.onerror = originalErrorHandler;
+        console.error('Error generating PDF:', error);
+        throw new Error('Error al generar el PDF. Intenta usar la exportación a Excel o CSV.');
+    }
+};

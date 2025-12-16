@@ -6,9 +6,10 @@ import ControlNotasTable from "../components/reportes/ControlNotasTable";
 import ProyectosJuradosTable from "../components/reportes/ProyectosJuradosTable";
 import CalificacionesFinalesTable from "../components/reportes/CalificacionesFinalesTable";
 import ProyectosIntegrantesTable from "../components/reportes/ProyectosIntegrantesTable";
+import PromedioNotasFeriasTable from "../components/reportes/PromedioNotasFeriasTable";
 import TableSettings from "../components/reportes/TableSettings";
 import { reportsService } from "../../../services/reportsService";
-import { ReporteConfig, ControlNotasData, ProyectosJuradosData, CalificacionesFinalesData, ProyectosIntegrantesData } from "../../../types/reportes";
+import { ReporteConfig, ControlNotasData, ProyectosJuradosData, CalificacionesFinalesData, ProyectosIntegrantesData, PromedioNotasFeriasData } from "../../../types/reportes";
 import {
     exportToCSV,
     exportToExcel,
@@ -21,7 +22,10 @@ import {
     exportCalificacionesFinalesToPDF,
     exportProyectosIntegrantesToCSV,
     exportProyectosIntegrantesToExcel,
-    exportProyectosIntegrantesToPDF
+    exportProyectosIntegrantesToPDF,
+    exportPromedioNotasFeriasToCSV,
+    exportPromedioNotasFeriasToExcel,
+    exportPromedioNotasFeriasToPDF
 } from "../../../utils/reportExports";
 import toast from "react-hot-toast";
 
@@ -55,10 +59,19 @@ const REPORTES_DISPONIBLES: ReporteConfig[] = [
     },
 ];
 
+const REPORTES_GLOBALES: ReporteConfig[] = [
+    {
+        id: "promedio-notas-ferias",
+        nombre: "Promedio de Notas de Ferias",
+        descripcion: "Estadísticas de promedio de calificaciones por feria a lo largo del tiempo",
+        filtrosDisponibles: [],
+    },
+];
+
 export default function ReportesPage() {
     const [activeTab, setActiveTab] = useState<TabType>("feriaActual");
     const [selectedReporte, setSelectedReporte] = useState<string | null>(null);
-    const [reporteData, setReporteData] = useState<ControlNotasData | ProyectosJuradosData | CalificacionesFinalesData | ProyectosIntegrantesData | null>(null);
+    const [reporteData, setReporteData] = useState<ControlNotasData | ProyectosJuradosData | CalificacionesFinalesData | ProyectosIntegrantesData | PromedioNotasFeriasData | null>(null);
     const [loading, setLoading] = useState(false);
     const [showExportMenu, setShowExportMenu] = useState(false);
     const [reporteGenerado, setReporteGenerado] = useState(false);
@@ -121,6 +134,18 @@ export default function ReportesPage() {
                     { id: "codigosIntegrantes", label: "Códigos Integrantes" },
                     { id: "total", label: "Total" },
                 ];
+            case "promedio-notas-ferias":
+                return [
+                    { id: "nombreFeria", label: "Nombre Feria" },
+                    { id: "semestre", label: "Semestre" },
+                    { id: "año", label: "Año" },
+                    { id: "promedioGeneral", label: "Promedio General" },
+                    { id: "mediana", label: "Mediana" },
+                    { id: "desviacionEstandar", label: "Desviación Estándar" },
+                    { id: "calificacionMaxima", label: "Calificación Máxima" },
+                    { id: "calificacionMinima", label: "Calificación Mínima" },
+                    { id: "totalProyectos", label: "Total Proyectos Calificados" },
+                ];
             default:
                 return [];
         }
@@ -169,6 +194,11 @@ export default function ReportesPage() {
                 toast.success("Reporte generado exitosamente");
             } else if (selectedReporte === "proyectos-integrantes") {
                 const data = await reportsService.getProyectosIntegrantes();
+                setReporteData(data);
+                setReporteGenerado(true);
+                toast.success("Reporte generado exitosamente");
+            } else if (selectedReporte === "promedio-notas-ferias") {
+                const data = await reportsService.getPromedioNotasFerias();
                 setReporteData(data);
                 setReporteGenerado(true);
                 toast.success("Reporte generado exitosamente");
@@ -253,6 +283,22 @@ export default function ReportesPage() {
                         break;
                     case 'pdf':
                         await exportProyectosIntegrantesToPDF('proyectos-integrantes-table', data);
+                        toast.success("Reporte exportado a PDF");
+                        break;
+                }
+            } else if (selectedReporte === "promedio-notas-ferias") {
+                const data = reporteData as PromedioNotasFeriasData;
+                switch (format) {
+                    case 'csv':
+                        exportPromedioNotasFeriasToCSV(data, visibleColumns);
+                        toast.success("Reporte exportado a CSV");
+                        break;
+                    case 'excel':
+                        exportPromedioNotasFeriasToExcel(data, visibleColumns);
+                        toast.success("Reporte exportado a Excel");
+                        break;
+                    case 'pdf':
+                        await exportPromedioNotasFeriasToPDF('promedio-notas-ferias-table', data);
                         toast.success("Reporte exportado a PDF");
                         break;
                 }
@@ -429,19 +475,86 @@ export default function ReportesPage() {
                 {/* Tab Content - Global */}
                 {activeTab === "global" && (
                     <div className="space-y-6">
-                        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-8 shadow-sm">
-                            <div className="text-center">
-                                <div className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4">
-                                    🌐
+                        {/* Selector de Reporte */}
+                        <ReportSelector
+                            reportes={REPORTES_GLOBALES}
+                            selectedReporte={selectedReporte}
+                            onReporteChange={handleReporteChange}
+                        />
+
+                        {/* Botones de Acción */}
+                        {selectedReporte && (
+                            <div className="grid grid-cols-2 gap-4">
+                                <button
+                                    onClick={handleGenerarReporte}
+                                    disabled={loading}
+                                    className="px-6 py-3 bg-brand-500 hover:bg-brand-600 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                >
+                                    {loading ? (
+                                        <>
+                                            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                            </svg>
+                                            Generando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            🔍 Generar Reporte
+                                        </>
+                                    )}
+                                </button>
+
+                                {/* Dropdown de Exportación */}
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setShowExportMenu(!showExportMenu)}
+                                        disabled={!reporteGenerado || !reporteData}
+                                        className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    >
+                                        📥 Exportar
+                                    </button>
+
+                                    {showExportMenu && reporteGenerado && reporteData && (
+                                        <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
+                                            <button
+                                                onClick={() => { handleExport('csv'); setShowExportMenu(false); }}
+                                                className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors flex items-center gap-3"
+                                            >
+                                                <span className="text-lg">📄</span>
+                                                <span className="font-medium">Exportar a CSV</span>
+                                            </button>
+                                            <button
+                                                onClick={() => { handleExport('excel'); setShowExportMenu(false); }}
+                                                className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors flex items-center gap-3"
+                                            >
+                                                <span className="text-lg">📊</span>
+                                                <span className="font-medium">Exportar a Excel</span>
+                                            </button>
+                                            <button
+                                                onClick={() => { handleExport('pdf'); setShowExportMenu(false); }}
+                                                className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors flex items-center gap-3"
+                                            >
+                                                <span className="text-lg">📑</span>
+                                                <span className="font-medium">Exportar a PDF</span>
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
-                                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                                    Reportes Globales
-                                </h3>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                    Aquí podrás generar reportes históricos de todas las ferias
-                                </p>
                             </div>
-                        </div>
+                        )}
+
+                        {/* Tabla de Reporte */}
+                        {selectedReporte === "promedio-notas-ferias" && (
+                            <div id="promedio-notas-ferias-table">
+                                <PromedioNotasFeriasTable
+                                    data={reporteData as PromedioNotasFeriasData}
+                                    loading={loading}
+                                    reporteGenerado={reporteGenerado}
+                                    visibleColumns={visibleColumns}
+                                />
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

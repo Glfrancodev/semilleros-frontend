@@ -192,3 +192,49 @@ export interface EstadisticasIntegrantes {
     totalEstudiantes: number;
     promedioIntegrantesPorProyecto: number;
 }
+
+// ============================================
+// Tipos para Promedio de Notas de Ferias (Global)
+// ============================================
+
+export interface PromedioNotasFeriasData {
+    series: FeriaEstadistica[];
+    tendenciaGeneral: {
+        direccion: 'creciente' | 'decreciente' | 'estable';
+        tasaCrecimientoPromedio: number;
+        promedioHistorico: number;
+    };
+    filtros: {
+        fechaInicio: string | null;
+        fechaFin: string | null;
+        ferias: string[];
+        areaId: string | null;
+        categoriaId: string | null;
+    };
+    timestamp: string;
+}
+
+export interface FeriaEstadistica {
+    feria: {
+        idFeria: string;
+        nombre: string;
+        semestre: number;
+        año: number;
+    };
+    estadisticas: {
+        promedioGeneral: number;
+        mediana: number;
+        desviacionEstandar: number;
+        calificacionMaxima: number;
+        calificacionMinima: number;
+        totalProyectosCalificados: number;
+    };
+    distribucionPorRango: DistribucionRango[];
+    variacion: number | null;
+}
+
+export interface DistribucionRango {
+    rango: string;
+    cantidad: number;
+    porcentaje: number;
+}
