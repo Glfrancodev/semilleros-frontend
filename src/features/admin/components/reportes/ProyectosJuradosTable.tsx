@@ -3,9 +3,10 @@ import { ProyectosJuradosData, Jurado } from "../../../../types/reportes";
 interface Props {
     data: ProyectosJuradosData | null;
     loading: boolean;
+    reporteGenerado: boolean;
 }
 
-export default function ProyectosJuradosTable({ data, loading }: Props) {
+export default function ProyectosJuradosTable({ data, loading, reporteGenerado }: Props) {
     if (loading) {
         return (
             <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-8">
@@ -21,6 +22,24 @@ export default function ProyectosJuradosTable({ data, loading }: Props) {
         );
     }
 
+    // Si no se ha generado el reporte aún
+    if (!reporteGenerado) {
+        return (
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-8">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                    👨‍⚖️ Previsualización
+                </h3>
+                <div className="text-center text-gray-500 dark:text-gray-400">
+                    <p>Selecciona un reporte y haz clic en Generar Reporte</p>
+                    <p className="text-sm mt-2">
+                        Los resultados aparecerán aquí
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    // Si se generó el reporte pero no hay datos
     if (!data || !data.proyectos || data.proyectos.length === 0) {
         return (
             <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-8">
@@ -113,22 +132,22 @@ export default function ProyectosJuradosTable({ data, loading }: Props) {
                         <table className="w-full">
                             <thead className="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider sticky left-0 bg-gray-50 dark:bg-gray-700 z-10">
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                         Proyecto
                                     </th>
-                                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                         Área
                                     </th>
-                                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                         Categoría
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider min-w-[200px]">
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                         Jurado 1
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider min-w-[200px]">
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                         Jurado 2
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider min-w-[200px]">
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                         Jurado 3
                                     </th>
                                 </tr>
@@ -139,28 +158,28 @@ export default function ProyectosJuradosTable({ data, loading }: Props) {
                                         key={proyecto.idProyecto}
                                         className={index % 2 === 0 ? "bg-white dark:bg-gray-800" : "bg-gray-50 dark:bg-gray-750"}
                                     >
-                                        <td className="px-6 py-4 whitespace-nowrap sticky left-0 bg-inherit z-10">
+                                        <td className="px-4 py-3">
                                             <div className="text-sm font-medium text-gray-900 dark:text-white">
                                                 {proyecto.nombre}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                                        <td className="px-4 py-3 text-center">
                                             <span className="text-sm text-gray-900 dark:text-white">
                                                 {proyecto.area}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                                        <td className="px-4 py-3 text-center">
                                             <span className="text-sm text-gray-900 dark:text-white">
                                                 {proyecto.categoria}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-4 py-3">
                                             {renderJurado(proyecto.jurado1)}
                                         </td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-4 py-3">
                                             {renderJurado(proyecto.jurado2)}
                                         </td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-4 py-3">
                                             {renderJurado(proyecto.jurado3)}
                                         </td>
                                     </tr>

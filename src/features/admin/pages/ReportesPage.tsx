@@ -33,6 +33,14 @@ export default function ReportesPage() {
     const [reporteData, setReporteData] = useState<ControlNotasData | ProyectosJuradosData | null>(null);
     const [loading, setLoading] = useState(false);
     const [showExportMenu, setShowExportMenu] = useState(false);
+    const [reporteGenerado, setReporteGenerado] = useState(false);
+
+    // Limpiar datos cuando cambia el tipo de reporte
+    const handleReporteChange = (reporteId: string) => {
+        setSelectedReporte(reporteId);
+        setReporteData(null);
+        setReporteGenerado(false);
+    };
 
     const handleGenerarReporte = async () => {
         if (!selectedReporte) {
@@ -45,16 +53,19 @@ export default function ReportesPage() {
             if (selectedReporte === "control-notas") {
                 const data = await reportsService.getControlNotas();
                 setReporteData(data);
+                setReporteGenerado(true);
                 toast.success("Reporte generado exitosamente");
             } else if (selectedReporte === "proyectos-jurados") {
                 const data = await reportsService.getProyectosJurados();
                 setReporteData(data);
+                setReporteGenerado(true);
                 toast.success("Reporte generado exitosamente");
             }
         } catch (error: any) {
             console.error("Error loading report:", error);
             toast.error(error.response?.data?.message || "Error al generar el reporte");
             setReporteData(null);
+            setReporteGenerado(false);
         } finally {
             setLoading(false);
         }
@@ -134,7 +145,7 @@ export default function ReportesPage() {
                         <ReportSelector
                             reportes={REPORTES_DISPONIBLES}
                             selectedReporte={selectedReporte}
-                            onReporteChange={setSelectedReporte}
+                            onReporteChange={handleReporteChange}
                         />
 
                         {/* Botones de Acción */}
@@ -212,7 +223,11 @@ export default function ReportesPage() {
 
                         {selectedReporte === "proyectos-jurados" && (
                             <div id="proyectos-jurados-table">
-                                <ProyectosJuradosTable data={reporteData as ProyectosJuradosData} loading={loading} />
+                                <ProyectosJuradosTable
+                                    data={reporteData as ProyectosJuradosData}
+                                    loading={loading}
+                                    reporteGenerado={reporteGenerado}
+                                />
                             </div>
                         )}
                     </div>
