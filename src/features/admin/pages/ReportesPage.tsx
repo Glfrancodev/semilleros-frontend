@@ -6,7 +6,14 @@ import ControlNotasTable from "../components/reportes/ControlNotasTable";
 import ProyectosJuradosTable from "../components/reportes/ProyectosJuradosTable";
 import { reportsService } from "../../../services/reportsService";
 import { ReporteConfig, ControlNotasData, ProyectosJuradosData } from "../../../types/reportes";
-import { exportToCSV, exportToExcel, exportToPDF } from "../../../utils/reportExports";
+import {
+    exportToCSV,
+    exportToExcel,
+    exportToPDF,
+    exportProyectosJuradosToCSV,
+    exportProyectosJuradosToExcel,
+    exportProyectosJuradosToPDF
+} from "../../../utils/reportExports";
 import toast from "react-hot-toast";
 
 type TabType = "feriaActual" | "global";
@@ -97,8 +104,21 @@ export default function ReportesPage() {
                         break;
                 }
             } else if (selectedReporte === "proyectos-jurados") {
-                // Por ahora, los proyectos-jurados no tienen exportación implementada
-                toast.error("Exportación de Proyectos con Jurados próximamente");
+                const data = reporteData as ProyectosJuradosData;
+                switch (format) {
+                    case 'csv':
+                        exportProyectosJuradosToCSV(data);
+                        toast.success("Reporte exportado a CSV");
+                        break;
+                    case 'excel':
+                        exportProyectosJuradosToExcel(data);
+                        toast.success("Reporte exportado a Excel");
+                        break;
+                    case 'pdf':
+                        await exportProyectosJuradosToPDF('proyectos-jurados-table', data);
+                        toast.success("Reporte exportado a PDF");
+                        break;
+                }
             }
         } catch (error: any) {
             console.error("Error exporting report:", error);

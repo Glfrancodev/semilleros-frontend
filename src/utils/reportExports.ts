@@ -2,7 +2,7 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import html2canvas from 'html2canvas';
-import { ControlNotasData } from '../types/reportes';
+import { ControlNotasData, ProyectosJuradosData } from '../types/reportes';
 
 /**
  * Exporta el reporte de Control de Notas a CSV
@@ -283,6 +283,229 @@ export const exportToPDF = async (elementId: string, data: ControlNotasData) => 
         if (wrapper && wrapper.parentNode) {
             document.body.removeChild(wrapper);
         }
+        console.error('Error generating PDF:', error);
+        throw new Error('Error al generar el PDF. Intenta usar la exportación a Excel o CSV.');
+    }
+};
+
+// ============================================
+// EXPORTACIONES PARA PROYECTOS CON JURADOS
+// ============================================
+
+/**
+ * Exporta el reporte de Proyectos con Jurados a CSV
+ */
+export const exportProyectosJuradosToCSV = (data: ProyectosJuradosData) => {
+    if (!data || data.proyectos.length === 0) {
+        throw new Error('No hay datos para exportar');
+    }
+
+    // Construir encabezados
+    const headers = ['Proyecto', 'Área', 'Categoría', 'Jurado 1', 'Jurado 2', 'Jurado 3'];
+
+    // Construir filas
+    const rows = data.proyectos.map(proyecto => {
+        return [
+            proyecto.nombre,
+            proyecto.area,
+            proyecto.categoria,
+            proyecto.jurado1 ? `${proyecto.jurado1.nombre} (${proyecto.jurado1.correo})` : '-',
+            proyecto.jurado2 ? `${proyecto.jurado2.nombre} (${proyecto.jurado2.correo})` : '-',
+            proyecto.jurado3 ? `${proyecto.jurado3.nombre} (${proyecto.jurado3.correo})` : '-',
+        ];
+    });
+
+    // Combinar encabezados y filas
+    const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    // Descargar archivo
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', `proyectos-jurados-${data.feriaActual.nombre}-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+/**
+ * Exporta el reporte de Proyectos con Jurados a Excel
+ */
+export const exportProyectosJuradosToExcel = (data: ProyectosJuradosData) => {
+    if (!data || data.proyectos.length === 0) {
+        throw new Error('No hay datos para exportar');
+    }
+
+    // Crear workbook
+    const wb = XLSX.utils.book_new();
+
+    // Construir datos para la hoja
+    const rows = data.proyectos.map(proyecto => ({
+        'Proyecto': proyecto.nombre,
+        'Área': proyecto.area,
+        'Categoría': proyecto.categoria,
+        'Jurado 1 - Nombre': proyecto.jurado1?.nombre || '-',
+        'Jurado 1 - Correo': proyecto.jurado1?.correo || '-',
+        'Jurado 2 - Nombre': proyecto.jurado2?.nombre || '-',
+        'Jurado 2 - Correo': proyecto.jurado2?.correo || '-',
+        'Jurado 3 - Nombre': proyecto.jurado3?.nombre || '-',
+        'Jurado 3 - Correo': proyecto.jurado3?.correo || '-',
+    }));
+
+    // Crear hoja de cálculo
+    const ws = XLSX.utils.json_to_sheet(rows);
+
+    // Ajustar ancho de columnas
+    const colWidths = [
+        { wch: 30 }, // Proyecto
+        { wch: 20 }, // Área
+        { wch: 20 }, // Categoría
+        { wch: 25 }, // Jurado 1 - Nombre
+        { wch: 30 }, // Jurado 1 - Correo
+        { wch: 25 }, // Jurado 2 - Nombre
+        { wch: 30 }, // Jurado 2 - Correo
+        { wch: 25 }, // Jurado 3 - Nombre
+        { wch: 30 }, // Jurado 3 - Correo
+    ];
+    ws['!cols'] = colWidths;
+
+    // Agregar hoja al workbook
+    XLSX.utils.book_append_sheet(wb, ws, 'Proyectos con Jurados');
+
+    // Agregar hoja de estadísticas
+    const statsData = [
+        { Métrica: 'Total Proyectos', Valor: data.estadisticas.totalProyectos },
+        { Métrica: 'Proyectos con Jurados', Valor: data.estadisticas.proyectosConJurados },
+        { Métrica: 'Proyectos sin Jurados', Valor: data.estadisticas.proyectosSinJurados },
+        { Métrica: 'Proyectos con 1 Jurado', Valor: data.estadisticas.proyectosCon1Jurado },
+        { Métrica: 'Proyectos con 2 Jurados', Valor: data.estadisticas.proyectosCon2Jurados },
+        { Métrica: 'Proyectos con 3 Jurados', Valor: data.estadisticas.proyectosCon3Jurados },
+    ];
+    const wsStats = XLSX.utils.json_to_sheet(statsData);
+    XLSX.utils.book_append_sheet(wb, wsStats, 'Estadísticas');
+
+    // Descargar archivo
+    XLSX.writeFile(wb, `proyectos-jurados-${data.feriaActual.nombre}-${new Date().toISOString().split('T')[0]}.xlsx`);
+};
+
+/**
+ * Exporta el reporte de Proyectos con Jurados a PDF capturando la visualización real
+ */
+export const exportProyectosJuradosToPDF = async (elementId: string, data: ProyectosJuradosData) => {
+    if (!data || data.proyectos.length === 0) {
+        throw new Error('No hay datos para exportar');
+    }
+
+    const element = document.getElementById(elementId);
+    if (!element) {
+        throw new Error('Elemento no encontrado para exportar');
+    }
+
+    // Crear un wrapper con fondo blanco sólido
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'absolute';
+    wrapper.style.left = '-9999px';
+    wrapper.style.top = '0';
+    wrapper.style.backgroundColor = '#ffffff';
+    wrapper.style.padding = '20px';
+    wrapper.style.width = element.offsetWidth + 'px';
+
+    // Clonar el elemento
+    const clone = element.cloneNode(true) as HTMLElement;
+    wrapper.appendChild(clone);
+    document.body.appendChild(wrapper);
+
+    // Suprimir errores de oklch temporalmente
+    const originalErrorHandler = window.onerror;
+    window.onerror = (message) => {
+        if (typeof message === 'string' && message.includes('oklch')) {
+            return true; // Suprimir error
+        }
+        return false;
+    };
+
+    try {
+        // Capturar el elemento como imagen usando html2canvas
+        const canvas = await html2canvas(wrapper, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: false,
+            backgroundColor: '#ffffff',
+            logging: false,
+            ignoreElements: () => {
+                return false;
+            },
+            onclone: (clonedDoc) => {
+                // Inyectar CSS override para convertir todos los colores a RGB
+                const style = clonedDoc.createElement('style');
+                style.innerHTML = `
+                    * {
+                        color: inherit !important;
+                        background-color: inherit !important;
+                        border-color: inherit !important;
+                    }
+                `;
+                clonedDoc.head.appendChild(style);
+            }
+        });
+
+        // Restaurar el manejador de errores original
+        window.onerror = originalErrorHandler;
+
+        // Crear PDF
+        const pdf = new jsPDF({
+            orientation: 'landscape',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        // Calcular dimensiones
+        const imgWidth = 277; // A4 landscape width in mm (minus margins)
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        // Agregar imagen al PDF
+        const imgData = canvas.toDataURL('image/png');
+        pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+
+        // Agregar tabla de estadísticas en nueva página
+        pdf.addPage();
+        pdf.setFontSize(16);
+        pdf.text('Estadísticas', 14, 15);
+
+        autoTable(pdf, {
+            startY: 25,
+            head: [['Métrica', 'Valor']],
+            body: [
+                ['Total Proyectos', data.estadisticas.totalProyectos.toString()],
+                ['Proyectos con Jurados', data.estadisticas.proyectosConJurados.toString()],
+                ['Proyectos sin Jurados', data.estadisticas.proyectosSinJurados.toString()],
+                ['Proyectos con 1 Jurado', data.estadisticas.proyectosCon1Jurado.toString()],
+                ['Proyectos con 2 Jurados', data.estadisticas.proyectosCon2Jurados.toString()],
+                ['Proyectos con 3 Jurados', data.estadisticas.proyectosCon3Jurados.toString()],
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [79, 70, 229] },
+        });
+
+        // Descargar PDF
+        pdf.save(`proyectos-jurados-${data.feriaActual.nombre}-${new Date().toISOString().split('T')[0]}.pdf`);
+
+        // Limpiar
+        document.body.removeChild(wrapper);
+    } catch (error) {
+        // Limpiar incluso si hay error
+        if (wrapper && wrapper.parentNode) {
+            document.body.removeChild(wrapper);
+        }
+        // Restaurar el manejador de errores original
+        window.onerror = originalErrorHandler;
         console.error('Error generating PDF:', error);
         throw new Error('Error al generar el PDF. Intenta usar la exportación a Excel o CSV.');
     }
