@@ -119,3 +119,36 @@ export interface EstadisticasJurados {
     proyectosCon2Jurados: number;
     proyectosCon3Jurados: number;
 }
+
+// ============================================
+// Tipos para Calificaciones Finales
+// ============================================
+
+export interface CalificacionesFinalesData {
+    proyectos: ProyectoConCalificaciones[];
+    estadisticas: EstadisticasCalificaciones;
+    feriaActual: {
+        idFeria: string;
+        nombre: string;
+        semestre: number;
+        año: number;
+    };
+    timestamp: string;
+}
+
+export interface ProyectoConCalificaciones {
+    idProyecto: string;
+    nombre: string;
+    area: string;
+    categoria: string;
+    calificacion1: number | 'Pendiente';
+    calificacion2: number | 'Pendiente';
+    calificacion3: number | 'Pendiente';
+    notaFinal: number | 'Pendiente';
+}
+
+export interface EstadisticasCalificaciones {
+    totalProyectos: number;
+    proyectosCalificados: number;
+    proyectosPendientes: number;
+}

@@ -4,15 +4,19 @@ import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import ReportSelector from "../components/reportes/ReportSelector";
 import ControlNotasTable from "../components/reportes/ControlNotasTable";
 import ProyectosJuradosTable from "../components/reportes/ProyectosJuradosTable";
+import CalificacionesFinalesTable from "../components/reportes/CalificacionesFinalesTable";
 import { reportsService } from "../../../services/reportsService";
-import { ReporteConfig, ControlNotasData, ProyectosJuradosData } from "../../../types/reportes";
+import { ReporteConfig, ControlNotasData, ProyectosJuradosData, CalificacionesFinalesData } from "../../../types/reportes";
 import {
     exportToCSV,
     exportToExcel,
     exportToPDF,
     exportProyectosJuradosToCSV,
     exportProyectosJuradosToExcel,
-    exportProyectosJuradosToPDF
+    exportProyectosJuradosToPDF,
+    exportCalificacionesFinalesToCSV,
+    exportCalificacionesFinalesToExcel,
+    exportCalificacionesFinalesToPDF
 } from "../../../utils/reportExports";
 import toast from "react-hot-toast";
 
@@ -32,12 +36,18 @@ const REPORTES_DISPONIBLES: ReporteConfig[] = [
         descripcion: "Lista de proyectos aprobados para exposición con sus jurados asignados",
         filtrosDisponibles: [],
     },
+    {
+        id: "calificaciones-finales",
+        nombre: "Calificaciones Finales",
+        descripcion: "Calificaciones de jurados y promedio final de proyectos aprobados",
+        filtrosDisponibles: [],
+    },
 ];
 
 export default function ReportesPage() {
     const [activeTab, setActiveTab] = useState<TabType>("feriaActual");
     const [selectedReporte, setSelectedReporte] = useState<string | null>(null);
-    const [reporteData, setReporteData] = useState<ControlNotasData | ProyectosJuradosData | null>(null);
+    const [reporteData, setReporteData] = useState<ControlNotasData | ProyectosJuradosData | CalificacionesFinalesData | null>(null);
     const [loading, setLoading] = useState(false);
     const [showExportMenu, setShowExportMenu] = useState(false);
     const [reporteGenerado, setReporteGenerado] = useState(false);
@@ -64,6 +74,11 @@ export default function ReportesPage() {
                 toast.success("Reporte generado exitosamente");
             } else if (selectedReporte === "proyectos-jurados") {
                 const data = await reportsService.getProyectosJurados();
+                setReporteData(data);
+                setReporteGenerado(true);
+                toast.success("Reporte generado exitosamente");
+            } else if (selectedReporte === "calificaciones-finales") {
+                const data = await reportsService.getCalificacionesFinales();
                 setReporteData(data);
                 setReporteGenerado(true);
                 toast.success("Reporte generado exitosamente");
@@ -116,6 +131,22 @@ export default function ReportesPage() {
                         break;
                     case 'pdf':
                         await exportProyectosJuradosToPDF('proyectos-jurados-table', data);
+                        toast.success("Reporte exportado a PDF");
+                        break;
+                }
+            } else if (selectedReporte === "calificaciones-finales") {
+                const data = reporteData as CalificacionesFinalesData;
+                switch (format) {
+                    case 'csv':
+                        exportCalificacionesFinalesToCSV(data);
+                        toast.success("Reporte exportado a CSV");
+                        break;
+                    case 'excel':
+                        exportCalificacionesFinalesToExcel(data);
+                        toast.success("Reporte exportado a Excel");
+                        break;
+                    case 'pdf':
+                        await exportCalificacionesFinalesToPDF('calificaciones-finales-table', data);
                         toast.success("Reporte exportado a PDF");
                         break;
                 }
@@ -245,6 +276,16 @@ export default function ReportesPage() {
                             <div id="proyectos-jurados-table">
                                 <ProyectosJuradosTable
                                     data={reporteData as ProyectosJuradosData}
+                                    loading={loading}
+                                    reporteGenerado={reporteGenerado}
+                                />
+                            </div>
+                        )}
+
+                        {selectedReporte === "calificaciones-finales" && (
+                            <div id="calificaciones-finales-table">
+                                <CalificacionesFinalesTable
+                                    data={reporteData as CalificacionesFinalesData}
                                     loading={loading}
                                     reporteGenerado={reporteGenerado}
                                 />
