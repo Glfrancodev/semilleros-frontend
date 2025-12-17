@@ -12,8 +12,8 @@ export default function ProyectoCard({ proyecto }: ProyectoCardProps) {
   const [imageError, setImageError] = useState(false);
   const navigate = useNavigate();
 
-  const imageSrc = imageError || !proyecto.urlLogo 
-    ? ImagenNoEncontrada 
+  const imageSrc = imageError || !proyecto.urlLogo
+    ? ImagenNoEncontrada
     : proyecto.urlLogo;
 
   const handleReadMore = () => {
@@ -44,6 +44,38 @@ export default function ProyectoCard({ proyecto }: ProyectoCardProps) {
           {proyecto.descripcion}
         </p>
 
+        {/* Badges de estado */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {/* Estado de aprobación de idea */}
+          {(proyecto.estaAprobado === null || proyecto.estaAprobadoTutor === null) && (
+            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">
+              Idea en Pendiente
+            </span>
+          )}
+          {(proyecto.estaAprobado === false || proyecto.estaAprobadoTutor === false) && (
+            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
+              Idea Rechazada
+            </span>
+          )}
+          {proyecto.estaAprobado === true && proyecto.estaAprobadoTutor === true && (
+            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+              Idea Aprobada
+            </span>
+          )}
+
+          {/* Estado de exposición */}
+          {proyecto.esFinal === true && (
+            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+              Aprobado para exposición
+            </span>
+          )}
+          {proyecto.esFinal === false && (
+            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300">
+              Rechazado para exposición
+            </span>
+          )}
+        </div>
+
         {/* Información adicional */}
         <div className="space-y-2">
           <div className="flex items-center text-sm">
@@ -63,9 +95,9 @@ export default function ProyectoCard({ proyecto }: ProyectoCardProps) {
         </div>
 
         {/* Botón "Read more" */}
-        <Button 
-          variant="primary" 
-          size="sm" 
+        <Button
+          variant="primary"
+          size="sm"
           className="w-full mt-4"
           onClick={handleReadMore}
         >
