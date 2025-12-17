@@ -32,7 +32,7 @@ export default function ProyectoDetallePage() {
 
   const cargarProyecto = async () => {
     if (!idProyecto) return;
-    
+
     try {
       setLoading(true);
       setError(null);
@@ -127,22 +127,22 @@ export default function ProyectoDetallePage() {
         title={`${proyecto.nombre} | Sistema de Semilleros`}
         description={`Detalles del proyecto ${proyecto.nombre}`}
       />
-      <PageBreadcrumb 
+      <PageBreadcrumb
         pageTitle={proyecto.nombre}
       />
-      
+
       <div className="space-y-6">
         {/* Card de información del proyecto */}
-        <ProyectoInfoCard proyecto={proyecto} onUpdate={cargarProyecto} />
-        
+        <ProyectoInfoCard proyecto={proyecto} onUpdate={cargarProyecto} estadoFeria={proyecto.estadoFeria} />
+
         {/* Card de Branding */}
-        <ProyectoBrandingCard proyecto={proyecto} onUpdate={cargarProyecto} />
-        
+        <ProyectoBrandingCard proyecto={proyecto} onUpdate={cargarProyecto} estadoFeria={proyecto.estadoFeria} />
+
         {/* Card de Integrantes */}
-        <ProyectoIntegrantesCard proyecto={proyecto} />
-        
+        <ProyectoIntegrantesCard proyecto={proyecto} estadoFeria={proyecto.estadoFeria} />
+
         {/* Card de Tareas */}
-        <ProyectoTareasCard idProyecto={proyecto.idProyecto} proyecto={proyecto} />
+        <ProyectoTareasCard idProyecto={proyecto.idProyecto} proyecto={proyecto} estadoFeria={proyecto.estadoFeria} />
       </div>
     </>
   );

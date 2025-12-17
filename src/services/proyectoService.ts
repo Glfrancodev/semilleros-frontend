@@ -50,6 +50,7 @@ export interface ProyectoDetalle {
   urlTriptico: string | null;
   urlBanner: string | null;
   esPublico: boolean;
+  estadoFeria?: string | null;
 }
 
 export interface CrearProyectoData {
