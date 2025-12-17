@@ -111,6 +111,18 @@ export const obtenerMisProyectosInvitadosPasados = async (): Promise<Proyecto[]>
   return response.data.data.items;
 };
 
+// Obtener proyectos públicos de la feria activa
+export const obtenerProyectosPublicosActuales = async (): Promise<Proyecto[]> => {
+  const response = await api.get<MisProyectosResponse>('/proyectos/publicos-actuales');
+  return response.data.data.items;
+};
+
+// Obtener proyectos ganadores de ferias finalizadas
+export const obtenerProyectosGanadores = async (): Promise<Proyecto[]> => {
+  const response = await api.get<MisProyectosResponse>('/proyectos/ganadores');
+  return response.data.data.items;
+};
+
 // Obtener invitaciones pendientes/registradas del estudiante autenticado
 export const obtenerMisInvitaciones = async (): Promise<{
   count: number;
