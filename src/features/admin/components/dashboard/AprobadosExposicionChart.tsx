@@ -46,8 +46,8 @@ export default function AprobadosExposicionChart({ filtros }: AprobadosExposicio
                 show: false,
             },
         },
-        colors: ['#10b981', '#f59e0b', '#6b7280'],
-        labels: ['Listos para Exponer', 'Pendientes', 'No Listos'],
+        colors: ['#10b981', '#f59e0b', '#ef4444'],
+        labels: ['Listos para Exponer', 'Pendientes', 'Rechazados'],
         legend: {
             show: true,
             position: 'bottom',
@@ -144,8 +144,8 @@ export default function AprobadosExposicionChart({ filtros }: AprobadosExposicio
                         </p>
                     </div>
                     <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">No Listos</p>
-                        <p className="text-lg font-bold text-gray-600 dark:text-gray-400">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Rechazados</p>
+                        <p className="text-lg font-bold text-red-600 dark:text-red-400">
                             {data?.porcentajeNoAprobados}%
                         </p>
                     </div>
