@@ -16,7 +16,6 @@ import ProyectosPorEstadoChart from "../components/dashboard/ProyectosPorEstadoC
 import ParticipacionAreaCategoriaChart from "../components/dashboard/ParticipacionAreaCategoriaChart";
 import CalificacionesFeriaChart from "../components/dashboard/CalificacionesFeriaChart";
 import CargaJuradosChart from "../components/dashboard/CargaJuradosChart";
-import ParticipacionEventosChart from "../components/dashboard/ParticipacionEventosChart";
 
 // Global KPI Components
 import ProyectosGlobalKPI from "../components/global-reports/kpis/ProyectosGlobalKPI";
@@ -102,7 +101,6 @@ export default function Dashboard() {
                                 <ParticipacionAreaCategoriaChart />
                                 <CalificacionesFeriaChart />
                                 <CargaJuradosChart />
-                                <ParticipacionEventosChart />
                             </div>
                         </div>
                     </div>

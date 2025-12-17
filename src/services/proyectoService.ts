@@ -87,6 +87,30 @@ export const obtenerMisProyectosInvitado = async (): Promise<Proyecto[]> => {
   return response.data.data.items;
 };
 
+// Obtener proyectos actuales (vinculados a feria activa)
+export const obtenerMisProyectosActuales = async (): Promise<Proyecto[]> => {
+  const response = await api.get<MisProyectosResponse>('/proyectos/mis-proyectos-actuales');
+  return response.data.data.items;
+};
+
+// Obtener proyectos pasados (todos menos feria activa)
+export const obtenerMisProyectosPasados = async (): Promise<Proyecto[]> => {
+  const response = await api.get<MisProyectosResponse>('/proyectos/mis-proyectos-pasados');
+  return response.data.data.items;
+};
+
+// Obtener proyectos invitados actuales (vinculados a feria activa)
+export const obtenerMisProyectosInvitadosActuales = async (): Promise<Proyecto[]> => {
+  const response = await api.get<MisProyectosResponse>('/proyectos/mis-proyectos-invitados-actuales');
+  return response.data.data.items;
+};
+
+// Obtener proyectos invitados pasados (todos menos feria activa)
+export const obtenerMisProyectosInvitadosPasados = async (): Promise<Proyecto[]> => {
+  const response = await api.get<MisProyectosResponse>('/proyectos/mis-proyectos-invitados-pasados');
+  return response.data.data.items;
+};
+
 // Obtener invitaciones pendientes/registradas del estudiante autenticado
 export const obtenerMisInvitaciones = async (): Promise<{
   count: number;
@@ -129,12 +153,12 @@ export const crearProyecto = async (
     idGrupoMateria: data.idGrupoMateria,
     esPublico: data.esPublico ?? false,
   };
-  
+
   // Solo incluir idConvocatoria si existe (para compatibilidad con código antiguo)
   if (data.idConvocatoria) {
     payload.idConvocatoria = data.idConvocatoria;
   }
-  
+
   const response = await api.post("proyectos", payload);
   return response.data.data;
 };

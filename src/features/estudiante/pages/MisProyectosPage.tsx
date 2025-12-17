@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import {
-  obtenerMisProyectos,
-  obtenerMisProyectosInvitado,
   obtenerMisInvitaciones,
   responderInvitacion,
+  obtenerMisProyectosActuales,
+  obtenerMisProyectosPasados,
+  obtenerMisProyectosInvitadosActuales,
+  obtenerMisProyectosInvitadosPasados,
   Proyecto,
   InvitacionProyecto,
 } from "../../../services/proyectoService";
@@ -15,10 +17,13 @@ export default function MisProyectosPage() {
   const [proyectosInvitado, setProyectosInvitado] = useState<Proyecto[]>([]);
   const [invitaciones, setInvitaciones] = useState<InvitacionProyecto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingProyectos, setLoadingProyectos] = useState(false);
   const [loadingInvitado, setLoadingInvitado] = useState(true);
   const [loadingInvitaciones, setLoadingInvitaciones] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showInvitacionesModal, setShowInvitacionesModal] = useState(false);
+  const [mostrarPasados, setMostrarPasados] = useState(false);
+  const [mostrarPasadosInvitado, setMostrarPasadosInvitado] = useState(false);
 
   useEffect(() => {
     void cargarTodo();
@@ -30,21 +35,56 @@ export default function MisProyectosPage() {
 
   const cargarProyectos = async () => {
     try {
-      setLoading(true);
+      setLoadingProyectos(true);
       setError(null);
-      const data = await obtenerMisProyectos();
+      const data = mostrarPasados
+        ? await obtenerMisProyectosPasados()
+        : await obtenerMisProyectosActuales();
       setProyectos(data);
     } catch (err: any) {
       setError(err.response?.data?.message || "Error al cargar los proyectos");
     } finally {
+      setLoadingProyectos(false);
       setLoading(false);
+    }
+  };
+
+  const handleToggleProyectos = async () => {
+    setMostrarPasados(!mostrarPasados);
+    try {
+      setLoadingProyectos(true);
+      const data = !mostrarPasados
+        ? await obtenerMisProyectosPasados()
+        : await obtenerMisProyectosActuales();
+      setProyectos(data);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Error al cargar los proyectos");
+    } finally {
+      setLoadingProyectos(false);
     }
   };
 
   const cargarProyectosInvitado = async () => {
     try {
       setLoadingInvitado(true);
-      const data = await obtenerMisProyectosInvitado();
+      const data = mostrarPasadosInvitado
+        ? await obtenerMisProyectosInvitadosPasados()
+        : await obtenerMisProyectosInvitadosActuales();
+      setProyectosInvitado(data);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Error al cargar los proyectos invitados");
+    } finally {
+      setLoadingInvitado(false);
+    }
+  };
+
+  const handleToggleProyectosInvitado = async () => {
+    setMostrarPasadosInvitado(!mostrarPasadosInvitado);
+    try {
+      setLoadingInvitado(true);
+      const data = !mostrarPasadosInvitado
+        ? await obtenerMisProyectosInvitadosPasados()
+        : await obtenerMisProyectosInvitadosActuales();
       setProyectosInvitado(data);
     } catch (err: any) {
       setError(err.response?.data?.message || "Error al cargar los proyectos invitados");
@@ -76,6 +116,10 @@ export default function MisProyectosPage() {
       setLoadingInvitaciones(false);
     }
   };
+
+  // Filtrar proyectos según el estado del toggle
+  const proyectosFiltrados = proyectos;
+  const proyectosInvitadoFiltrados = proyectosInvitado;
 
   if (loading) {
     return (
@@ -118,12 +162,31 @@ export default function MisProyectosPage() {
 
       {/* Proyectos líder */}
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden mb-8">
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Proyectos</h2>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              {mostrarPasados ? "Proyectos Pasados" : "Proyectos Actuales"}
+            </span>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={mostrarPasados}
+                onChange={handleToggleProyectos}
+                className="sr-only peer"
+                disabled={loadingProyectos}
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            </label>
+          </div>
         </div>
 
         <div className="p-6">
-          {proyectos.length === 0 ? (
+          {loadingProyectos ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : proyectosFiltrados.length === 0 ? (
             <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-12 text-center">
               <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-3xl">📄</span>
@@ -135,7 +198,7 @@ export default function MisProyectosPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {proyectos.map((proyecto) => (
+              {proyectosFiltrados.map((proyecto) => (
                 <ProyectoCard key={proyecto.idProyecto} proyecto={proyecto} />
               ))}
             </div>
@@ -146,28 +209,47 @@ export default function MisProyectosPage() {
       {/* Proyectos de Invitado */}
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Proyectos de Invitado</h2>
-          <Button
-            variant="primary"
-            onClick={() => {
-              void cargarInvitaciones();
-              setShowInvitacionesModal(true);
-            }}
-            size="sm"
-          >
-            Invitaciones
-            {invitaciones.filter((inv) => inv.invitacion === null).length > 0 && (
-              <span className="ml-2 inline-flex items-center justify-center text-xs font-semibold px-2 py-0.5 bg-red-600 text-white rounded-full">
-                {invitaciones.filter((inv) => inv.invitacion === null).length}
-              </span>
-            )}
-          </Button>
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Proyectos de Invitado</h2>
+            <Button
+              variant="primary"
+              onClick={() => {
+                void cargarInvitaciones();
+                setShowInvitacionesModal(true);
+              }}
+              size="sm"
+            >
+              Invitaciones
+              {invitaciones.filter((inv) => inv.invitacion === null).length > 0 && (
+                <span className="ml-2 inline-flex items-center justify-center text-xs font-semibold px-2 py-0.5 bg-red-600 text-white rounded-full">
+                  {invitaciones.filter((inv) => inv.invitacion === null).length}
+                </span>
+              )}
+            </Button>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              {mostrarPasadosInvitado ? "Proyectos Pasados" : "Proyectos Actuales"}
+            </span>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={mostrarPasadosInvitado}
+                onChange={handleToggleProyectosInvitado}
+                className="sr-only peer"
+                disabled={loadingInvitado}
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            </label>
+          </div>
         </div>
 
         <div className="p-6">
           {loadingInvitado ? (
-            <div className="text-center text-gray-500 dark:text-gray-400">Cargando...</div>
-          ) : proyectosInvitado.length === 0 ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : proyectosInvitadoFiltrados.length === 0 ? (
             <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-12 text-center">
               <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-3xl">🤝</span>
@@ -181,7 +263,7 @@ export default function MisProyectosPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {proyectosInvitado.map((proyecto) => (
+              {proyectosInvitadoFiltrados.map((proyecto) => (
                 <ProyectoCard key={proyecto.idProyecto} proyecto={proyecto} />
               ))}
             </div>
