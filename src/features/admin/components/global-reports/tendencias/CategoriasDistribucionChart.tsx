@@ -92,8 +92,7 @@ export default function CategoriasDistribucionChart({ filtros }: CategoriasDistr
                     },
                 },
                 dataLabels: {
-                    enabled: true,
-                    formatter: (val: number) => `${val.toFixed(1)}%`,
+                    enabled: false,
                 },
                 tooltip: {
                     y: {

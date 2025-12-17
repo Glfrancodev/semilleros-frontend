@@ -34,10 +34,10 @@ export default function ProyectosKPI({ filtros }: ProyectosKPIProps) {
         return (
             <KPICard
                 title="Proyectos Inscritos"
-                value="Error"
-                subtitle={error}
+                value={0}
+                subtitle="No hay feria activa"
                 icon={<FolderIcon />}
-                colorClass="text-red-500 dark:text-red-400"
+                colorClass="text-blue-500 dark:text-blue-400"
             />
         );
     }

@@ -34,10 +34,10 @@ export default function TutoresKPI({ filtros }: TutoresKPIProps) {
         return (
             <KPICard
                 title="Tutores"
-                value="Error"
-                subtitle={error}
+                value={0}
+                subtitle="No hay feria activa"
                 icon={<UserCircleIcon />}
-                colorClass="text-red-500 dark:text-red-400"
+                colorClass="text-purple-500 dark:text-purple-400"
             />
         );
     }

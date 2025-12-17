@@ -34,10 +34,10 @@ export default function JuradosKPI({ filtros }: JuradosKPIProps) {
         return (
             <KPICard
                 title="Jurados"
-                value="Error"
-                subtitle={error}
+                value={0}
+                subtitle="No hay feria activa"
                 icon={<UserIcon />}
-                colorClass="text-red-500 dark:text-red-400"
+                colorClass="text-orange-500 dark:text-orange-400"
             />
         );
     }

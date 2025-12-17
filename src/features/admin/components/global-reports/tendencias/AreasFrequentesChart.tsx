@@ -92,8 +92,7 @@ export default function AreasFrequentesChart({ filtros }: AreasFrequentesChartPr
                     },
                 },
                 dataLabels: {
-                    enabled: true,
-                    formatter: (val: number) => `${val.toFixed(1)}%`,
+                    enabled: false,
                 },
                 tooltip: {
                     y: {
@@ -195,7 +194,7 @@ export default function AreasFrequentesChart({ filtros }: AreasFrequentesChartPr
                             <p className="text-sm text-gray-600 dark:text-gray-400">
                                 Área dominante: <span className="font-semibold text-blue-600 dark:text-blue-400">
                                     {data.estadisticas.areaDominante.nombre}
-                                </span> ({data.estadisticas.areaDominante.porcentaje.toFixed(1)}%)
+                                </span>
                             </p>
                         </div>
                     </div>

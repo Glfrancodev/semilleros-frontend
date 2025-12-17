@@ -50,7 +50,7 @@ export default function GanadoresPage() {
 
   const cargarGanadores = async () => {
     if (!idFeria) return;
-    
+
     try {
       setLoading(true);
       const data = await obtenerFeriaPorId(idFeria);
@@ -84,7 +84,7 @@ export default function GanadoresPage() {
     }
 
     const { proyecto } = lugar;
-    
+
     // Colores según el puesto
     const estilos = {
       primero: {
@@ -158,7 +158,7 @@ export default function GanadoresPage() {
             </p>
             <div className="space-y-1.5">
               {proyecto.integrantes.map((integrante) => (
-                <div 
+                <div
                   key={integrante.idEstudiante}
                   className="flex items-center gap-2"
                 >
@@ -216,8 +216,8 @@ export default function GanadoresPage() {
         <PageBreadcrumb pageTitle="Ganadores" />
         <div className="rounded-xl border border-gray-200 bg-white p-6 text-center dark:border-white/[0.05] dark:bg-white/[0.03]">
           <p className="text-gray-600 dark:text-gray-400">No hay ganadores registrados</p>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             onClick={() => navigate(`/ferias/${idFeria}`)}
             className="mt-4"
@@ -265,8 +265,8 @@ export default function GanadoresPage() {
                 </div>
               </div>
               {isAdmin && (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={() => navigate(`/ferias/${idFeria}`)}
                 >
@@ -282,7 +282,7 @@ export default function GanadoresPage() {
               <Button
                 variant="primary"
                 size="md"
-                onClick={() => {}}
+                onClick={() => window.open('http://54.90.100.111:5173/ferias', '_blank')}
                 className="w-full"
               >
                 Imprimir Certificados
@@ -293,7 +293,7 @@ export default function GanadoresPage() {
 
         {/* Ganadores por Área y Categoría */}
         {Object.entries(ganadores).map(([area, categorias]) => (
-          <div 
+          <div
             key={area}
             className="rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm dark:border-gray-800 dark:bg-gray-900/50"
           >

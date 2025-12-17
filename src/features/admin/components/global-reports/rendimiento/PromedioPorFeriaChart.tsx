@@ -173,8 +173,7 @@ export default function PromedioPorFeriaChart({ filtros }: PromedioPorFeriaChart
                 },
             },
             dataLabels: {
-                enabled: true,
-                formatter: (val: number) => `${val.toFixed(1)}%`,
+                enabled: false,
             },
             tooltip: {
                 y: {

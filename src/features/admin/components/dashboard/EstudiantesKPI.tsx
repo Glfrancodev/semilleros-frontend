@@ -34,10 +34,10 @@ export default function EstudiantesKPI({ filtros }: EstudiantesKPIProps) {
         return (
             <KPICard
                 title="Estudiantes Participantes"
-                value="Error"
-                subtitle={error}
+                value={0}
+                subtitle="No hay feria activa"
                 icon={<UserIcon />}
-                colorClass="text-red-500 dark:text-red-400"
+                colorClass="text-green-500 dark:text-green-400"
             />
         );
     }
