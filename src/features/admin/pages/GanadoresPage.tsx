@@ -180,7 +180,7 @@ export default function GanadoresPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(`/admin/proyectos/${proyecto.idProyecto}`)}
+              onClick={() => navigate(isAdmin ? `/admin/proyectos/${proyecto.idProyecto}` : `/estudiante/proyectos/${proyecto.idProyecto}`)}
               className="w-full"
             >
               Ver Detalles
