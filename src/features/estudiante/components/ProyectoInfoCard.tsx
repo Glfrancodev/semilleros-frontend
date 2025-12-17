@@ -10,6 +10,7 @@ import { ROLES } from "../../../constants/roles";
 interface ProyectoInfoCardProps {
   proyecto: ProyectoDetalle;
   onUpdate?: () => void;
+  estadoFeria?: string | null;
 }
 
 interface DatosProgreso {
@@ -18,7 +19,8 @@ interface DatosProgreso {
   progreso: number;
 }
 
-export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCardProps) {
+export default function ProyectoInfoCard({ proyecto, onUpdate, estadoFeria }: ProyectoInfoCardProps) {
+  const feriaEstaFinalizada = estadoFeria === "Finalizado";
   const navigate = useNavigate();
   const { user } = useAuth();
   const [datosProgreso, setDatosProgreso] = useState<DatosProgreso>({
@@ -50,10 +52,10 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
       // Obtener tareas organizadas del proyecto
       const resTareasOrg = await api.get(`/proyectos/${proyecto.idProyecto}/tareas-organizadas`);
       const tareasData = resTareasOrg.data.data;
-      
+
       const tareasCompletadas = tareasData.completado?.length || 0;
       const totalTareas = (tareasData.enProceso?.length || 0) + (tareasData.completado?.length || 0) + (tareasData.pendiente?.length || 0);
-      
+
       const progreso = totalTareas > 0 ? Math.round((tareasCompletadas / totalTareas) * 100) : 0;
 
       setDatosProgreso({
@@ -65,7 +67,7 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
       // Verificar si la tarea final fue calificada
       const todasLasTareas = [...(tareasData.completado || []), ...(tareasData.enProceso || []), ...(tareasData.pendiente || [])];
       const tareaFinal = todasLasTareas.find((t: any) => t.esFinal === true);
-      
+
       if (tareaFinal) {
         // Verificar si esta tarea final está en completado
         const estaCalificada = tareasData.completado?.some((t: any) => t.idTarea === tareaFinal.idTarea);
@@ -122,16 +124,16 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
   }, [proyecto.idProyecto, user?.idUsuario]);
 
   // Determinar el estado del proyecto (null = Pendiente, true = Aprobado, false = Rechazado)
-  const estado = proyecto.estaAprobado === null 
-    ? "Pendiente de revisión del Administrador" 
-    : proyecto.estaAprobado 
-      ? "Aprobado por Administrador" 
+  const estado = proyecto.estaAprobado === null
+    ? "Pendiente de revisión del Administrador"
+    : proyecto.estaAprobado
+      ? "Aprobado por Administrador"
       : "Rechazado por Administrador";
-  
+
   const estadoColor = proyecto.estaAprobado === null
     ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300"
-    : proyecto.estaAprobado 
-      ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" 
+    : proyecto.estaAprobado
+      ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
       : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300";
   const visibilidadColor = isPublico
     ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
@@ -140,29 +142,29 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
     proyecto.esFinal === null
       ? "En proceso para exposición en feria"
       : proyecto.esFinal
-      ? "Aprobado para exposición en feria"
-      : "Denegado para exposición en feria";
+        ? "Aprobado para exposición en feria"
+        : "Denegado para exposición en feria";
   const estadoFeriaColor =
     proyecto.esFinal === null
       ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-200"
       : proyecto.esFinal
-      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
-      : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300";
+        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+        : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300";
 
   // Estado de aprobación del tutor (solo para docentes)
   const estadoTutorLabel =
     proyecto.estaAprobadoTutor === null || proyecto.estaAprobadoTutor === undefined
       ? "Pendiente de revisión del tutor"
       : proyecto.estaAprobadoTutor === true
-      ? "Aprobado por el tutor"
-      : "Rechazado por el tutor";
-  
+        ? "Aprobado por el tutor"
+        : "Rechazado por el tutor";
+
   const estadoTutorColor =
     proyecto.estaAprobadoTutor === null || proyecto.estaAprobadoTutor === undefined
       ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"
       : proyecto.estaAprobadoTutor === true
-      ? "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
-      : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300";
+        ? "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
+        : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300";
 
   const handleToggleVisibilidad = async () => {
     try {
@@ -214,7 +216,7 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
       toast.error('Solo los integrantes del proyecto pueden acceder a la reunión');
       return;
     }
-    
+
     // Abrir sala de videollamada en nueva pestaña
     const userName = user?.nombre ? `${user.nombre} ${user.apellido || ''}`.trim() : 'Usuario';
     const url = `/reunion/${proyecto.idProyecto}?userName=${encodeURIComponent(userName)}&proyecto=${encodeURIComponent(proyecto.nombre)}`;
@@ -255,7 +257,7 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
       <h3 className="mb-5 text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-7">
         Información del Proyecto
       </h3>
-      
+
       {/* Título y estado */}
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-4">
         <div className="flex-1">
@@ -278,7 +280,7 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
             <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap self-start ${estadoFeriaColor}`}>
               {estadoFeriaLabel}
             </span>
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap self-start ${visibilidadColor}`}>
+            <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap self-start ${visibilidadColor}`}>
               {isPublico ? "Público" : "Privado"}
             </span>
           </div>
@@ -305,14 +307,14 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
             {proyecto.nombreDocente || "Sin docente"}
           </p>
         </div>
-        
+
         <div>
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de creación:</span>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             {new Date(proyecto.fechaCreacion).toLocaleDateString()}
           </p>
         </div>
-        
+
         {/* Nota Promedio - Solo si la feria está finalizada */}
         {feriaFinalizada && notaPromedio !== null && (
           <div>
@@ -346,7 +348,7 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
         onClick={() => navigate(`/estudiante/proyectos/${proyecto.idProyecto}/documento`)}
         className="w-full"
       >
-        Ir al documento
+        {feriaEstaFinalizada ? "Ver documento (solo lectura)" : "Ir al documento"}
       </Button>
 
       {/* Botones de Aprobación/Rechazo para Feria - Solo para admin cuando tarea final está calificada */}
@@ -388,12 +390,14 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
           </Button>
         </div>
       )}
-      
+
       {/* Botón Unirse a la reunión - solo para integrantes */}
       {esIntegrante && (
         <Button
           onClick={handleUnirseReunion}
           className="w-full mt-3"
+          disabled={feriaEstaFinalizada}
+          title={feriaEstaFinalizada ? "No se puede unirse a reuniones de ferias finalizadas" : ""}
         >
           📹 Unirse a la reunión
         </Button>
@@ -410,8 +414,8 @@ export default function ProyectoInfoCard({ proyecto, onUpdate }: ProyectoInfoCar
           {cambiandoVisibilidad
             ? "Actualizando..."
             : isPublico
-            ? "Hacer privado 🔒"
-            : "Hacer público 🔓"}
+              ? "Hacer privado 🔒"
+              : "Hacer público 🔓"}
         </Button>
       )}
     </div>

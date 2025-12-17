@@ -12,6 +12,7 @@ const ALLOWED_PDF_TYPES = ["application/pdf"];
 interface ProyectoBrandingCardProps {
   proyecto: ProyectoDetalle;
   onUpdate: () => void;
+  estadoFeria?: string | null;
 }
 
 interface Integrante {
@@ -25,7 +26,8 @@ interface TareaEnProceso {
   enRevision?: boolean;
 }
 
-export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardProps) {
+export default function ProyectoBrandingCard({ proyecto, estadoFeria }: ProyectoBrandingCardProps) {
+  const feriaFinalizada = estadoFeria === "Finalizado";
   const { user } = useAuth();
   const [uploading, setUploading] = useState<string | null>(null);
   const [urls, setUrls] = useState({
@@ -90,9 +92,10 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
     (integrante) => integrante.idUsuario && user?.idUsuario && integrante.idUsuario === user.idUsuario
   );
 
-  // Bloquear branding si el proyecto es final o si no está aprobado por admin y tutor
+  // Bloquear branding si el proyecto es final, si no está aprobado por admin y tutor, o si la feria está finalizada
   const brandingBloqueadoPorEsFinal = proyecto.esFinal === true;
   const brandingBloqueadoPorAprobacion = proyecto.estaAprobado !== true || proyecto.estaAprobadoTutor !== true;
+  const brandingBloqueadoPorFeriaFinalizada = feriaFinalizada;
 
   const handleFileUpload = async (file: File, tipo: "logo" | "banner" | "triptico") => {
     try {
@@ -152,7 +155,12 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
           El proyecto ha sido marcado como final. No se pueden realizar modificaciones al branding.
         </p>
       )}
-      {puedeGestionarBranding && brandingBloqueado && !brandingBloqueadoPorEsFinal && !brandingBloqueadoPorAprobacion && (
+      {puedeGestionarBranding && brandingBloqueadoPorFeriaFinalizada && !brandingBloqueadoPorEsFinal && !brandingBloqueadoPorAprobacion && (
+        <p className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-200">
+          La feria ha finalizado. No se pueden realizar modificaciones al branding.
+        </p>
+      )}
+      {puedeGestionarBranding && brandingBloqueado && !brandingBloqueadoPorEsFinal && !brandingBloqueadoPorAprobacion && !brandingBloqueadoPorFeriaFinalizada && (
         <p className="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-2 text-sm text-yellow-800 dark:border-yellow-900/40 dark:bg-yellow-900/20 dark:text-yellow-200">
           Hay una tarea en revisión, por lo que la actualización de branding está temporalmente
           deshabilitada.
@@ -163,7 +171,7 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
         {/* Logo */}
         <div className="space-y-3">
           <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Logo</h4>
-          <div 
+          <div
             className="w-full h-40 rounded-xl overflow-hidden bg-gray-200 dark:bg-gray-700 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
             onClick={() => urls.logo && window.open(urls.logo, '_blank')}
           >
@@ -191,7 +199,7 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
                   const file = e.target.files?.[0];
                   if (file) handleFileUpload(file, "logo");
                 }}
-                disabled={uploading === "logo" || brandingBloqueado || brandingBloqueadoPorEsFinal || brandingBloqueadoPorAprobacion}
+                disabled={uploading === "logo" || brandingBloqueado || brandingBloqueadoPorEsFinal || brandingBloqueadoPorAprobacion || brandingBloqueadoPorFeriaFinalizada}
               />
               <Button
                 size="sm"
@@ -200,7 +208,7 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
                   e.preventDefault();
                   (e.currentTarget.previousElementSibling as HTMLInputElement)?.click();
                 }}
-                disabled={uploading === "logo" || brandingBloqueado || brandingBloqueadoPorEsFinal || brandingBloqueadoPorAprobacion}
+                disabled={uploading === "logo" || brandingBloqueado || brandingBloqueadoPorEsFinal || brandingBloqueadoPorAprobacion || brandingBloqueadoPorFeriaFinalizada}
               >
                 {uploading === "logo" ? "Subiendo..." : "Subir Logo"}
               </Button>
@@ -211,7 +219,7 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
         {/* Banner */}
         <div className="space-y-3">
           <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Banner</h4>
-          <div 
+          <div
             className="w-full h-40 rounded-xl overflow-hidden bg-gray-200 dark:bg-gray-700 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
             onClick={() => urls.banner && window.open(urls.banner, '_blank')}
           >
@@ -239,7 +247,7 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
                   const file = e.target.files?.[0];
                   if (file) handleFileUpload(file, "banner");
                 }}
-                disabled={uploading === "banner" || brandingBloqueado || brandingBloqueadoPorEsFinal || brandingBloqueadoPorAprobacion}
+                disabled={uploading === "banner" || brandingBloqueado || brandingBloqueadoPorEsFinal || brandingBloqueadoPorAprobacion || brandingBloqueadoPorFeriaFinalizada}
               />
               <Button
                 size="sm"
@@ -248,7 +256,7 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
                   e.preventDefault();
                   (e.currentTarget.previousElementSibling as HTMLInputElement)?.click();
                 }}
-                disabled={uploading === "banner" || brandingBloqueado || brandingBloqueadoPorEsFinal || brandingBloqueadoPorAprobacion}
+                disabled={uploading === "banner" || brandingBloqueado || brandingBloqueadoPorEsFinal || brandingBloqueadoPorAprobacion || brandingBloqueadoPorFeriaFinalizada}
               >
                 {uploading === "banner" ? "Subiendo..." : "Subir Banner"}
               </Button>
@@ -259,7 +267,7 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
         {/* Tríptico */}
         <div className="space-y-3">
           <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Tríptico (PDF)</h4>
-          <div 
+          <div
             className="w-full h-40 rounded-xl overflow-hidden bg-gray-200 dark:bg-gray-700 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
             onClick={() => urls.triptico && window.open(urls.triptico, '_blank')}
           >
@@ -291,7 +299,7 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
                   const file = e.target.files?.[0];
                   if (file) handleFileUpload(file, "triptico");
                 }}
-                disabled={uploading === "triptico" || brandingBloqueado || brandingBloqueadoPorEsFinal || brandingBloqueadoPorAprobacion}
+                disabled={uploading === "triptico" || brandingBloqueado || brandingBloqueadoPorEsFinal || brandingBloqueadoPorAprobacion || brandingBloqueadoPorFeriaFinalizada}
               />
               <Button
                 size="sm"
@@ -300,7 +308,7 @@ export default function ProyectoBrandingCard({ proyecto}: ProyectoBrandingCardPr
                   e.preventDefault();
                   (e.currentTarget.previousElementSibling as HTMLInputElement)?.click();
                 }}
-                disabled={uploading === "triptico" || brandingBloqueado || brandingBloqueadoPorEsFinal || brandingBloqueadoPorAprobacion}
+                disabled={uploading === "triptico" || brandingBloqueado || brandingBloqueadoPorEsFinal || brandingBloqueadoPorAprobacion || brandingBloqueadoPorFeriaFinalizada}
               >
                 {uploading === "triptico" ? "Subiendo..." : "Subir Tríptico (PDF)"}
               </Button>

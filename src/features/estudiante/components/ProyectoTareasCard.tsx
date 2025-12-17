@@ -25,6 +25,7 @@ interface TareasOrganizadas {
 interface ProyectoTareasCardProps {
   idProyecto: string;
   proyecto?: ProyectoDetalle;
+  estadoFeria?: string | null;
 }
 
 
@@ -37,7 +38,7 @@ interface Integrante {
   idUsuario?: string;
 }
 
-export default function ProyectoTareasCard({ idProyecto, proyecto }: ProyectoTareasCardProps) {
+export default function ProyectoTareasCard({ idProyecto, proyecto, estadoFeria }: ProyectoTareasCardProps) {
   const { user } = useAuth();
   const [tareas, setTareas] = useState<TareasOrganizadas>({
     enProceso: [],
@@ -51,8 +52,9 @@ export default function ProyectoTareasCard({ idProyecto, proyecto }: ProyectoTar
   const [errorRevision, setErrorRevision] = useState<string | null>(null);
   const [revisionesMap, setRevisionesMap] = useState<Record<string, Revision>>({});
 
-  // Verificar si el proyecto está bloqueado por falta de aprobaciones
-  const proyectoBloqueado = proyecto && (proyecto.estaAprobado !== true || proyecto.estaAprobadoTutor !== true);  const [revisionSeleccionada, setRevisionSeleccionada] = useState<{
+  // Verificar si el proyecto está bloqueado por falta de aprobaciones o si la feria está finalizada
+  const proyectoBloqueado = proyecto && (proyecto.estaAprobado !== true || proyecto.estaAprobadoTutor !== true);
+  const feriaFinalizada = estadoFeria === "Finalizado"; const [revisionSeleccionada, setRevisionSeleccionada] = useState<{
     tarea: Tarea;
     revision: Revision;
     editable: boolean;
@@ -184,30 +186,29 @@ export default function ProyectoTareasCard({ idProyecto, proyecto }: ProyectoTar
       <div
         key={tarea.idTarea}
         onClick={handleClick}
-        className={`rounded-3xl border border-gray-200 bg-white p-5 shadow-sm transition-colors dark:border-white/10 dark:bg-[#1c2639] ${
-          revision ? "cursor-pointer" : ""
-        } ${revision ? "hover:border-gray-300 dark:hover:border-white/25" : "hover:border-gray-200 dark:hover:border-white/15"}`}
+        className={`rounded-3xl border border-gray-200 bg-white p-5 shadow-sm transition-colors dark:border-white/10 dark:bg-[#1c2639] ${revision ? "cursor-pointer" : ""
+          } ${revision ? "hover:border-gray-300 dark:hover:border-white/25" : "hover:border-gray-200 dark:hover:border-white/15"}`}
       >
         <div className="flex items-start justify-between mb-2">
           <h4 className={`font-medium text-gray-900 dark:text-white ${esCompletado ? 'line-through opacity-60' : ''}`}>
             {tarea.orden}. {tarea.nombre}
           </h4>
-        {/* Etiqueta En Revisión */}
-        {('enRevision' in tarea && (tarea as any).enRevision) && (
-          <span className="ml-2 px-2 py-0.5 rounded-full bg-yellow-200 text-yellow-800 text-xs font-semibold border border-yellow-300">
-            En Revisión
-          </span>
-        )}
-      </div>
-      <p className={`text-sm text-gray-600 dark:text-gray-400 mb-2 ${esCompletado ? 'line-through opacity-60' : ''}`}>
-        {tarea.descripcion || "Sin descripción"}
-      </p>
-      <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-        <span>Fecha límite: {new Date(tarea.fechaLimite).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-      </div>
+          {/* Etiqueta En Revisión */}
+          {('enRevision' in tarea && (tarea as any).enRevision) && (
+            <span className="ml-2 px-2 py-0.5 rounded-full bg-yellow-200 text-yellow-800 text-xs font-semibold border border-yellow-300">
+              En Revisión
+            </span>
+          )}
+        </div>
+        <p className={`text-sm text-gray-600 dark:text-gray-400 mb-2 ${esCompletado ? 'line-through opacity-60' : ''}`}>
+          {tarea.descripcion || "Sin descripción"}
+        </p>
+        <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <span>Fecha límite: {new Date(tarea.fechaLimite).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+        </div>
         {revision && (
           <div className="mt-3 text-right">
             <button
@@ -222,7 +223,7 @@ export default function ProyectoTareasCard({ idProyecto, proyecto }: ProyectoTar
             </button>
           </div>
         )}
-    </div>
+      </div>
     );
   };
 
@@ -265,18 +266,23 @@ export default function ProyectoTareasCard({ idProyecto, proyecto }: ProyectoTar
           <Button
             size="sm"
             variant="primary"
-            disabled={!!revisionEnCurso || enviandoRevision || proyectoBloqueado}
+            disabled={!!revisionEnCurso || enviandoRevision || proyectoBloqueado || feriaFinalizada}
             onClick={handleEnviarRevision}
           >
             {enviandoRevision ? "Enviando..." : "Enviar Revisión"}
           </Button>
         )}
-            {errorRevision && (
-              <div className="mb-3 text-sm text-red-600 dark:text-red-400">{errorRevision}</div>
-            )}
+        {errorRevision && (
+          <div className="mb-3 text-sm text-red-600 dark:text-red-400">{errorRevision}</div>
+        )}
       </div>
 
-      {proyectoBloqueado && (
+      {feriaFinalizada && (
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-200">
+          La feria ha finalizado. No se pueden enviar tareas para revisión.
+        </div>
+      )}
+      {proyectoBloqueado && !feriaFinalizada && (
         <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-200">
           El proyecto debe estar aprobado por el Administrador y el Tutor antes de poder enviar tareas para revisión.
         </div>
