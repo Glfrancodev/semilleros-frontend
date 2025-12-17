@@ -82,8 +82,9 @@ export default function DocumentoEditorPage() {
         if (esIntegrante) {
           // Si el proyecto no está aprobado por admin y tutor, forzar modo solo lectura
           const proyectoBloqueado = detalle.estaAprobado !== true || detalle.estaAprobadoTutor !== true;
-          // Si el proyecto es final, forzar modo solo lectura
-          setForceReadOnly(detalle.esFinal === true || proyectoBloqueado);
+          // Si el proyecto es final o la feria está finalizada, forzar modo solo lectura
+          const feriaFinalizada = detalle.estadoFeria === "Finalizado";
+          setForceReadOnly(detalle.esFinal === true || proyectoBloqueado || feriaFinalizada);
           setPuedeVer(true);
           return true;
         }
