@@ -52,7 +52,7 @@ export default function GuiasDescubrirPage() {
     navigate(`/estudiante/proyectos/${idProyecto}`);
   };
 
-  const scrollCarousel = (ref: React.RefObject<HTMLDivElement>, direction: 'left' | 'right') => {
+  const scrollCarousel = (ref: React.RefObject<HTMLDivElement | null>, direction: 'left' | 'right') => {
     if (ref.current) {
       const scrollAmount = 400;
       const newScrollLeft = direction === 'left'
