@@ -2,15 +2,15 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "./components/ui/button/Button";
 import { ThemeToggleButton } from "./components/common/ThemeToggleButton";
-import { 
-  obtenerFeriaActiva, 
-  obtenerFeriasPasadas, 
-  FeriaActiva, 
-  Feria 
+import {
+  obtenerFeriaActiva,
+  obtenerFeriasPasadas,
+  FeriaActiva,
+  Feria
 } from "./services/feriaService";
-import { 
-  obtenerPerfilesDestacados, 
-  PerfilDestacado 
+import {
+  obtenerPerfilesDestacados,
+  PerfilDestacado
 } from "./services/estudianteService";
 import "./landing.css";
 
@@ -36,12 +36,12 @@ export default function NewLandingPage() {
         obtenerFeriasPasadas(),
         obtenerPerfilesDestacados(10)
       ]);
-      
+
       console.log('🌐 [LANDING] Feria activa recibida:', feria);
       console.log('🌐 [LANDING] Ferias pasadas recibidas:', pasadas);
       console.log('🌐 [LANDING] Perfiles destacados recibidos:', perfiles);
       console.log('🌐 [LANDING] Fotos de perfil:', perfiles.map(p => ({ nombre: p.nombreCompleto, foto: p.fotoPerfil })));
-      
+
       setFeriaActiva(feria);
       setFeriasPasadas(pasadas);
       setPerfilesDestacados(perfiles);
@@ -58,7 +58,7 @@ export default function NewLandingPage() {
   };
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => 
+    setCurrentSlide((prev) =>
       prev === 0 ? Math.max(0, feriasPasadas.length - 1) : prev - 1
     );
   };
@@ -70,14 +70,14 @@ export default function NewLandingPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-3">
-              <img 
-                src="/images/logo/logo.svg" 
-                alt="Semilleros" 
+              <img
+                src="/images/logo/logo.svg"
+                alt="Semilleros"
                 className="h-10 dark:hidden"
               />
-              <img 
-                src="/images/logo/logo-dark.svg" 
-                alt="Semilleros" 
+              <img
+                src="/images/logo/logo-dark.svg"
+                alt="Semilleros"
                 className="h-10 hidden dark:block"
               />
               <div>
@@ -104,7 +104,7 @@ export default function NewLandingPage() {
             <div className="absolute top-20 left-10 w-72 h-72 bg-brand-500/10 rounded-full blur-3xl" />
             <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue-light-500/10 rounded-full blur-3xl" />
           </div>
-          
+
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="text-center max-w-4xl mx-auto">
               <div className="inline-block px-4 py-2 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-800 rounded-full text-brand-700 dark:text-brand-300 text-sm font-medium mb-6">
@@ -216,18 +216,18 @@ export default function NewLandingPage() {
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-gray-700 dark:text-gray-300 font-medium">Progreso General</span>
                         <span className="text-brand-600 dark:text-brand-400 font-bold">
-                          {feriaActiva.cantidadProyectosInscritos > 0 
+                          {feriaActiva.cantidadProyectosInscritos > 0
                             ? Math.round((feriaActiva.cantidadProyectosAprobados / feriaActiva.cantidadProyectosInscritos) * 100)
                             : 0}%
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-                        <div 
+                        <div
                           className="bg-gradient-to-r from-brand-500 to-brand-600 h-3 rounded-full transition-all duration-500"
-                          style={{ 
-                            width: `${feriaActiva.cantidadProyectosInscritos > 0 
-                              ? (feriaActiva.cantidadProyectosAprobados / feriaActiva.cantidadProyectosInscritos) * 100 
-                              : 0}%` 
+                          style={{
+                            width: `${feriaActiva.cantidadProyectosInscritos > 0
+                              ? (feriaActiva.cantidadProyectosAprobados / feriaActiva.cantidadProyectosInscritos) * 100
+                              : 0}%`
                           }}
                         />
                       </div>
@@ -272,7 +272,7 @@ export default function NewLandingPage() {
                 <div className="relative">
                   {/* Carousel */}
                   <div className="overflow-hidden rounded-2xl">
-                    <div 
+                    <div
                       className="flex transition-transform duration-500 ease-out"
                       style={{ transform: `translateX(-${currentSlide * 100}%)` }}
                     >
@@ -292,16 +292,16 @@ export default function NewLandingPage() {
                                     Semestre {feria.semestre}
                                   </span>
                                   <span className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-sm border border-gray-200 dark:border-gray-700">
-                                    {new Date(feria.fechaCreacion).toLocaleDateString('es-ES', { 
-                                      year: 'numeric', 
-                                      month: 'long' 
+                                    {new Date(feria.fechaCreacion).toLocaleDateString('es-ES', {
+                                      year: 'numeric',
+                                      month: 'long'
                                     })}
                                   </span>
                                 </div>
                               </div>
-                              <Button 
-                                variant="primary" 
-                                size="sm" 
+                              <Button
+                                variant="primary"
+                                size="sm"
                                 className="mt-4 md:mt-0"
                                 onClick={() => navigate(`/ferias/${feria.idFeria}`)}
                               >
@@ -369,11 +369,10 @@ export default function NewLandingPage() {
                         <button
                           key={idx}
                           onClick={() => setCurrentSlide(idx)}
-                          className={`rounded-full transition-all duration-300 ${
-                            idx === currentSlide 
-                              ? 'bg-brand-500 dark:bg-brand-400 w-8 h-3' 
+                          className={`rounded-full transition-all duration-300 ${idx === currentSlide
+                              ? 'bg-brand-500 dark:bg-brand-400 w-8 h-3'
                               : 'bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 w-3 h-3'
-                          }`}
+                            }`}
                           aria-label={`Ir a diapositiva ${idx + 1}`}
                         />
                       ))}
@@ -462,56 +461,56 @@ export default function NewLandingPage() {
 
                   {/* Primer Lugar (siempre existe si length > 0) */}
                   <div className="flex flex-col items-center flex-1 max-w-xs -mt-8">
-                      <div className="relative mb-4">
-                        <div className="absolute -top-8 left-1/2 transform -translate-x-1/2">
-                          <div className="text-4xl">👑</div>
-                        </div>
-                        <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-warning-500 bg-gradient-to-br from-warning-500 to-warning-600 shadow-theme-lg">
-                          {perfilesDestacados[0].fotoPerfil ? (
-                            <img src={perfilesDestacados[0].fotoPerfil} alt={perfilesDestacados[0].nombreCompleto} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-500 to-brand-600 text-white font-bold text-4xl">
-                              {perfilesDestacados[0].nombreCompleto.split(' ').filter(n => n).slice(0, 2).map(n => n[0].toUpperCase()).join('')}
-                            </div>
-                          )}
-                        </div>
-                        <div className="absolute -bottom-2 -right-2 w-12 h-12 rounded-full bg-warning-500 flex items-center justify-center text-3xl border-4 border-white shadow-theme-md">
-                          🥇
-                        </div>
+                    <div className="relative mb-4">
+                      <div className="absolute -top-8 left-1/2 transform -translate-x-1/2">
+                        <div className="text-4xl">👑</div>
                       </div>
-                      <div className="bg-white dark:bg-gray-800 border border-warning-200 dark:border-warning-800 rounded-2xl p-6 w-full shadow-theme-lg">
-                        <div className="text-center mb-4">
-                          <h3 className="text-gray-900 dark:text-white font-bold text-xl truncate">{perfilesDestacados[0].nombreCompleto}</h3>
-                          <p className="text-gray-600 dark:text-gray-400 text-sm">{perfilesDestacados[0].codigoEstudiante}</p>
-                        </div>
-                        <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-700 dark:text-gray-300">Promedio</span>
-                            <span className="text-success-600 dark:text-success-400 font-bold text-lg">{perfilesDestacados[0].promedioNotas}</span>
+                      <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-warning-500 bg-gradient-to-br from-warning-500 to-warning-600 shadow-theme-lg">
+                        {perfilesDestacados[0].fotoPerfil ? (
+                          <img src={perfilesDestacados[0].fotoPerfil} alt={perfilesDestacados[0].nombreCompleto} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-500 to-brand-600 text-white font-bold text-4xl">
+                            {perfilesDestacados[0].nombreCompleto.split(' ').filter(n => n).slice(0, 2).map(n => n[0].toUpperCase()).join('')}
                           </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-700 dark:text-gray-300">Proyectos</span>
-                            <span className="text-gray-900 dark:text-white font-bold text-lg">{perfilesDestacados[0].totalProyectos}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-700 dark:text-gray-300">Ganadores</span>
-                            <span className="text-warning-600 dark:text-warning-400 font-bold text-lg">{perfilesDestacados[0].proyectosGanadores}</span>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => navigate(`/estudiantes/${perfilesDestacados[0].idEstudiante}/perfil`)}
-                          className="mt-4 w-full px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg transition-colors duration-200"
-                        >
-                          Ver Perfil
-                        </button>
+                        )}
+                      </div>
+                      <div className="absolute -bottom-2 -right-2 w-12 h-12 rounded-full bg-warning-500 flex items-center justify-center text-3xl border-4 border-white shadow-theme-md">
+                        🥇
                       </div>
                     </div>
+                    <div className="bg-white dark:bg-gray-800 border border-warning-200 dark:border-warning-800 rounded-2xl p-6 w-full shadow-theme-lg">
+                      <div className="text-center mb-4">
+                        <h3 className="text-gray-900 dark:text-white font-bold text-xl truncate">{perfilesDestacados[0].nombreCompleto}</h3>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm">{perfilesDestacados[0].codigoEstudiante}</p>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-700 dark:text-gray-300">Promedio</span>
+                          <span className="text-success-600 dark:text-success-400 font-bold text-lg">{perfilesDestacados[0].promedioNotas}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-700 dark:text-gray-300">Proyectos</span>
+                          <span className="text-gray-900 dark:text-white font-bold text-lg">{perfilesDestacados[0].totalProyectos}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-700 dark:text-gray-300">Ganadores</span>
+                          <span className="text-warning-600 dark:text-warning-400 font-bold text-lg">{perfilesDestacados[0].proyectosGanadores}</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => navigate(`/estudiantes/${perfilesDestacados[0].idEstudiante}/perfil`)}
+                        className="mt-4 w-full px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg transition-colors duration-200"
+                      >
+                        Ver Perfil
+                      </button>
+                    </div>
+                  </div>
 
-                    {/* Tercer Lugar (si existe) */}
-                    {perfilesDestacados.length >= 3 && (
-                      <div className="flex flex-col items-center flex-1 max-w-xs">
-                        <div className="relative mb-4">
-                          <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-orange-400 bg-gradient-to-br from-orange-300 to-orange-500 shadow-theme-md">
+                  {/* Tercer Lugar (si existe) */}
+                  {perfilesDestacados.length >= 3 && (
+                    <div className="flex flex-col items-center flex-1 max-w-xs">
+                      <div className="relative mb-4">
+                        <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-orange-400 bg-gradient-to-br from-orange-300 to-orange-500 shadow-theme-md">
                           {perfilesDestacados[2].fotoPerfil ? (
                             <img src={perfilesDestacados[2].fotoPerfil} alt={perfilesDestacados[2].nombreCompleto} className="w-full h-full object-cover" />
                           ) : (
@@ -519,46 +518,46 @@ export default function NewLandingPage() {
                               {perfilesDestacados[2].nombreCompleto.split(' ').filter(n => n).slice(0, 2).map(n => n[0].toUpperCase()).join('')}
                             </div>
                           )}
-                          </div>
-                          <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-orange-400 flex items-center justify-center text-2xl border-4 border-white shadow-theme-sm">
-                            🥉
-                          </div>
                         </div>
-                        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 w-full shadow-theme-md">
-                          <div className="text-center mb-3">
-                            <h3 className="text-gray-900 dark:text-white font-bold text-lg truncate">{perfilesDestacados[2].nombreCompleto}</h3>
-                            <p className="text-gray-600 dark:text-gray-400 text-sm">{perfilesDestacados[2].codigoEstudiante}</p>
-                          </div>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
-                              <span className="text-gray-600 dark:text-gray-400">Promedio</span>
-                              <span className="text-success-600 dark:text-success-400 font-bold">{perfilesDestacados[2].promedioNotas}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600 dark:text-gray-400">Proyectos</span>
-                              <span className="text-gray-900 dark:text-white font-bold">{perfilesDestacados[2].totalProyectos}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600 dark:text-gray-400">Ganadores</span>
-                              <span className="text-warning-600 dark:text-warning-400 font-bold">{perfilesDestacados[2].proyectosGanadores}</span>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => navigate(`/estudiantes/${perfilesDestacados[2].idEstudiante}/perfil`)}
-                            className="mt-4 w-full px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg transition-colors duration-200"
-                          >
-                            Ver Perfil
-                          </button>
+                        <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-orange-400 flex items-center justify-center text-2xl border-4 border-white shadow-theme-sm">
+                          🥉
                         </div>
                       </div>
-                    )}
-                  </div>
+                      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 w-full shadow-theme-md">
+                        <div className="text-center mb-3">
+                          <h3 className="text-gray-900 dark:text-white font-bold text-lg truncate">{perfilesDestacados[2].nombreCompleto}</h3>
+                          <p className="text-gray-600 dark:text-gray-400 text-sm">{perfilesDestacados[2].codigoEstudiante}</p>
+                        </div>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">Promedio</span>
+                            <span className="text-success-600 dark:text-success-400 font-bold">{perfilesDestacados[2].promedioNotas}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">Proyectos</span>
+                            <span className="text-gray-900 dark:text-white font-bold">{perfilesDestacados[2].totalProyectos}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">Ganadores</span>
+                            <span className="text-warning-600 dark:text-warning-400 font-bold">{perfilesDestacados[2].proyectosGanadores}</span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => navigate(`/estudiantes/${perfilesDestacados[2].idEstudiante}/perfil`)}
+                          className="mt-4 w-full px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg transition-colors duration-200"
+                        >
+                          Ver Perfil
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* Resto del Top 10 */}
                 {perfilesDestacados.length > 3 && (
                   <div className="space-y-3 mb-8">
                     {perfilesDestacados.slice(3, 10).map((perfil) => (
-                      <div 
+                      <div
                         key={perfil.idEstudiante}
                         className="flex items-center gap-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:border-brand-300 dark:hover:border-brand-600 hover:shadow-theme-md transition-all duration-200"
                       >
@@ -606,11 +605,7 @@ export default function NewLandingPage() {
                 )}
 
                 {/* Botón Ver Más */}
-                <div className="text-center">
-                  <Button variant="primary" size="md">
-                    Ver más →
-                  </Button>
-                </div>
+
               </div>
             ) : (
               <div className="text-center py-20">
